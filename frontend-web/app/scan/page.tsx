@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/contexts/session-context";
 import { sessionAPI } from "@/lib/api";
+// axios removed
 import { ProgressHeader } from "@/components/layout/progress-header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ import FingerprintScanner from "@/components/features/scan/fingerprint-scanner";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
 import { SessionEndModal } from "@/components/modals/session-end-modal";
+import { ROUTES, STEPS } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/errors";
 
 const FINGER_NAMES: { [key: string]: string } = {
   "left_thumb": "Left Thumb",
@@ -37,6 +40,44 @@ const FINGER_NAMES: { [key: string]: string } = {
   "right_middle": "Right Middle", 
   "right_ring": "Right Ring",
   "right_pinky": "Right Pinky"
+};
+
+// Helper component to manage object URL lifecycle and debugging
+const ScanPreview = ({ file, fingerName }: { file?: File, fingerName: string }) => {
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file) {
+      setObjectUrl(null);
+      return;
+    }
+
+    console.log(`Creating object URL for ${fingerName}, size: ${file.size}, type: ${file.type}`);
+    if (file.size === 0) {
+        console.warn(`File for ${fingerName} has 0 bytes!`);
+    }
+
+    const url = URL.createObjectURL(file);
+    setObjectUrl(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [file, fingerName]);
+
+  if (!objectUrl) return null;
+
+  return (
+    <img
+      src={objectUrl}
+      alt={fingerName}
+      className="w-full h-full object-contain"
+      onError={(e) => {
+        console.error(`Failed to load image for ${fingerName}`);
+        console.error("Source URL:", objectUrl);
+      }}
+    />
+  );
 };
 
 export default function ScanPage() {
@@ -96,60 +137,65 @@ export default function ScanPage() {
     setLoading(true);
     try {
         if (!sessionId) {
-            console.warn("No session ID");
+            console.error("No session ID available");
+            alert("No session ID. Please restart the workflow.");
+            return;
         }
 
-        // Upload all files
-        // In this architecture, maybe we upload one by one or all at once?
-        // sessionAPI.submitFingerprint takes one finger.
-        // We should loop through and upload.
+        console.log(`Uploading ${Object.keys(fingerFiles).length} fingerprints...`);
         
+        // Upload all files
         const uploadPromises = Object.entries(fingerFiles).map(async ([finger, file]) => {
-             // Convert file to base64 if API expects string image (as per my api.ts)
-             // Or update api.ts to accept FormData
-             // My api.ts expects { finger_name, image: string }
-             
              return new Promise<void>((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = async () => {
                     const base64 = reader.result as string;
                     try {
-                        if (sessionId) {
-                             await sessionAPI.submitFingerprint(sessionId, {
-                                finger_name: finger,
-                                image: base64
-                            });
-                        }
+                        console.log(`Uploading ${finger}...`);
+                        await sessionAPI.submitFingerprint(sessionId, {
+                            finger_name: finger,
+                            image: base64
+                        });
+                        console.log(`${finger} uploaded successfully`);
                         resolve();
                     } catch (e) {
+                        console.error(`Failed to upload ${finger}:`, e);
                         reject(e);
                     }
                 };
+                reader.onerror = () => reject(new Error(`Failed to read file for ${finger}`));
                 reader.readAsDataURL(file);
              });
         });
 
         await Promise.all(uploadPromises);
+        console.log("All fingerprints uploaded successfully");
         
         // Trigger analysis
-        if (sessionId) {
-            await sessionAPI.analyze(sessionId);
+        console.log("Triggering analysis...");
+        try {
+          const analyzeResponse = await sessionAPI.analyze(sessionId);
+          console.log("Analysis API response:", analyzeResponse);
+          console.log("Analysis completed successfully");
+        } catch (analyzeError) {
+          console.error("Analysis API error:", analyzeError);
+          // Error is already logged by api-client logic, but we throw to stop navigation
+          throw analyzeError;
         }
 
-        setCurrentStep(4); // Moving to results page (step 4)
-        router.push("/results");
+        setCurrentStep(STEPS.RESULTS); // Moving to results page (step 4)
+        router.push(ROUTES.RESULTS);
     } catch (err) {
-        console.error("Submission failed", err);
-        // alert("Failed to submit fingerprints");
-        // Fallback for demo
-        router.push("/results");
+        console.error("Submission failed:", err);
+        const message = getErrorMessage(err);
+        alert(`Failed to submit: ${message}`);
     } finally {
         setLoading(false);
     }
   };
 
   return (
-    <ProtectedRoute requireSession={true} requiredStep={3}>
+    <ProtectedRoute requireSession={true} requiredStep={STEPS.SCAN}>
     <>
       <SessionEndModal 
         isOpen={showModal}
@@ -160,7 +206,7 @@ export default function ScanPage() {
       <main className="flex-1 w-full px-6 md:px-12 lg:px-16 xl:px-20 py-4 flex flex-col overflow-y-auto">
         <div className="h-full flex flex-col px-6 py-3">
           <ProgressHeader
-            currentStep={3}
+            currentStep={STEPS.SCAN}
             totalSteps={4}
             title="Fingerprint Scan"
             subtitle="Securely scan your fingerprints for analysis"
@@ -249,12 +295,11 @@ export default function ScanPage() {
                         <h4 className="text-xs font-medium mb-2 text-foreground">
                           Scan Result
                         </h4>
-                        <div className="w-32 h-32 bg-muted/30 rounded-lg border-2 border-border flex items-center justify-center mb-2 overflow-hidden">
+                        <div className="w-32 h-32 bg-muted/30 rounded-lg border-2 border-border flex items-center justify-center mb-2 overflow-hidden relative">
                           {isScanned ? (
-                            <img
-                              src={URL.createObjectURL(fingerFiles[currentFinger]!)}
-                              alt={currentFinger}
-                              className="w-full h-full object-contain"
+                            <ScanPreview 
+                                file={fingerFiles[currentFinger]} 
+                                fingerName={currentFinger} 
                             />
                           ) : (
                             <div className="text-center">

@@ -16,11 +16,20 @@ class GeminiService:
             raise ValueError("Missing GEMINI_API_KEY in environment")
         
         genai.configure(api_key=api_key)
+        # Use gemini-1.5-flash for better free tier quotas
         self.model = genai.GenerativeModel('gemini-1.5-flash')
         logger.info("Gemini Flash service initialized")
     
     def generate_risk_explanation(self, patient_data: Dict) -> str:
         """Generate personalized risk explanation."""
+        from .cache_service import get_response_cache
+        
+        # Check cache first
+        cache = get_response_cache()
+        cached_response = cache.get(patient_data)
+        if cached_response:
+            logger.info("Gemini: Using cached explanation")
+            return cached_response
         
         prompt = f"""
 You are a medical AI assistant. Generate a brief, professional explanation of diabetes risk assessment.
@@ -41,11 +50,28 @@ Do not include medical advice or recommendations.
 """
         
         try:
+            # Apply rate limiting
+            from .rate_limiter import get_gemini_rate_limiter
+            import time
+            
+            rate_limiter = get_gemini_rate_limiter()
+            wait_time = rate_limiter.wait_if_needed()
+            if wait_time:
+                logger.warning(f"Gemini: Rate limited, waiting {wait_time:.2f}s")
+                time.sleep(wait_time)
+            
             response = self.model.generate_content(prompt)
-            return response.text.strip()
+            explanation = response.text.strip()
+            # Cache the successful response
+            cache.set(patient_data, explanation)
+            logger.info("Gemini: Generated and cached new explanation")
+            return explanation
         except Exception as e:
             logger.error(f"Gemini generation failed: {e}")
-            return self._fallback_explanation(patient_data)
+            fallback = self._fallback_explanation(patient_data)
+            # Cache fallback to avoid repeated failures
+            cache.set(patient_data, fallback)
+            return fallback
     
     def _fallback_explanation(self, data: Dict) -> str:
         """Template-based fallback if Gemini fails."""
@@ -58,6 +84,88 @@ Do not include medical advice or recommendations.
         }
         
         return templates.get(risk_level, "Risk assessment completed.")
+    
+    def generate_patient_explanation(self, analysis_results: Dict, demographics: Dict) -> str:
+        """Generate comprehensive explanation for patient results."""
+        
+        prompt = f"""
+You are a compassionate medical AI assistant. Generate a clear, personable health report for a patient.
+
+PATIENT PROFILE:
+- Age: {demographics['age']} years
+- Gender: {demographics['gender']}
+- BMI: {analysis_results['bmi']}
+- Blood Type: {demographics.get('blood_type', 'Unknown')} (Patient reported)
+
+ANALYSIS RESULTS:
+- Diabetes Risk Score: {analysis_results['diabetes_risk_score']:.1%}
+- Risk Level: {analysis_results['diabetes_risk_level']}
+- Predicted Blood Group (from fingerprint AI): {analysis_results['predicted_blood_group']}
+- Fingerprint Patterns: {analysis_results['pattern_counts']['Whorl']} Whorls, {analysis_results['pattern_counts']['Loop']} Loops, {analysis_results['pattern_counts']['Arc']} Arcs
+
+INSTRUCTIONS:
+Generate a health report in the following structure:
+
+1. **Summary** (2-3 sentences):
+   - Start with their diabetes risk level assessment
+   - Mention what this means in simple terms
+
+2. **Key Findings** (bullet points):
+   - Explain the fingerprint pattern analysis briefly
+   - Mention the blood group prediction confidence
+   - Highlight any important BMI considerations
+
+3. **Recommendations** (3-4 actionable tips):
+   - Based on their risk level, provide specific health advice
+   - If risk is moderate/high: recommend seeing a doctor, lifestyle changes
+   - If risk is low: encourage maintaining healthy habits
+   - If willing to donate: mention blood donation centers (context: {demographics.get('willing_to_donate', False)})
+
+Keep the tone friendly, professional, and encouraging. Use simple language.
+"""
+        
+        try:
+            response = self.model.generate_content(prompt)
+            return response.text.strip()
+        except Exception as e:
+            logger.error(f"Gemini generation failed: {e}")
+            return self._fallback_comprehensive_explanation(analysis_results, demographics)
+    
+    def _fallback_comprehensive_explanation(self, results: Dict, demographics: Dict) -> str:
+        """Fallback explanation if Gemini fails."""
+        risk = results['diabetes_risk_level']
+        blood_group = results['predicted_blood_group']
+        
+        explanation = f"""
+**Health Assessment Summary**
+
+Your diabetes risk assessment indicates a {risk} risk level (confidence: {results['diabetes_confidence']:.1%}). 
+
+**Key Findings:**
+- Your BMI is {results['bmi']}, which is an important health indicator
+- Fingerprint analysis revealed {results['pattern_counts']['Whorl']} whorls, {results['pattern_counts']['Loop']} loops, and {results['pattern_counts']['Arc']} arcs
+- AI predicted blood group: {blood_group} (based on fingerprint patterns)
+
+**Recommendations:**
+"""
+        
+        if risk.lower() in ['high', 'moderate']:
+            explanation += """
+- Schedule a consultation with your healthcare provider for proper evaluation
+- Consider regular blood glucose monitoring
+- Maintain a balanced diet and regular exercise routine
+- Keep track of your weight and BMI
+"""
+        else:
+            explanation += """
+- Continue maintaining your healthy lifestyle
+- Stay physically active and eat a balanced diet
+- Get regular health checkups
+- Consider donating blood if you're willing and eligible
+"""
+        
+        return explanation.strip()
+
 
 
 _gemini_instance = None

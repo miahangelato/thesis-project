@@ -1,7 +1,7 @@
 """Multi-step workflow API endpoints."""
 
 from ninja import Router
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 import base64
 from .workflow_schemas import (
     SessionStartRequest, SessionStartResponse,
@@ -38,7 +38,7 @@ def submit_demographics(request, session_id: str, data: DemographicsRequest):
     session = session_mgr.get_session(session_id)
     
     if not session:
-        return {"error": "Invalid or expired session"}, 404
+        return JsonResponse({"error": "Invalid or expired session"}, status=404)
     
     height_m = data.height_cm / 100
     bmi = round(data.weight_kg / (height_m ** 2), 2)
@@ -67,7 +67,7 @@ def submit_fingerprint(request, session_id: str, data: FingerprintRequest):
     session = session_mgr.get_session(session_id)
     
     if not session:
-        return {"error": "Invalid or expired session"}, 404
+        return JsonResponse({"error": "Invalid or expired session"}, status=404)
     
     session_mgr.add_fingerprint(session_id, data.finger_name, data.image)
     
@@ -82,57 +82,138 @@ def submit_fingerprint(request, session_id: str, data: FingerprintRequest):
     }
 
 
-@router.post("/{session_id}/analyze", response=AnalysisResponse, tags=["Workflow"])
-def analyze_patient(request, session_id: str):
-    """Step 3 & 4: Run Pattern CNN + Blood Group CNN + Diabetes Model."""
+
+def _validate_session_for_analysis(session_id: str):
+    """Validate session exists and has required fingerprints."""
+    from .constants import REQUIRED_FINGERPRINTS_COUNT, ERROR_INVALID_SESSION
+    from .exceptions import SessionNotFoundError, IncompleteFingerprintsError
+    
     session_mgr = get_session_manager()
     session = session_mgr.get_session(session_id)
     
     if not session:
-        return {"error": "Invalid or expired session"}, 404
+        raise SessionNotFoundError(session_id)
     
-    if len(session["fingerprints"]) < 10:
-        return {"error": f"Need 10 fingerprints, only have {len(session['fingerprints'])}"}, 400
+    fingerprint_count = len(session["fingerprints"])
+    if fingerprint_count < REQUIRED_FINGERPRINTS_COUNT:
+        raise IncompleteFingerprintsError(
+            required=REQUIRED_FINGERPRINTS_COUNT,
+            received=fingerprint_count
+        )
     
-    # TODO: Replace with actual ML model calls
-    # For now, placeholder predictions
-    pattern_counts = {"arc": 2, "whorl": 5, "loop": 3}
-    diabetes_risk = 0.65
-    risk_level = "Moderate"
-    blood_group = "A+"
-    blood_group_confidence = 0.85
+    return session, session_mgr
+
+
+def _get_fingerprint_images(session_mgr, session_id: str):
+    """Get and decode fingerprint images from session."""
+    from .utils.image_processing import decode_fingerprints_from_dict
     
-    demographics = session["demographics"]
+    fingerprints_dict = session_mgr.get_fingerprints(session_id)
+    fingerprint_images = decode_fingerprints_from_dict(fingerprints_dict)
+    return fingerprint_images
+
+
+def _run_ml_predictions(demographics: dict, fingerprint_images: list):
+    """Run diabetes and blood group predictions."""
+    from .ml_service import get_ml_service
     
-    patient_data = {
+    ml_service = get_ml_service()
+    
+    # Load models if not already loaded
+    if ml_service.diabetes_model is None:
+        ml_service.load_models()
+    
+    # Run predictions
+    diabetes_result = ml_service.predict_diabetes_risk(
+        age=demographics["age"],
+        weight_kg=demographics["weight_kg"],
+        height_cm=demographics["height_cm"],
+        gender=demographics["gender"],
+        fingerprint_images=fingerprint_images
+    )
+    
+    blood_group_result = ml_service.predict_blood_group(fingerprint_images)
+    
+    return diabetes_result, blood_group_result
+
+
+def _prepare_patient_data_for_gemini(demographics: dict, diabetes_result: dict, blood_group_result: dict):
+    """Prepare patient data dictionary for Gemini API."""
+    return {
         **demographics,
-        "pattern_arc": pattern_counts["arc"],
-        "pattern_whorl": pattern_counts["whorl"],
-        "pattern_loop": pattern_counts["loop"],
-        "risk_score": diabetes_risk,
-        "risk_level": risk_level,
-        "blood_group": blood_group
+        "pattern_arc": diabetes_result["pattern_counts"]["Arc"],
+        "pattern_whorl": diabetes_result["pattern_counts"]["Whorl"],
+        "pattern_loop": diabetes_result["pattern_counts"]["Loop"],
+        "risk_score": diabetes_result["risk_score"],
+        "risk_level": diabetes_result["risk_level"],
+        "blood_group": blood_group_result["blood_group"]
     }
-    
-    gemini = get_gemini_service()
-    explanation = gemini.generate_risk_explanation(patient_data)
-    
-    predictions = {
-        "diabetes_risk": diabetes_risk,
-        "risk_level": risk_level,
-        "blood_group": blood_group,
-        "blood_group_confidence": blood_group_confidence,
-        "pattern_counts": pattern_counts,
+
+
+def _build_predictions_dict(diabetes_result: dict, blood_group_result: dict, explanation: str):
+    """Build predictions dictionary for storage."""
+    return {
+        "diabetes_risk": diabetes_result["risk_score"],
+        "risk_level": diabetes_result["risk_level"],
+        "blood_group": blood_group_result["blood_group"],
+        "blood_group_confidence": blood_group_result["confidence"],
+        "pattern_counts": {
+            "arc": diabetes_result["pattern_counts"]["Arc"],
+            "whorl": diabetes_result["pattern_counts"]["Whorl"],
+            "loop": diabetes_result["pattern_counts"]["Loop"]
+        },
         "explanation": explanation
     }
+
+
+@router.post("/{session_id}/analyze", response=AnalysisResponse, tags=["Workflow"])
+def analyze_patient(request, session_id: str):
+    """Step 3 & 4: Run Pattern CNN + Blood Group CNN + Diabetes Model."""
+    import logging
+    logger = logging.getLogger(__name__)
     
-    session_mgr.store_predictions(session_id, predictions)
-    
-    return {
-        "session_id": session_id,
-        **predictions,
-        "bmi": demographics["bmi"]
-    }
+    try:
+        # Validate session and get required data
+        session, session_mgr = _validate_session_for_analysis(session_id)
+        
+        # Get fingerprint images
+        fingerprint_images = _get_fingerprint_images(session_mgr, session_id)
+        
+        # Run ML predictions
+        demographics = session["demographics"]
+        diabetes_result, blood_group_result = _run_ml_predictions(demographics, fingerprint_images)
+        
+        # Generate AI explanation
+        patient_data = _prepare_patient_data_for_gemini(demographics, diabetes_result, blood_group_result)
+        gemini = get_gemini_service()
+        explanation = gemini.generate_risk_explanation(patient_data)
+        
+        # Build and store predictions
+        predictions = _build_predictions_dict(diabetes_result, blood_group_result, explanation)
+        session_mgr.store_predictions(session_id, predictions)
+        
+        # Mark session as completed
+        session["completed"] = True
+        session_mgr.sessions[session_id] = session
+        
+        logger.info(f"Analysis completed for session {session_id}")
+        
+        return {
+            "session_id": session_id,
+            **predictions,
+            "bmi": demographics["bmi"]
+        }
+        
+    except Exception as e:
+        logger.error(f"Analysis failed for session {session_id}: {e}", exc_info=True)
+        
+        # Handle custom exceptions with proper status codes
+        from .exceptions import BaseAPIException
+        if isinstance(e, BaseAPIException):
+            return JsonResponse({"error": e.message}, status=e.status_code)
+        
+        # Generic error
+        return JsonResponse({"error": f"Analysis failed: {str(e)}"}, status=500)
 
 
 @router.get("/{session_id}/results", response=ResultsResponse, tags=["Workflow"])
@@ -142,10 +223,10 @@ def get_results(request, session_id: str):
     session = session_mgr.get_session(session_id)
     
     if not session:
-        return {"error": "Invalid or expired session"}, 404
+        return JsonResponse({"error": "Invalid or expired session"}, status=404)
     
     if not session.get("completed"):
-        return {"error": "Analysis not completed yet"}, 400
+        return JsonResponse({"error": "Analysis not completed yet"}, status=400)
     
     predictions = session["predictions"]
     demographics = session["demographics"]
@@ -154,18 +235,22 @@ def get_results(request, session_id: str):
     saved = False
     
     if session["consent"]:
-        storage = get_storage()
-        record_data = {
-            **demographics,
-            "pattern_arc": predictions["pattern_counts"]["arc"],
-            "pattern_whorl": predictions["pattern_counts"]["whorl"],
-            "pattern_loop": predictions["pattern_counts"]["loop"],
-            "risk_score": predictions["diabetes_risk"],
-            "risk_level": predictions["risk_level"],
-            "blood_group": predictions["blood_group"]
-        }
-        record_id = storage.save_patient_record(record_data)
-        saved = True
+        try:
+            storage = get_storage()
+            record_data = {
+                **demographics,
+                "pattern_arc": predictions["pattern_counts"]["arc"],
+                "pattern_whorl": predictions["pattern_counts"]["whorl"],
+                "pattern_loop": predictions["pattern_counts"]["loop"],
+                "risk_score": predictions["diabetes_risk"],
+                "risk_level": predictions["risk_level"],
+                "blood_group": predictions["blood_group"]
+            }
+            record_id = storage.save_patient_record(record_data)
+            saved = True
+        except Exception as e:
+            print(f"Failed to save to storage: {e}")
+            # Continue without saving
     
     session_mgr.delete_session(session_id)
     
@@ -174,10 +259,19 @@ def get_results(request, session_id: str):
         "diabetes_risk": predictions["diabetes_risk"],
         "risk_level": predictions["risk_level"],
         "blood_group": predictions.get("blood_group"),
+        "blood_group_confidence": predictions.get("blood_group_confidence"),
         "explanation": predictions["explanation"],
         "bmi": demographics["bmi"],
         "saved_to_database": saved,
-        "record_id": record_id
+        "record_id": record_id,
+        # Include demographics
+        "age": demographics.get("age"),
+        "weight_kg": demographics.get("weight_kg"),
+        "height_cm": demographics.get("height_cm"),
+        "gender": demographics.get("gender"),
+        "willing_to_donate": demographics.get("willing_to_donate"),
+        # Include pattern counts
+        "pattern_counts": predictions.get("pattern_counts")
     }
 
 @router.post("/{session_id}/generate-pdf", response=PDFGenerateResponse, tags=["Workflow"])
@@ -185,7 +279,7 @@ def generate_pdf_report(request, session_id: str):
     session_mgr = get_session_manager()
     session = session_mgr.get_session(session_id)
     if not session or not session.get("completed"):
-        return {"error": "Invalid session"}, 404
+        return JsonResponse({"error": "Invalid session"}, status=404)
     predictions = session["predictions"]
     demographics = session["demographics"]
     patient_data = {**demographics, "pattern_arc": predictions["pattern_counts"]["arc"], "pattern_whorl": predictions["pattern_counts"]["whorl"], "pattern_loop": predictions["pattern_counts"]["loop"], "risk_score": predictions["diabetes_risk"], "risk_level": predictions["risk_level"], "blood_group": predictions.get("blood_group", "Not analyzed")}

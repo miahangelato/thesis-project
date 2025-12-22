@@ -19,7 +19,8 @@ class DemographicsRequest(BaseModel):
     age: int = Field(gt=0, lt=150)
     weight_kg: float = Field(gt=0)
     height_cm: float = Field(gt=0)
-    gender: Literal["male", "female", "other"]
+    gender: Literal["male", "female", "other", "prefer_not_say"]
+
 
 
 class FingerprintRequest(BaseModel):
@@ -57,3 +58,10 @@ class ResultsResponse(BaseModel):
     bmi: float
     saved_to_database: bool
     record_id: Optional[str]
+    # Demographics
+    age: Optional[int]
+    weight_kg: Optional[float]
+    height_cm: Optional[float]
+    gender: Optional[str]
+    # Pattern counts
+    pattern_counts: Optional[Dict[str, int]]

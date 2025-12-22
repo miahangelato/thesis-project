@@ -19,6 +19,7 @@ interface ScannerProps {
 // Fallback to localhost if not set
 const SCANNER_BASE_URL = process.env.NEXT_PUBLIC_SCANNER_BASE_URL || "http://localhost:5000";
 
+
 export default function FingerprintScanner({
   onScanComplete,
   currentFinger,
@@ -47,24 +48,50 @@ export default function FingerprintScanner({
             "Content-Type": "application/json",
             "ngrok-skip-browser-warning": "true",
           },
-          timeout: 10000 // 10s timeout
+          timeout: 30000 // 30s timeout - scanner needs time to wait for finger placement
         }
       );
 
       if (response.data.success) {
-        const base64Data = response.data.data.image_data;
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        let base64Data = response.data.data.image_data;
+        
+        // Debug logging
+        console.log("Received base64 data length:", base64Data?.length);
+        console.log("First 100 chars:", base64Data?.substring(0, 100));
+        
+        // Remove data URL prefix if present (e.g., "data:image/png;base64,")
+        if (base64Data.includes(',')) {
+          base64Data = base64Data.split(',')[1];
+          console.log("Stripped data URL prefix");
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: "image/png" });
-        const file = new File([blob], `${currentFinger}.png`, {
-          type: "image/png",
-        });
+        
+        // Convert base64 to blob
+        try {
+          const byteCharacters = atob(base64Data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          console.log("Converted to byte array, length:", byteArray.length);
+          
+          // Verify Header
+          const header = Array.from(byteArray.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+          console.log("PNG Magic Bytes:", header); // Expect: 89 50 4e 47 0d 0a 1a 0a
 
-        onScanComplete(currentFinger, file, response.data.data);
+          const blob = new Blob([byteArray], { type: "image/png" });
+          console.log("Created blob, size:", blob.size);
+          
+          const file = new File([blob], `${currentFinger}.png`, {
+            type: "image/png",
+          });
+          console.log("Created file, size:", file.size);
+
+          onScanComplete(currentFinger, file, response.data.data);
+        } catch (conversionError) {
+          console.error("Image conversion error:", conversionError);
+          throw new Error("Failed to convert image data");
+        }
       } else {
         throw new Error(response.data.message || "Scan failed");
       }

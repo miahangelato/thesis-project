@@ -24,6 +24,8 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
 import { SessionEndModal } from "@/components/modals/session-end-modal";
 
+import { ROUTES, STEPS } from "@/lib/constants";
+
 export default function ConsentPage() {
   const router = useRouter();
   const { setSession, sessionId, setCurrentStep } = useSession();
@@ -41,18 +43,18 @@ export default function ConsentPage() {
       setSession(sessionId, finalConsent);
     }
 
-    setCurrentStep(2);
+    setCurrentStep(STEPS.DEMOGRAPHICS);
 
     // Let React paint the loading UI
     requestAnimationFrame(() => {
-      router.push("/demographics");
+      router.push(ROUTES.DEMOGRAPHICS);
     });
   };
 
   const handleBack = () => router.back();
 
   return (
-    <ProtectedRoute requireSession={true} requiredStep={1}>
+    <ProtectedRoute requireSession={true} requiredStep={STEPS.CONSENT}>
       <>
         <SessionEndModal
           isOpen={showModal}
@@ -89,7 +91,7 @@ export default function ConsentPage() {
             <main className="w-full page-container flex-1 flex flex-col overflow-y-auto">
               <div className="w-full flex flex-col">
                 <ProgressHeader
-                  currentStep={1}
+                  currentStep={STEPS.CONSENT}
                   totalSteps={4}
                   title="Your Privacy Comes First"
                   subtitle="Before we analyze your fingerprints, here’s exactly what happens to your data — and what doesn’t."

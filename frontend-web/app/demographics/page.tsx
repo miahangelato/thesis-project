@@ -34,6 +34,7 @@ import {
   CheckCircle,
   X,
 } from "lucide-react";
+import { ROUTES, STEPS } from "@/lib/constants";
 
 export default function DemographicsPage() {
   const router = useRouter();
@@ -124,19 +125,21 @@ export default function DemographicsPage() {
           weight_kg: parseFloat(formData.weight),
           height_cm: parseFloat(formData.height),
           gender: formData.gender,
+          willing_to_donate: willingToDonate ?? false,
+          blood_type: formData.blood_type,
         });
       } else {
         // Fallback for demo without session
         console.warn("No active session ID, skipping API submission");
       }
 
-      setCurrentStep(3); // Moving to scan page (step 3)
-      router.push("/scan");
+      setCurrentStep(STEPS.SCAN); // Moving to scan page (step 3)
+      router.push(ROUTES.SCAN);
     } catch (err) {
       console.error("Failed to submit demographics:", err);
       // alert("Failed to save information. Please try again.");
       // Fallback navigation
-      router.push("/scan");
+      router.push(ROUTES.SCAN);
     } finally {
       setLoading(false);
     }
@@ -242,7 +245,7 @@ export default function DemographicsPage() {
     willingToDonate === null ? "" : willingToDonate === true ? "yes" : "no";
 
   return (
-    <ProtectedRoute requireSession={true} requiredStep={2}>
+    <ProtectedRoute requireSession={true} requiredStep={STEPS.DEMOGRAPHICS}>
       <>
         <SessionEndModal
           isOpen={showModal}
@@ -252,7 +255,7 @@ export default function DemographicsPage() {
         <div className="h-screen bg-white flex flex-col">
           <main className="flex-1 w-full page-container flex flex-col overflow-y-auto pb-28">
             <ProgressHeader
-              currentStep={2}
+              currentStep={STEPS.DEMOGRAPHICS}
               totalSteps={4}
               title="Tell Us a Bit About You"
               subtitle="These details help personalize your fingerprint-based health insights. Nothing here identifies you personally."

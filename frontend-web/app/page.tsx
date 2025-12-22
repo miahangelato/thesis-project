@@ -7,6 +7,7 @@ import { sessionAPI } from "@/lib/api";
 import { useSession } from "@/contexts/session-context";
 import { MainCarousel } from "@/components/features/landing/main-carousel";
 import { WarningHeader } from "@/components/layout/warning-header";
+import { ROUTES, STEPS } from "@/lib/constants";
 
 const features = [
   {
@@ -44,22 +45,25 @@ export default function LandingPage() {
     setLoading(true);
     try {
       // Start session immediately (consent status pending)
-      // We pass 'false' initially; actual consent comes later?
-      // User said "Consent is just for database saving".
-      // Let's pass 'false' for now or handle it.
-      // Actually, if consent is just for DB, we can start it.
-
       const response = await sessionAPI.start(false); // Start without consent
-      const { session_id } = response.data;
-      setSession(session_id, false);
-      setCurrentStep(1); // Moving to consent page (step 1)
-      router.push("/consent");
+      
+      // Use logical OR to handle different response structures if backend API varies
+      const session_id = response.data?.session_id || response.data?.sessionId;
+      
+      if (session_id) {
+        setSession(session_id, false);
+        setCurrentStep(STEPS.CONSENT);
+        router.push(ROUTES.CONSENT);
+      } else {
+        throw new Error("Invalid session response");
+      }
     } catch (err) {
       console.error("Failed to start session:", err);
+      // Fallback for demo/offline mode if needed, but preferably handle error UI
       const mockId = "dev-session-" + Date.now();
       setSession(mockId, false);
-      setCurrentStep(1);
-      router.push("/consent");
+      setCurrentStep(STEPS.CONSENT);
+      router.push(ROUTES.CONSENT);
     } finally {
       setLoading(false);
     }

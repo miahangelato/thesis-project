@@ -132,3 +132,177 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ==============================================================================
+# SECURITY SETTINGS
+# ==============================================================================
+
+# HTTPS/SSL Settings (enabled in production only)
+SECURE_SSL_REDIRECT = not DEBUG  # Force HTTPS in production
+SESSION_COOKIE_SECURE = not DEBUG  # Only send session cookie over HTTPS
+CSRF_COOKIE_SECURE = not DEBUG  # Only send CSRF cookie over HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # For reverse proxy
+
+# HTTP Strict Transport Security (HSTS)
+# Tells browsers to only use HTTPS for this domain
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# Security Headers
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME-sniffing
+SECURE_BROWSER_XSS_FILTER = True  # Enable XSS filter
+X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking
+
+# Content Security Policy (CSP)
+# Prevents XSS attacks by controlling where resources can be loaded from
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'",)
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")  # unsafe-inline needed for some libraries
+CSP_IMG_SRC = ("'self'", "data:", "https:")
+CSP_FONT_SRC = ("'self'", "https:")
+CSP_CONNECT_SRC = ("'self'",)
+CSP_FRAME_ANCESTORS = ("'none'",)
+
+# Session Security
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_SAVE_EVERY_REQUEST = False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# CSRF Security
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_AGE = 31449600  # 1 year
+
+# Password Security
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',  # Most secure
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+]
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'errors.log',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG' if DEBUG else 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['console', 'file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'api': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# ==============================================================================
+# PERFORMANCE SETTINGS
+# ==============================================================================
+
+# Database Connection Pooling
+DATABASES['default']['CONN_MAX_AGE'] = 600
+
+# Only add PostgreSQL-specific options if using PostgreSQL
+if 'postgresql' in DATABASE_URL or 'postgres' in DATABASE_URL:
+    DATABASES['default']['OPTIONS'] = {
+        'connect_timeout': 10,
+    }
+
+# Cache (for future use with Redis)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    }
+}
+
+# ==============================================================================
+# API SPECIFIC SETTINGS
+# ==============================================================================
+
+# Rate Limiting (requests per minute)
+RATE_LIMIT_ENABLED = os.getenv('RATE_LIMIT_ENABLED', 'True') == 'True'
+RATE_LIMIT_DEFAULT = int(os.getenv('RATE_LIMIT_DEFAULT', '60'))
+RATE_LIMIT_ANALYZE = int(os.getenv('RATE_LIMIT_ANALYZE', '20'))
+RATE_LIMIT_UPLOAD = int(os.getenv('RATE_LIMIT_UPLOAD', '100'))
+
+# File Upload Limits
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB max request size
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB max file size
+
+# Timeout Settings
+REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
+
+# ==============================================================================
+# DEVELOPMENT OVERRIDES
+# ==============================================================================
+
+if DEBUG:
+    # Disable some security features in development for easier testing
+    CORS_ALLOW_ALL_ORIGINS = False  # Still use explicit list
+    
+    # Security warnings for development
+    import warnings
+    warnings.warn(
+        "Running in DEBUG mode. Security features reduced. "
+        "DO NOT use in production!",
+        RuntimeWarning
+    )
+    
+    # Create logs directory if it doesn't exist
+    import os
+    os.makedirs(BASE_DIR / 'logs', exist_ok=True)
