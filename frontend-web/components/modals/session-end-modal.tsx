@@ -25,7 +25,7 @@ export function SessionEndModal({
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none select-none">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none">
         <div
           className="bg-white rounded-3xl shadow-2xl max-w-xl w-full pointer-events-auto animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 overflow-hidden border-2 border-teal-100"
           onClick={(e) => e.stopPropagation()}

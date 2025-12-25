@@ -101,10 +101,8 @@ export default function DemographicsPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    closeAllKeypads();
-
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (loading) return;
 
     if (!formData.age || !formData.weight || !formData.height) {
@@ -121,40 +119,36 @@ export default function DemographicsPage() {
 
     setLoading(true);
     try {
-      // Optimistically advance to unlock scan route immediately
-      setCurrentStep(STEPS.SCAN);
-
       if (sessionId) {
-        const demographicsData = {
+        await sessionAPI.submitDemographics(sessionId, {
           age: parseInt(formData.age),
           weight_kg: parseFloat(formData.weight),
           height_cm: parseFloat(formData.height),
           gender: formData.gender,
           willing_to_donate: willingToDonate ?? false,
           blood_type: formData.blood_type,
-        };
-
-        await sessionAPI.submitDemographics(sessionId, demographicsData);
-
-        // Store demographics in sessionStorage for the scan page to access
-        sessionStorage.setItem(
-          "demographics",
-          JSON.stringify(demographicsData)
-        );
+        });
       } else {
         // Fallback for demo without session
         console.warn("No active session ID, skipping API submission");
       }
 
+      setCurrentStep(STEPS.SCAN); // Moving to scan page (step 3)
       router.push(ROUTES.SCAN);
     } catch (err) {
       console.error("Failed to submit demographics:", err);
-      // Still allow forward navigation if API fails
-      setCurrentStep(STEPS.SCAN);
+      // alert("Failed to save information. Please try again.");
+      // Fallback navigation
       router.push(ROUTES.SCAN);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNext = () => {
+    // Create a synthetic event
+    const event = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(event);
   };
 
   const handleBack = () => {
@@ -178,7 +172,6 @@ export default function DemographicsPage() {
       last_donation_date: "",
     });
     setWillingToDonate(null);
-    closeAllKeypads();
   };
 
   const [activeKeypadName, setActiveKeypadName] = useState<string | null>(null);
@@ -246,14 +239,6 @@ export default function DemographicsPage() {
     setActiveKeypadName(null);
   };
 
-  const closeAllKeypads = () => {
-    ageKeypad.close();
-    weightKeypad.close();
-    heightKeypad.close();
-    sleepKeypad.close();
-    setActiveKeypadName(null);
-  };
-
   const isBasicInfoComplete =
     formData.age && formData.weight && formData.height && formData.gender;
   const willingToDonateValue =
@@ -267,33 +252,8 @@ export default function DemographicsPage() {
           onConfirm={handleConfirm}
           onCancel={handleCancel}
         />
-
-        {/* Loading Overlay (bigger, kiosk-friendly) */}
-        {loading && (
-          <div className="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-5">
-              <div className="relative">
-                <div className="w-20 h-20 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin" />
-                <div
-                  className="absolute inset-0 w-20 h-20 border-4 border-transparent border-b-teal-400 rounded-full animate-spin"
-                  style={{
-                    animationDirection: "reverse",
-                    animationDuration: "1s",
-                  }}
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-800 mb-1">
-                  Preparing Fingerprint Scan
-                </p>
-                <p className="text-base text-gray-600">Please wait a moment…</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="h-screen p-5 bg-white flex flex-col overflow-none">
-          <main className="flex-1 w-full flex flex-col">
+        <div className="h-screen bg-white flex flex-col">
+          <main className="flex-1 w-full page-container flex flex-col overflow-y-auto pb-28">
             <ProgressHeader
               currentStep={STEPS.DEMOGRAPHICS}
               totalSteps={4}
@@ -795,7 +755,7 @@ export default function DemographicsPage() {
                           <div className="w-10 h-10 bg-linear-to-br from-red-50 to-pink-50 rounded-xl flex items-center justify-center mr-3 shrink-0">
                             <Heart className="h-5 w-5 text-red-500" />
                           </div>
-                          <div className="flex-1 select-none">
+                          <div className="flex-1">
                             <h2 className="text-2xl font-bold text-slate-800 leading-tight mb-1">
                               Blood Donation Awareness
                             </h2>
@@ -806,16 +766,15 @@ export default function DemographicsPage() {
                         </div>
 
                         <div>
-                          <Label className="text-lg font-medium text-slate-700 mb-2 block leading-relaxed select-none">
+                          <Label className="text-lg font-medium text-slate-700 mb-2 block leading-relaxed">
                             Would you like to learn whether you may be eligible
                             to donate blood based on general guidelines?
                           </Label>
                           <RadioGroup
                             value={willingToDonateValue}
-                            onValueChange={(value) => {
-                              closeAllKeypads();
-                              setWillingToDonate(value === "yes");
-                            }}
+                            onValueChange={(value) =>
+                              setWillingToDonate(value === "yes")
+                            }
                             className="space-y-2"
                           >
                             <div className="flex items-center p-3 rounded-xl bg-white border-2 border-slate-200 cursor-pointer transition-all hover:border-teal-300 hover:bg-teal-50/30 has-checked:border-teal-500 has-checked:bg-teal-50 has-checked:shadow-sm">
@@ -850,7 +809,7 @@ export default function DemographicsPage() {
                               </Label>
                             </div>
                           </RadioGroup>
-                          <p className="text-base text-slate-500 mt-2 leading-relaxed select-none">
+                          <p className="text-base text-slate-500 mt-2 leading-relaxed">
                             💡 This is optional and does not affect your health
                             screening results.
                           </p>
@@ -1174,58 +1133,47 @@ export default function DemographicsPage() {
                     )}
                   </div>
                 </div>
-
-                {/* Buttons */}
-                <div className="flex justify-between items-center mt-5 select-none">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.push("/consent")}
-                    className="flex items-center border-2 border-gray-300 hover:bg-gray-50 h-14 text-base font-bold cursor-pointer rounded-xl"
-                  >
-                    <ArrowLeft size={18} />
-                    Back
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearForm}
-                    className="h-14 px-6 text-red-600 border-red-300 hover:bg-red-50 text-base rounded-md bg-transparent cursor-pointer"
-                  >
-                    <X size={16} />
-                    Clear Fields
-                  </Button>
-
-                  <div className="flex flex-col items-end">
-                    <Button
-                      type="submit"
-                      disabled={!isBasicInfoComplete || loading}
-                      className="flex items-center gap-2 px-6 py-2 h-14 rounded-xl bg-[#00c2cb] hover:bg-[#00a8b0] text-white font-bold text-xl shadow-lg cursor-pointer"
-                    >
-                      {loading ? (
-                        <>
-                          <span className="animate-spin h-6 w-6 border-2 border-white border-t-transparent rounded-full" />
-                          <span>Processing…</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Continue to Fingerprint Scan</span>
-                          <ArrowRight size={20} />
-                        </>
-                      )}
-                    </Button>
-                    <p className="text-xs mt-1 text-gray-500">
-                      Takes less than 1 minute • No needles • Non-invasive
-                    </p>
-                    <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-400">
-                      <span>🛡️</span>
-                      <span>Your privacy is always protected</span>
-                    </div>
-                  </div>
-                </div>
               </form>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex justify-between items-center mt-5">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/consent")}
+                className="flex items-center border-2 border-gray-300 hover:bg-gray-50 h-14 px-6 text-base font-bold cursor-pointer rounded-xl"
+              >
+                <ArrowLeft size={18} />
+                Back
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearForm}
+                className="h-14 px-6 text-red-600 border-red-300 hover:bg-red-50 text-base rounded-md bg-transparent cursor-pointer"
+              >
+                <X size={16} />
+                Clear Fields
+              </Button>
+
+              <div className="flex flex-col items-end">
+                <Button
+                  onClick={handleNext}
+                  disabled={!isBasicInfoComplete || loading}
+                  className="flex items-center gap-2 px-6 py-2 h-14 rounded-xl bg-[#00c2cb] hover:bg-[#00a8b0] text-white font-bold text-xl shadow-lg cursor-pointer"
+                >
+                  Continue to Fingerprint Scan
+                  <ArrowRight size={18} />
+                </Button>
+                <p className="text-xs mt-1 text-gray-500">
+                  Takes less than 1 minute • No needles • Non-invasive
+                </p>
+                <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-400">
+                  <span>🛡️</span>
+                  <span>Your privacy is always protected</span>
+                </div>
+              </div>
             </div>
           </main>
 
