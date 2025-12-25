@@ -51,5 +51,10 @@ export function useBackNavigation(enabled: boolean = true) {
     window.history.pushState(null, "", window.location.pathname);
   };
 
-  return { showModal, handleConfirm, handleCancel };
+  const promptBackNavigation = () => {
+    setShowModal(true);
+    setPendingNavigation(true);
+  };
+
+  return { showModal, handleConfirm, handleCancel, promptBackNavigation };
 }
