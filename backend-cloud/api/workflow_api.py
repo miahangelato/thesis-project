@@ -173,30 +173,54 @@ def analyze_patient(request, session_id: str):
     logger = logging.getLogger(__name__)
     
     try:
+        logger.info(f"🎯 Starting analysis for session {session_id}")
+        
         # Validate session and get required data
         session, session_mgr = _validate_session_for_analysis(session_id)
         
         # Get fingerprint images
         fingerprint_images = _get_fingerprint_images(session_mgr, session_id)
+        logger.info(f"📷 Loaded {len(fingerprint_images)} fingerprint images")
         
         # Run ML predictions
         demographics = session["demographics"]
+        logger.info(f"👤 Patient: Age {demographics.get('age')}, Gender {demographics.get('gender')}")
+        
         diabetes_result, blood_group_result = _run_ml_predictions(demographics, fingerprint_images)
+        logger.info(f"✅ ML predictions complete: Risk={diabetes_result['risk_level']}, Blood={blood_group_result['blood_group']}")
         
         # Generate AI explanation
         patient_data = _prepare_patient_data_for_gemini(demographics, diabetes_result, blood_group_result)
         gemini = get_gemini_service()
         explanation = gemini.generate_risk_explanation(patient_data)
+        logger.info("🤖 AI explanation generated")
+        
+        # Generate health facility recommendations
+        logger.info(f"🏥 Requesting facility recommendations for {diabetes_result['risk_level']} risk")
+        nearby_facilities = gemini.generate_health_facilities(diabetes_result['risk_level'])
+        logger.info(f"✅ Received {len(nearby_facilities)} facility recommendations")
+        
+        # Get blood donation centers (only if user is willing)
+        blood_centers = []
+        if demographics.get("willing_to_donate"):
+            from .constants import BLOOD_CENTERS_DB
+            logger.info("🩸 User willing to donate - providing blood center information")
+            blood_centers = BLOOD_CENTERS_DB
+            logger.info(f"✅ Provided {len(blood_centers)} blood donation centers")
+        else:
+            logger.info("ℹ️ User not willing to donate - skipping blood centers")
         
         # Build and store predictions
         predictions = _build_predictions_dict(diabetes_result, blood_group_result, explanation)
+        predictions["blood_centers"] = blood_centers
+        predictions["nearby_facilities"] = nearby_facilities
         session_mgr.store_predictions(session_id, predictions)
         
         # Mark session as completed
         session["completed"] = True
         session_mgr.sessions[session_id] = session
         
-        logger.info(f"Analysis completed for session {session_id}")
+        logger.info(f"✅ Analysis completed for session {session_id}")
         
         return {
             "session_id": session_id,
@@ -205,7 +229,7 @@ def analyze_patient(request, session_id: str):
         }
         
     except Exception as e:
-        logger.error(f"Analysis failed for session {session_id}: {e}", exc_info=True)
+        logger.error(f"❌ Analysis failed for session {session_id}: {e}", exc_info=True)
         
         # Handle custom exceptions with proper status codes
         from .exceptions import BaseAPIException
@@ -214,6 +238,7 @@ def analyze_patient(request, session_id: str):
         
         # Generic error
         return JsonResponse({"error": f"Analysis failed: {str(e)}"}, status=500)
+
 
 
 @router.get("/{session_id}/results", response=ResultsResponse, tags=["Workflow"])

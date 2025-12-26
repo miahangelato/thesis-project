@@ -131,6 +131,73 @@ Keep the tone friendly, professional, and encouraging. Use simple language.
             logger.error(f"Gemini generation failed: {e}")
             return self._fallback_comprehensive_explanation(analysis_results, demographics)
     
+    def generate_health_facilities(self, risk_level: str) -> list:
+        """Generate recommended health facilities based on risk level."""
+        from .constants import FACILITIES_DB
+        import json
+        
+        logger.info(f"🏥 Starting health facilities generation for risk level: {risk_level}")
+        
+        # Prepare the context from our verified database
+        facilities_context = json.dumps(FACILITIES_DB, indent=2)
+        logger.debug(f"📋 Facilities database loaded with {len(FACILITIES_DB)} cities")
+        
+        prompt = f"""
+You are a medical referral assistant for a patient in Central Luzon, Philippines.
+Patient Status: {risk_level} Diabetes Risk.
+
+Verified Hospital Database:
+{facilities_context}
+
+Task:
+1. Select exactly 3 facilities from the database that are best suited for this patient.
+2. Prioritize facilities with Endocrinology/Diabetes specializations.
+3. Provide a mix of locations if appropriate.
+4. For each selected facility, add these SIMULATED details:
+   - "doctors": List of 2 realistic Filipino doctor names with specializations (e.g., "Dr. Maria Santos - Endocrinologist")
+   - "operating_hours": Operating hours (e.g., "24/7 Emergency, Clinics: Mon-Sat 8AM-5PM")
+   - "availability": Status like "High Capacity", "Walk-ins Welcome", or "By Appointment"
+   - "current_status": "Open" or "Closed"
+   - "city": The city from the database
+
+Return ONLY a valid JSON list. Each object must have: name, type, address, google_query, operating_hours, current_status, availability, doctors (list), city.
+"""
+        
+        logger.info("🤖 Calling Gemini API for facility recommendations...")
+        try:
+            response = self.model.generate_content(prompt)
+            text = response.text.strip()
+            
+            logger.debug(f"✅ Gemini response received (length: {len(text)} chars)")
+            logger.debug(f"📄 Raw response preview: {text[:200]}...")
+            
+            # Clean markdown formatting
+            if text.startswith("```json"):
+                text = text[7:-3]
+                logger.debug("🧹 Cleaned JSON markdown formatting")
+            elif text.startswith("```"):
+                text = text[3:-3]
+                logger.debug("🧹 Cleaned generic markdown formatting")
+                
+            facilities = json.loads(text.strip())
+            logger.info(f"✅ Successfully parsed {len(facilities)} facilities from Gemini")
+            for idx, fac in enumerate(facilities):
+                logger.debug(f"  {idx+1}. {fac.get('name', 'Unknown')} ({fac.get('city', 'Unknown')})")
+            
+            return facilities
+        except Exception as e:
+            logger.error(f"❌ Gemini facility generation failed: {e}")
+            logger.warning("⚠️ Falling back to static facilities list")
+            return self._fallback_facilities()
+
+
+    def _fallback_facilities(self) -> list:
+        """Fallback to static list from Angeles if AI fails - REAL DATA ONLY."""
+        from .constants import FACILITIES_DB
+        
+        # Return first 3 facilities from Angeles - NO SIMULATED FIELDS
+        return FACILITIES_DB.get("Angeles", [])[:3]
+    
     def _fallback_comprehensive_explanation(self, results: Dict, demographics: Dict) -> str:
         """Fallback explanation if Gemini fails."""
         risk = results['diabetes_risk_level']

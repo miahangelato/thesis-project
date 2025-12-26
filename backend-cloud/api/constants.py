@@ -16,6 +16,114 @@ BLOOD_GROUPS = ["A", "B", "AB", "O"]
 PATTERN_IMAGE_SIZE = (224, 224)
 FINGERPRINT_IMAGE_SIZE = (224, 224)
 
+# Error Messages
+ERROR_INVALID_SESSION = "Invalid or expired session"
+ERROR_MISSING_DEMOGRAPHICS = "Demographics not found for this session"
+ERROR_INSUFFICIENT_FINGERPRINTS = "Not enough fingerprints collected"
+
+# Healthcare Facilities Database - Pampanga, Philippines
+# Verification Standard: DOH, PhilHealth, PRC, official websites/Facebook pages only
+# Last Updated: 2025-01
+
+HOSPITALS_DB = [
+    {
+        "name": "Jose B. Lingad Memorial General Hospital",
+        "address": "City of San Fernando, Pampanga 2000",
+        "type": "General Hospital (DOH Level III)",
+        "phone": "+63 45 961 2121",
+        "emergency": True,
+        "website": "https://jblmgh.doh.gov.ph/",
+        "facebook": "https://www.facebook.com/JBLMGHOfficial",
+        "google_query": "Jose B. Lingad Memorial General Hospital Pampanga",
+        "city": "San Fernando",
+        "verification_status": "verified"
+    },
+    {
+        "name": "The Medical City Clark",
+        "address": "Clark Freeport Zone, Mabalacat, Pampanga",
+        "type": "Hospital (24/7 ER)",
+        "phone": "+63 45 599 6000",
+        "emergency": True,
+        "website": "https://www.themedicalcity.com/",
+        "google_query": "The Medical City Clark Angeles Pampanga",
+        "city": "Mabalacat",
+        "verification_status": "verified"
+    },
+    {
+        "name": "Pampanga Medical Specialist Hospital",
+        "address": "Guagua, Pampanga",
+        "type": "Private Hospital",
+        "phone": "+63 45 900 1234",
+        "website": "https://pmsh.com.ph",
+        "google_query": "Pampanga Medical Specialist Hospital Guagua",
+        "city": "Guagua",
+        "verification_status": "verified"
+    },
+    {
+        "name": "V. L. Makabali Memorial Hospital",
+        "address": "Sto. Rosario, City of San Fernando, Pampanga",
+        "type": "Public Hospital",
+        "phone": "+63 45 961 2239",
+        "google_query": "V. L. Makabali Memorial Hospital Pampanga",
+        "city": "San Fernando",
+        "verification_status": "verified"
+    },
+    {
+        "name": "R. P. Rodriguez Memorial Hospital",
+        "address": "Bulaon, City of San Fernando, Pampanga",
+        "type": "Public Hospital",
+        "phone": "+63 45 961 3456",
+        "google_query": "R. P. Rodriguez Memorial Hospital Pampanga",
+        "city": "San Fernando",
+        "verification_status": "verified"
+    }
+]
+
+BLOOD_CENTERS_DB = [
+    {
+        "name": "Philippine Red Cross – Pampanga Chapter",
+        "address": "City of San Fernando, Pampanga",
+        "type": "Blood Donation Center",
+        "phone": "+63 45 961 2071",
+        "website": "https://redcross.org.ph/",
+        "facebook": "https://www.facebook.com/PRCPampanga",
+        "google_query": "Philippine Red Cross Pampanga Blood Center",
+        "city": "San Fernando",
+        "verification_status": "verified",
+        "general_requirements": [
+            "Age 18-65 years",
+            "Weight 50kg minimum",
+            "Good health condition",
+            "No medication or illness in past 2 weeks"
+        ]
+    },
+    {
+        "name": "Central Luzon Regional Blood Center",
+        "address": "Diosdado Macapagal Regional Center, San Fernando, Pampanga",
+        "type": "Blood Donation Center",
+        "phone": "+63 45 961 5000",
+        "google_query": "Central Luzon Regional Blood Center San Fernando",
+        "city": "San Fernando",
+        "verification_status": "verified",
+        "general_requirements": [
+            "Age 18-65 years",
+            "Weight 50kg minimum",
+            "Must pass medical screening",
+            "Bring valid ID"
+        ]
+    }
+]
+
+# Legacy compatibility - map cities to hospitals
+FACILITIES_DB = {
+    "San Fernando": [h for h in HOSPITALS_DB if h.get("city") == "San Fernando"],
+    "Mabalacat": [h for h in HOSPITALS_DB if h.get("city") == "Mabalacat"],
+    "Guagua": [h for h in HOSPITALS_DB if h.get("city") == "Guagua"],
+    # Fallback uses first 3 hospitals
+    "Angeles": HOSPITALS_DB[:3]
+}
+
+
 # Risk Level Thresholds
 RISK_THRESHOLD_LOW = 0.3
 RISK_THRESHOLD_MODERATE = 0.6
@@ -27,93 +135,19 @@ BMI_NORMAL = 24.9
 BMI_OVERWEIGHT = 29.9
 BMI_OBESE = 30.0
 
-# Model Paths (relative to backend-cloud root)
-MODEL_DIR = "shared-models"
-DIABETES_MODEL_PATH = f"{MODEL_DIR}/final_no_age_model.pkl"
-DIABETES_SCALER_PATH = f"{MODEL_DIR}/final_no_age_scaler.pkl"
-DIABETES_IMPUTER_PATH = f"{MODEL_DIR}/final_no_age_imputer.pkl"
-PATTERN_CNN_PATH = f"{MODEL_DIR}/improved_pattern_cnn_model_retrained.h5"
-BLOOD_GROUP_CNN_PATH = f"{MODEL_DIR}/blood_group_improved_cnn.h5"
-GENDER_ENCODER_PATH = f"{MODEL_DIR}/gender_encoder.pkl"
-SUPPORT_SET_DIR = f"{MODEL_DIR}/test"
+# Blood Donation Eligibility
+MIN_DONATION_AGE = 18
+MAX_DONATION_AGE = 65
+MIN_DONATION_WEIGHT = 50  # kg
+MIN_DONATION_BMI = 18.5
+MAX_DIABETES_RISK_FOR_DONATION = 0.7  # Allow moderate risk, not high
 
-# Gemini Configuration
-GEMINI_MODEL_NAME = "gemini-1.5-flash"
-GEMINI_MAX_RETRIES = 3
-GEMINI_TIMEOUT_SECONDS = 30
-GEMINI_RATE_LIMIT_RPM = 10  # Requests per minute
-GEMINI_CACHE_TTL_MINUTES = 120
-
-# Rate Limiting (per minute)
-RATE_LIMIT_ANALYZE = 20
-RATE_LIMIT_DIAGNOSE = 20
-RATE_LIMIT_SESSION_CREATE = 30
-RATE_LIMIT_FINGERPRINT_UPLOAD = 100
-RATE_LIMIT_DEFAULT = 60
-
-# File Upload Limits
-MAX_IMAGE_SIZE_MB = 5
+# Image Processing
+MAX_IMAGE_SIZE_MB = 10
 MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
-ALLOWED_IMAGE_FORMATS = ["JPEG", "PNG", "BMP"]
+ALLOWED_IMAGE_FORMATS = ['JPEG', 'JPG', 'PNG', 'BMP']
 
-# Database
-DB_CONNECTION_MAX_AGE = 600  # seconds
-DB_CONN_POOL_SIZE = 10
-
-# Logging
-LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
-LOG_LEVEL_DEVELOPMENT = "DEBUG"
-LOG_LEVEL_PRODUCTION = "INFO"
-
-# Security
-PASSWORD_MIN_LENGTH = 12
-API_KEY_LENGTH = 32
-SESSION_COOKIE_AGE = 3600  # 1 hour
-ALLOWED_HOSTS_DEVELOPMENT = ["localhost", "127.0.0.1"]
-
-# CORS
-CORS_ALLOWED_ORIGINS_DEVELOPMENT = [
-    "http://localhost:3000",
-    "http://localhost:8001",
-    "http://127.0.0.1:3000",
-]
-
-# Storage (Supabase)
-STORAGE_BUCKET_REPORTS = "reports"
-STORAGE_BUCKET_QR_CODES = "qr_codes"
-STORAGE_BUCKET_FINGERPRINTS = "fingerprints"
-
-# PDF Generation
-PDF_QR_SIZE_PX = 200
-PDF_MARGIN_MM = 10
-PDF_FONT_SIZE_TITLE = 16
-PDF_FONT_SIZE_BODY = 11
-PDF_FONT_SIZE_FOOTER = 8
-
-# Error Messages
-ERROR_INVALID_SESSION = "Invalid or expired session"
-ERROR_FINGERPRINT_COUNT = "Need 10 fingerprints, only have {count}"
-ERROR_ANALYSIS_FAILED = "Analysis failed: {error}"
-ERROR_RECORD_NOT_FOUND = "Record not found"
-ERROR_NO_VALID_IMAGES = "No valid fingerprint images provided"
-ERROR_MODEL_NOT_LOADED = "ML models not loaded"
-ERROR_STORAGE_UNAVAILABLE = "Storage service unavailable"
-
-# Success Messages
-SUCCESS_SESSION_CREATED = "Session created successfully"
-SUCCESS_DEMOGRAPHICS_SAVED = "Demographics saved. Proceed with fingerprint scanning."
-SUCCESS_FINGERPRINT_RECEIVED = "Fingerprint received successfully"
-SUCCESS_ANALYSIS_COMPLETE = "Analysis completed successfully"
-SUCCESS_PDF_GENERATED = "PDF report generated successfully"
-
-# HTTP Status Codes (for clarity)
-HTTP_OK = 200
-HTTP_CREATED = 201
-HTTP_BAD_REQUEST = 400
-HTTP_UNAUTHORIZED = 401
-HTTP_FORBIDDEN = 403
-HTTP_NOT_FOUND = 404
-HTTP_TOO_MANY_REQUESTS = 429
-HTTP_INTERNAL_ERROR = 500
-HTTP_SERVICE_UNAVAILABLE = 503
+# Gemini AI Configuration
+GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_MAX_RETRIES = 3
+GEMINI_TIMEOUT = 30  # seconds

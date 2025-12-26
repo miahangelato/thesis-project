@@ -47,6 +47,9 @@ class AnalysisResponse(BaseModel):
     pattern_counts: Dict[str, int]
     bmi: float
     explanation: str
+    nearby_facilities: list = []
+    blood_centers: list = []  # Only if willing_to_donate = true
+
 
 
 class ResultsResponse(BaseModel):

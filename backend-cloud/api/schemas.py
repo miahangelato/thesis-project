@@ -1,7 +1,7 @@
 """Pydantic schemas for API requests and responses."""
 
 from pydantic import BaseModel, Field
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Any
 from datetime import datetime
 
 
@@ -95,6 +95,10 @@ class AnalyzeResponse(BaseModel):
     
     # AI-generated explanation
     explanation: str
+    
+    # Recommended facilities
+    nearby_facilities: List[Dict[str, Any]] = []
+    blood_centers: List[Dict[str, Any]] = []  # Only if willing_to_donate = true
     
     # Metadata
     saved: bool

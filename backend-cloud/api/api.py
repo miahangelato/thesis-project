@@ -26,6 +26,35 @@ api = NinjaAPI(
 
 api.add_router("/session", workflow_router)
 
+def _check_donation_eligibility(age: int, weight_kg: float, bmi: float, risk_level: str) -> dict:
+    """Check if patient meets basic blood donation eligibility criteria."""
+    
+    # Age check (18-65 years old)
+    if age < 18:
+        return {"status": "Ineligible", "reason": "You must be at least 18 years old to donate blood."}
+    if age > 65:
+        return {"status": "Ineligible", "reason": "Blood donation is typically restricted to individuals under 65 years old."}
+    
+    # Weight check (minimum 50kg)
+    if weight_kg < 50:
+        return {"status": "Ineligible", "reason": "You must weigh at least 50kg to donate blood safely."}
+    
+    # Diabetes risk check
+    if risk_level.lower() in ['high', 'diabetic']:
+        return {"status": "Ineligible", "reason": "High diabetes risk may affect blood donation eligibility. Please consult with a healthcare provider."}
+    
+    # BMI check (underweight)
+    if bmi < 18.5:
+        return {"status": "Ineligible", "reason": "Your BMI indicates you may be underweight. Please consult with a healthcare provider before donating."}
+    
+    # Passed basic checks
+    return {
+        "status": "Provisional",
+        "reason": "You meet the basic health requirements for blood donation screening. However, final eligibility must be confirmed by medical staff at the donation center through a complete health assessment and blood test."
+    }
+
+
+
 @api.post("/analyze", response=AnalyzeResponse, tags=["Prediction"])
 def analyze_patient(request, data: AnalyzeRequest):
     """Process patient data with ML models and generate comprehensive report."""
@@ -98,6 +127,25 @@ def analyze_patient(request, data: AnalyzeRequest):
             analysis_results, demographics
         )
         
+        logger.info("📊 Analysis complete, generating additional features...")
+        
+        # Generate health facility recommendations
+        logger.info(f"🏥 Requesting facility recommendations for {analysis_results['diabetes_risk_level']} risk")
+        nearby_facilities = gemini_service.generate_health_facilities(
+            analysis_results['diabetes_risk_level']
+        )
+        logger.info(f"✅ Received {len(nearby_facilities)} facility recommendations")
+        
+        # Get blood donation centers (only if user is willing)
+        blood_centers = []
+        if data.willing_to_donate:
+            from .constants import BLOOD_CENTERS_DB
+            logger.info("🩸 User willing to donate - providing blood center information")
+            blood_centers = BLOOD_CENTERS_DB
+            logger.info(f"✅ Provided {len(blood_centers)} blood donation centers")
+        else:
+            logger.info("ℹ️ User not willing to donate - skipping blood centers")
+        
         # Save to database if consent given
         record_id = None
         if data.consent:
@@ -131,6 +179,8 @@ def analyze_patient(request, data: AnalyzeRequest):
             predicted_blood_group=analysis_results['predicted_blood_group'],
             blood_group_confidence=analysis_results['blood_group_confidence'],
             explanation=explanation,
+            nearby_facilities=nearby_facilities,
+            blood_centers=blood_centers,
             saved=data.consent,
             timestamp=datetime.utcnow()
         )
