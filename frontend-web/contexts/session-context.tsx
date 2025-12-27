@@ -83,6 +83,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     storage.clear();
     // Clear demographics data from sessionStorage
     sessionStorage.removeItem("demographics");
+    sessionStorage.removeItem("current_session_id");
     // Clear analysis results from sessionStorage
     if (currentSessionId) {
       sessionStorage.removeItem(currentSessionId);

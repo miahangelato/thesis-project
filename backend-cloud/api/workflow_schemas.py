@@ -1,7 +1,7 @@
 """Updated API schemas for multi-step workflow."""
 
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Literal
+from typing import Optional, Dict, Literal, List, Any
 from datetime import datetime
 
 
@@ -20,6 +20,8 @@ class DemographicsRequest(BaseModel):
     weight_kg: float = Field(gt=0)
     height_cm: float = Field(gt=0)
     gender: Literal["male", "female", "other", "prefer_not_say"]
+    willing_to_donate: bool = False
+    blood_type: Optional[str] = None
 
 
 
@@ -47,8 +49,12 @@ class AnalysisResponse(BaseModel):
     pattern_counts: Dict[str, int]
     bmi: float
     explanation: str
-    nearby_facilities: list = []
-    blood_centers: list = []  # Only if willing_to_donate = true
+    nearby_facilities: List[Dict[str, Any]] = []
+    blood_centers: List[Dict[str, Any]] = []  # Only if willing_to_donate = true
+    hospitals_db: List[Dict[str, Any]] = []
+    laboratories_db: List[Dict[str, Any]] = []
+    diabetes_doctors_db: List[Dict[str, Any]] = []
+    willing_to_donate: bool = False
 
 
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/contexts/session-context";
 import { sessionAPI } from "@/lib/api";
@@ -161,11 +162,16 @@ export default function ScanPage() {
   };
 
   const handleSubmit = async () => {
+    if (loading) return;
     setLoading(true);
     try {
-      if (!sessionId) {
+      let activeSessionId =
+        sessionId || sessionStorage.getItem("current_session_id");
+
+      if (!activeSessionId) {
         console.error("No session ID available");
         alert("No session ID. Please restart the workflow.");
+        setLoading(false);
         return;
       }
 
@@ -182,7 +188,7 @@ export default function ScanPage() {
               const base64 = reader.result as string;
               try {
                 console.log(`Uploading ${finger}...`);
-                await sessionAPI.submitFingerprint(sessionId, {
+                await sessionAPI.submitFingerprint(activeSessionId, {
                   finger_name: finger,
                   image: base64,
                 });
@@ -205,7 +211,7 @@ export default function ScanPage() {
 
       // Trigger analysis
       console.log("Triggering analysis...");
-      const analyzeResponse = await sessionAPI.analyze(sessionId);
+      const analyzeResponse = await sessionAPI.analyze(activeSessionId);
       console.log("Analysis API response:", analyzeResponse);
       console.log("Analysis completed successfully");
 
@@ -214,15 +220,22 @@ export default function ScanPage() {
         data: analyzeResponse.data,
         expiry: Date.now() + 3600000, // 1 hour expiry
       };
-      const encodedData = btoa(JSON.stringify(resultsData));
-      sessionStorage.setItem(sessionId, encodedData);
+      // Encode with UTF-8 safe base64 to handle emoji/unicode in AI text
+      const json = JSON.stringify(resultsData);
+      const utf8Bytes = new TextEncoder().encode(json);
+      let binary = "";
+      utf8Bytes.forEach((b) => {
+        binary += String.fromCharCode(b);
+      });
+      const encodedData = btoa(binary);
+      sessionStorage.setItem(activeSessionId, encodedData);
+      sessionStorage.setItem("current_session_id", activeSessionId);
       console.log("💾 Stored results in sessionStorage");
 
       console.log("🔄 Setting current step to RESULTS:", STEPS.RESULTS);
-      setCurrentStep(STEPS.RESULTS); // Moving to results page (step 4)
-
-      // Clear loading state BEFORE navigation
-      setLoading(false);
+      flushSync(() => {
+        setCurrentStep(STEPS.RESULTS); // Moving to results page (step 4)
+      });
 
       console.log("🚀 About to navigate to:", ROUTES.RESULTS);
       router.push(ROUTES.RESULTS);
@@ -231,15 +244,19 @@ export default function ScanPage() {
       console.error("Submission failed:", err);
       const message = getErrorMessage(err);
       alert(`Failed to submit: ${message}`);
+    } finally {
       setLoading(false);
     }
   };
 
   const handleFinishClick = () => {
+    if (loading) return;
     setShowFinishModal(true);
   };
 
   const handleFinishConfirm = async () => {
+    if (loading) return;
+    setShowFinishModal(false);
     await handleSubmit();
     // Modal will close automatically when navigation happens
   };
