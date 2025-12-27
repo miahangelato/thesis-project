@@ -18,7 +18,18 @@ import {
   Clock,
   AlertTriangle,
   XCircle,
+  FileText,
+  User,
+  Activity,
+  Download,
+  QrCode,
+  Smartphone,
 } from "lucide-react";
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { QRCodeSVG } from "qrcode.react";
+import { SessionEndModal } from "@/components/modals/session-end-modal";
+import { useBackNavigation } from "@/hooks/use-back-navigation";
+import { sessionAPI } from "@/lib/api";
 
 interface DiabetesResult {
   diabetes_risk?: string;
@@ -30,6 +41,8 @@ interface BloodGroupResult {
   confidence?: number;
 }
 
+type TabType = "results" | "facilities" | "download";
+
 export default function ResultPage() {
   const router = useRouter();
   const { sessionId, clearSession } = useSession();
@@ -37,19 +50,43 @@ export default function ResultPage() {
   const [bloodGroupResult, setBloodGroupResult] =
     useState<BloodGroupResult | null>(null);
   const [participantData, setParticipantData] = useState<any>(null);
+  const [demographics, setDemographics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabType>("results");
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const { showModal, handleConfirm, handleCancel } = useBackNavigation(true);
+
+  // Fetch demographics from sessionStorage (same as scan page)
+  useEffect(() => {
+    const storedDemo = sessionStorage.getItem("demographics");
+    if (storedDemo) {
+      try {
+        setDemographics(JSON.parse(storedDemo));
+        console.log("✅ Loaded demographics from sessionStorage:", storedDemo);
+      } catch (e) {
+        console.error("Failed to parse demographics:", e);
+      }
+    } else {
+      console.warn("⚠️ No demographics found in sessionStorage");
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       console.log("🔍 [Results Page - New] Loading results...");
-      
+
       // Try to get sessionId from context or fallback to sessionStorage
       let activeSessionId = sessionId;
       if (!activeSessionId) {
-        activeSessionId = sessionStorage.getItem('current_session_id');
-        console.log("⚠️ No sessionId from context, using fallback:", activeSessionId);
+        activeSessionId = sessionStorage.getItem("current_session_id");
+        console.log(
+          "⚠️ No sessionId from context, using fallback:",
+          activeSessionId
+        );
       }
-      
+
       if (!activeSessionId) {
         console.warn("⚠️ No session ID available");
         setLoading(false);
@@ -59,12 +96,12 @@ export default function ResultPage() {
       try {
         // Try to get data from sessionStorage first
         const encodedData = sessionStorage.getItem(activeSessionId!);
-        
+
         if (encodedData) {
           console.log("📦 Found data in sessionStorage");
           const dataString = atob(encodedData);
           const dataWithExpiry = JSON.parse(dataString);
-          
+
           // Check expiry
           if (Date.now() > dataWithExpiry.expiry) {
             console.warn("⏰ Data expired");
@@ -72,37 +109,40 @@ export default function ResultPage() {
             setLoading(false);
             return;
           }
-          
+
           const data = dataWithExpiry.data;
           console.log("✅ Loaded data:", data);
-          
+
           // Map API response to component state
           setResult({
             diabetes_risk: data.risk_level || "Unknown",
-            confidence: data.diabetes_risk || 0
+            confidence: data.diabetes_risk || 0,
           });
-          
+
           setBloodGroupResult({
             predicted_blood_group: data.blood_group || "Unknown",
-            confidence: data.blood_group_confidence || 0
+            confidence: data.blood_group_confidence || 0,
           });
-          
+
           setParticipantData({
             age: data.demographics?.age || data.age || 0,
             weight: data.demographics?.weight_kg || data.weight_kg || 0,
             height: data.demographics?.height_cm || data.height_cm || 0,
             gender: data.demographics?.gender || data.gender || "N/A",
             blood_type: data.blood_group || "Unknown",
-            willing_to_donate: data.demographics?.willing_to_donate || data.willing_to_donate || false,
+            willing_to_donate:
+              data.demographics?.willing_to_donate ||
+              data.willing_to_donate ||
+              false,
             saved: data.saved_to_database || false,
             participant_id: activeSessionId,
             explanation: data.explanation || "",
             blood_centers: data.blood_centers || [],
             nearby_facilities: data.nearby_facilities || [],
             pattern_counts: data.pattern_counts || {},
-            bmi: data.bmi || 0
+            bmi: data.bmi || 0,
           });
-          
+
           console.log("✅ State updated successfully");
           setLoading(false);
         } else {
@@ -121,6 +161,38 @@ export default function ResultPage() {
   const handleNewSession = () => {
     clearSession();
     router.push(ROUTES.HOME);
+  };
+
+  const generatePDF = async () => {
+    if (!sessionId) return;
+    try {
+      setPdfLoading(true);
+      setPdfError(null);
+      const response = await sessionAPI.generatePDF(sessionId);
+      setPdfUrl(response.data.pdf_url);
+    } catch (err: any) {
+      console.error("Failed to generate PDF:", err);
+      setPdfError(
+        err.response?.data?.error || "Failed to generate PDF report."
+      );
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handleDirectDownload = async () => {
+    if (!pdfUrl) return;
+    try {
+      const link = document.createElement("a");
+      link.href = pdfUrl;
+      link.download = `health_report_${sessionId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Download failed:", err);
+      setPdfError("Failed to download PDF. Please try again.");
+    }
   };
 
   if (loading) {
@@ -151,389 +223,536 @@ export default function ResultPage() {
   }
 
   return (
-    <div className="h-screen bg-white flex flex-col">
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <ProgressHeader
-            currentStep={STEPS.RESULTS}
-            totalSteps={4}
-            title="Analysis Results"
-            subtitle="Your health analysis is complete. Review your results and recommendations below."
-          />
+    <ProtectedRoute requireSession={true} requiredStep={STEPS.SCAN}>
+      <>
+        <SessionEndModal
+          isOpen={showModal}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
+        <div className="h-screen bg-white flex flex-col overflow-hidden">
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex flex-col px-28 py-6 overflow-hidden">
+              <ProgressHeader
+                currentStep={STEPS.RESULTS}
+                totalSteps={4}
+                title="Analysis Results"
+                subtitle="Your health analysis is complete"
+                accentColor="#00c2cb"
+              />
 
-          {/* Main Content */}
-          <div className="mt-8 space-y-6">
-            {/* Results Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Blood Type Card */}
-              <div className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 border rounded-lg p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Droplets className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      Predicted Blood Type
-                    </p>
-                    <p className="text-2xl text-blue-800 dark:text-blue-200 font-semibold">
-                      {bloodGroupResult.predicted_blood_group || "Unknown"}
-                    </p>
-                    {bloodGroupResult.confidence && (
-                      <p className="text-xs text-muted-foreground">
-                        Confidence: {(bloodGroupResult.confidence * 100).toFixed(1)}%
+              <div className="grid grid-cols-12 gap-6 overflow-hidden mb-6">
+                {/* Left Sidebar - Results & Profile */}
+                <div className="col-span-4 flex flex-col">
+                  {/* Profile Card with All Info */}
+                  <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-5 h-full flex flex-col overflow-hidden">
+                    {/* Profile Header */}
+                    <div className="text-center mb-4">
+                      <div className="w-20 h-20 bg-linear-to-br from-teal-400 to-cyan-500 rounded-full mx-auto mb-3 flex items-center justify-center">
+                        <User className="w-10 h-10 text-white" />
+                      </div>
+                      <h3 className="font-bold text-lg text-gray-800">
+                        Participant Profile
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Session: {sessionId?.slice(0, 8)}...
                       </p>
-                    )}
+                    </div>
+                    {/* Demographics Section */}
+                    <div className="flex-1 overflow-y-auto">
+                      <h4 className="text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                        Demographics
+                      </h4>
+                      {demographics ? (
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2">
+                            <span className="text-sm text-gray-600">Age</span>
+                            <span className="text-sm font-bold text-gray-900">
+                              {demographics?.age || "N/A"} years
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2">
+                            <span className="text-sm text-gray-600">
+                              Gender
+                            </span>
+                            <span className="text-sm font-bold text-gray-900 capitalize">
+                              {demographics?.gender || "N/A"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2.5">
+                            <span className="text-sm text-gray-600">
+                              Blood Type
+                            </span>
+                            <span className="text-sm font-bold text-gray-900 capitalize">
+                              {demographics?.blood_type || "Unknown"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2.5">
+                            <span className="text-sm text-gray-600">
+                              Height
+                            </span>
+                            <span className="text-sm font-bold text-gray-900">
+                              {demographics?.height_cm || "N/A"} cm
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2.5">
+                            <span className="text-sm text-gray-600">
+                              Weight
+                            </span>
+                            <span className="text-sm font-bold text-gray-900">
+                              {demographics?.weight_kg || "N/A"} kg
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2.5">
+                            <span className="text-sm text-gray-600">BMI</span>
+                            <span className="text-sm font-bold text-gray-900">
+                              {participantData?.bmi?.toFixed(1) || "N/A"}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          Loading demographics...
+                        </p>
+                      )}
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => router.push(ROUTES.SCAN)}
+                      className="font-bold cursor-pointer mt-4"
+                    >
+                      ← Back
+                    </Button>
                   </div>
                 </div>
-              </div>
 
-              {/* Diabetes Risk Card */}
-              <div
-                className={`border rounded-lg p-6 ${
-                  result.diabetes_risk?.toLowerCase() === "diabetic" ||
-                  result.diabetes_risk?.toLowerCase() === "high"
-                    ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
-                    : "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
-                }`}
-              >
-                <div className="flex items-center space-x-4">
-                  <div
-                    className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      result.diabetes_risk?.toLowerCase() === "diabetic" ||
-                      result.diabetes_risk?.toLowerCase() === "high"
-                        ? "bg-red-100 dark:bg-red-900"
-                        : "bg-green-100 dark:bg-green-900"
-                    }`}
-                  >
-                    <TrendingUp
-                      className={`w-6 h-6 ${
-                        result.diabetes_risk?.toLowerCase() === "diabetic" ||
-                        result.diabetes_risk?.toLowerCase() === "high"
-                          ? "text-red-600"
-                          : "text-green-600"
+                {/* Right Content Area - Tabs */}
+                <div className="col-span-8 flex flex-col overflow-hidden">
+                  {/* Tab Navigation */}
+                  <div className="flex space-x-3 mb-3">
+                    <button
+                      onClick={() => setActiveTab("results")}
+                      className={`flex-1 py-3 px-4 rounded-lg font-bold text-base transition-all cursor-pointer ${
+                        activeTab === "results"
+                          ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white shadow-lg"
+                          : "bg-white text-gray-600 hover:bg-gray-50 border-2 border-gray-200"
                       }`}
-                    />
+                    >
+                      <Activity className="w-5 h-5 inline mr-2" />
+                      Health Results
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("facilities")}
+                      className={`flex-1 py-3 px-4 rounded-lg font-bold text-base transition-all cursor-pointer ${
+                        activeTab === "facilities"
+                          ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white shadow-lg"
+                          : "bg-white text-gray-600 hover:bg-gray-50 border-2 border-gray-200"
+                      }`}
+                    >
+                      <Hospital className="w-5 h-5 inline mr-2" />
+                      Recommended Facilities
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("download")}
+                      className={`flex-1 py-3 px-4 rounded-lg font-bold text-base transition-all cursor-pointer ${
+                        activeTab === "download"
+                          ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white shadow-lg"
+                          : "bg-white text-gray-600 hover:bg-gray-50 border-2 border-gray-200"
+                      }`}
+                    >
+                      <FileText className="w-5 h-5 inline mr-2" />
+                      Download Results
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={`text-sm ${
-                        result.diabetes_risk?.toLowerCase() === "diabetic" ||
-                        result.diabetes_risk?.toLowerCase() === "high"
-                          ? "text-red-700 dark:text-red-300"
-                          : "text-green-700 dark:text-green-300"
-                      }`}
-                    >
-                      Diabetes Risk Assessment
-                    </p>
-                    <p
-                      className={`text-lg font-semibold ${
-                        result.diabetes_risk?.toLowerCase() === "diabetic" ||
-                        result.diabetes_risk?.toLowerCase() === "high"
-                          ? "text-red-800 dark:text-red-200"
-                          : "text-green-800 dark:text-green-200"
-                      }`}
-                    >
-                      {result.diabetes_risk
-                        ? result.diabetes_risk.toUpperCase()
-                        : "UNKNOWN"}
-                    </p>
-                    {result.confidence && (
-                      <p className="text-xs text-muted-foreground">
-                        Confidence: {(result.confidence * 100).toFixed(1)}%
-                      </p>
-                    )}
+
+                  {/* Tab Content */}
+                  <div className="flex-1 bg-white rounded-lg shadow-lg border-2 border-gray-200 overflow-hidden min-h-0">
+                    <div className="h-full overflow-y-auto p-5">
+                      {activeTab === "results" && (
+                        <div className="space-y-4">
+                          <h2 className="text-xl font-bold text-gray-800 mb-4">
+                            Health Analysis Results
+                          </h2>
+
+                          <div className="flex flex-row gap-4 justify-center items-stretch">
+                            {/* Blood Type Card - Large */}
+                            <div className="flex-1 bg-linear-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-6 shadow-lg">
+                              <div className="flex items-center mb-3">
+                                <div className="w-14 h-14 bg-blue-500 rounded-xl flex items-center justify-center mr-3">
+                                  <Droplets className="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-medium text-blue-700 mb-1">
+                                    Predicted Blood Type
+                                  </p>
+                                  <p className="text-4xl font-bold text-blue-900">
+                                    {bloodGroupResult?.predicted_blood_group ||
+                                      "Unknown"}
+                                  </p>
+                                </div>
+                              </div>
+                              {bloodGroupResult?.confidence && (
+                                <div className="mt-4 pt-4 border-t border-blue-200">
+                                  <p className="text-sm text-blue-600">
+                                    Confidence Level:{" "}
+                                    <span className="font-bold text-lg">
+                                      {(
+                                        bloodGroupResult.confidence * 100
+                                      ).toFixed(1)}
+                                      %
+                                    </span>
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Diabetes Risk Card - Large */}
+                            <div
+                              className={`flex-1 border-2 rounded-xl p-6 shadow-lg ${
+                                result?.diabetes_risk?.toLowerCase() ===
+                                  "diabetic" ||
+                                result?.diabetes_risk?.toLowerCase() === "high"
+                                  ? "bg-linear-to-br from-red-50 to-pink-50 border-red-200"
+                                  : "bg-linear-to-br from-green-50 to-emerald-50 border-green-200"
+                              }`}
+                            >
+                              <div className="flex items-center mb-3">
+                                <div
+                                  className={`w-14 h-14 rounded-xl flex items-center justify-center mr-3 ${
+                                    result?.diabetes_risk?.toLowerCase() ===
+                                      "diabetic" ||
+                                    result?.diabetes_risk?.toLowerCase() ===
+                                      "high"
+                                      ? "bg-red-500"
+                                      : "bg-green-500"
+                                  }`}
+                                >
+                                  <TrendingUp className="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                  <p
+                                    className={`text-xs font-medium mb-1 ${
+                                      result?.diabetes_risk?.toLowerCase() ===
+                                        "diabetic" ||
+                                      result?.diabetes_risk?.toLowerCase() ===
+                                        "high"
+                                        ? "text-red-700"
+                                        : "text-green-700"
+                                    }`}
+                                  >
+                                    Diabetes Risk Assessment
+                                  </p>
+                                  <p
+                                    className={`text-4xl font-bold ${
+                                      result?.diabetes_risk?.toLowerCase() ===
+                                        "diabetic" ||
+                                      result?.diabetes_risk?.toLowerCase() ===
+                                        "high"
+                                        ? "text-red-900"
+                                        : "text-green-900"
+                                    }`}
+                                  >
+                                    {result?.diabetes_risk || "Unknown"}
+                                  </p>
+                                </div>
+                              </div>
+                              {result?.confidence && (
+                                <div
+                                  className={`mt-4 pt-4 border-t ${
+                                    result?.diabetes_risk?.toLowerCase() ===
+                                      "diabetic" ||
+                                    result?.diabetes_risk?.toLowerCase() ===
+                                      "high"
+                                      ? "border-red-200"
+                                      : "border-green-200"
+                                  }`}
+                                >
+                                  <p
+                                    className={`text-sm ${
+                                      result?.diabetes_risk?.toLowerCase() ===
+                                        "diabetic" ||
+                                      result?.diabetes_risk?.toLowerCase() ===
+                                        "high"
+                                        ? "text-red-600"
+                                        : "text-green-600"
+                                    }`}
+                                  >
+                                    Confidence Level:{" "}
+                                    <span className="font-bold text-lg">
+                                      {(result.confidence * 100).toFixed(1)}%
+                                    </span>
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* AI Health Insights */}
+                          {participantData?.explanation && (
+                            <div className="bg-linear-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-6 shadow-lg">
+                              <h3 className="font-bold text-lg text-purple-900 mb-3 flex items-center">
+                                <Info className="w-6 h-6 mr-2" />
+                                AI-Generated Health Insights
+                              </h3>
+                              <div className="prose max-w-none text-gray-700 whitespace-pre-wrap leading-relaxed text-base">
+                                {participantData.explanation}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {activeTab === "facilities" && (
+                        <div className="space-y-4">
+                          {/* Health Facilities */}
+                          {participantData?.nearby_facilities &&
+                            participantData.nearby_facilities.length > 0 && (
+                              <div>
+                                <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                                  <Hospital className="w-6 h-6 mr-2 text-teal-600" />
+                                  Health Facilities Near You
+                                </h2>
+                                <div className="space-y-3">
+                                  {participantData.nearby_facilities.map(
+                                    (facility: any, idx: number) => (
+                                      <div
+                                        key={idx}
+                                        className="bg-linear-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl p-4 hover:shadow-lg transition-shadow"
+                                      >
+                                        <h4 className="font-bold text-lg text-gray-900 mb-2">
+                                          {facility.name}
+                                        </h4>
+                                        <p className="text-sm text-gray-600 mb-3 flex items-center">
+                                          <MapPin className="w-4 h-4 mr-2" />
+                                          {facility.address}
+                                        </p>
+
+                                        {/* Map Embed */}
+                                        <div className="mb-3 rounded-lg overflow-hidden border-2 border-gray-300">
+                                          <iframe
+                                            src={`https://www.google.com/maps?q=${encodeURIComponent(
+                                              facility.google_query
+                                            )}&output=embed`}
+                                            width="100%"
+                                            height="200"
+                                            style={{ border: 0 }}
+                                            loading="lazy"
+                                            title={facility.name}
+                                          ></iframe>
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                          {facility.phone && (
+                                            <a
+                                              href={`tel:${facility.phone}`}
+                                              className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                                            >
+                                              📞 {facility.phone}
+                                            </a>
+                                          )}
+                                          <a
+                                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                              facility.google_query
+                                            )}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+                                          >
+                                            <MapPin className="w-4 h-4 mr-2" />
+                                            View on Map
+                                          </a>
+                                        </div>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                          {/* Blood Donation Centers */}
+                          {participantData?.blood_centers &&
+                            participantData.blood_centers.length > 0 && (
+                              <div>
+                                <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                                  <Heart className="w-6 h-6 mr-2 text-red-600" />
+                                  Blood Donation Centers
+                                </h2>
+                                <div className="space-y-3">
+                                  {participantData.blood_centers.map(
+                                    (center: any, idx: number) => (
+                                      <div
+                                        key={idx}
+                                        className="bg-linear-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-xl p-4 hover:shadow-lg transition-shadow"
+                                      >
+                                        <h4 className="font-bold text-lg text-gray-900 mb-2 flex items-center">
+                                          <Heart className="w-5 h-5 mr-2 text-red-500" />
+                                          {center.name}
+                                        </h4>
+                                        <p className="text-sm text-gray-600 mb-3 flex items-center">
+                                          <MapPin className="w-4 h-4 mr-2" />
+                                          {center.address}
+                                        </p>
+
+                                        {/* Map Embed */}
+                                        <div className="mb-3 rounded-lg overflow-hidden border-2 border-gray-300">
+                                          <iframe
+                                            src={`https://www.google.com/maps?q=${encodeURIComponent(
+                                              center.google_query
+                                            )}&output=embed`}
+                                            width="100%"
+                                            height="200"
+                                            style={{ border: 0 }}
+                                            loading="lazy"
+                                            title={center.name}
+                                          ></iframe>
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                          {center.phone && (
+                                            <a
+                                              href={`tel:${center.phone}`}
+                                              className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
+                                            >
+                                              📞 {center.phone}
+                                            </a>
+                                          )}
+                                          <a
+                                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                              center.google_query
+                                            )}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+                                          >
+                                            <MapPin className="w-4 h-4 mr-2" />
+                                            View on Map
+                                          </a>
+                                        </div>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                        </div>
+                      )}
+
+                      {activeTab === "download" && (
+                        <div className="space-y-4">
+                          <h2 className="text-xl font-bold text-gray-800 mb-4">
+                            Download Your Results
+                          </h2>
+
+                          {!pdfUrl ? (
+                            <div className="flex flex-col items-center justify-center py-8">
+                              <FileText className="w-16 h-16 text-teal-600 mb-4" />
+                              <p className="text-gray-700 mb-4 font-medium">
+                                Generate your PDF report
+                              </p>
+                              <Button
+                                onClick={generatePDF}
+                                disabled={pdfLoading}
+                                className="bg-linear-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold py-3 px-8 rounded-xl cursor-pointer"
+                              >
+                                {pdfLoading ? (
+                                  <>
+                                    <span className="animate-spin h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full inline-block" />
+                                    Generating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FileText className="w-5 h-5 mr-2 inline" />
+                                    Generate PDF Report
+                                  </>
+                                )}
+                              </Button>
+                              {pdfError && (
+                                <p className="text-red-600 text-sm mt-3">
+                                  {pdfError}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              {/* QR Code Section */}
+                              <div className="bg-gray-100 rounded-lg p-6">
+                                <div className="flex flex-col items-center space-y-4">
+                                  <div className="flex items-center gap-2 text-lg font-semibold text-gray-800">
+                                    <QrCode className="h-6 w-6" />
+                                    Scan to Download
+                                  </div>
+
+                                  <div className="bg-white p-4 rounded-lg shadow-inner">
+                                    <QRCodeSVG
+                                      value={pdfUrl}
+                                      size={200}
+                                      level="M"
+                                      includeMargin={true}
+                                    />
+                                  </div>
+
+                                  <div className="flex items-start gap-2 text-sm text-gray-600 max-w-sm text-center">
+                                    <Smartphone className="h-4 w-4 mt-0.5 shrink-0" />
+                                    <p>
+                                      Scan this QR code with your smartphone to
+                                      download the PDF report directly
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Direct Download Section */}
+                              <div className="space-y-3">
+                                <div className="text-center text-sm text-gray-600">
+                                  Or download directly
+                                </div>
+
+                                <Button
+                                  onClick={handleDirectDownload}
+                                  className="w-full bg-linear-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold py-3 rounded-xl cursor-pointer"
+                                >
+                                  <Download className="w-5 h-5 mr-2 inline" />
+                                  Download PDF Report
+                                </Button>
+                              </div>
+
+                              {/* Reset Button */}
+                              <button
+                                onClick={() => {
+                                  setPdfUrl(null);
+                                  setPdfError(null);
+                                }}
+                                className="w-full text-teal-600 hover:text-teal-700 font-medium text-sm py-2"
+                              >
+                                Generate Another Report
+                              </button>
+                            </div>
+                          )}
+
+                          <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+                            <p className="text-sm text-blue-800 flex items-start">
+                              <Info className="w-5 h-5 mr-2 mt-0.5 shrink-0" />
+                              <span>
+                                <strong>Important:</strong> This report is for
+                                informational purposes only and should not
+                                replace professional medical advice. Please
+                                consult with a healthcare provider for proper
+                                diagnosis and treatment.
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-
-            {/* Participant Details */}
-            <div className="bg-gray-50 dark:bg-gray-900/20 border rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">
-                Participant Information
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">
-                    Age
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">
-                    {participantData.age} years
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">
-                    Gender
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">
-                    {participantData.gender}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">
-                    Height
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">
-                    {participantData.height} cm
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">
-                    Weight
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">
-                    {participantData.weight} kg
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">
-                    BMI
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">
-                    {participantData.bmi?.toFixed(1)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">
-                    Blood Type
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">
-                    {participantData.blood_type}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Health Insights Section */}
-            {participantData.explanation && (
-              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <Info className="w-5 h-5 mr-2 text-purple-600" />
-                  AI Health Insights
-                </h3>
-                <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                  {participantData.explanation}
-                </div>
-              </div>
-            )}
-
-            {/* Blood Donation Centers Section - Only if willing to donate */}
-            {participantData.blood_centers && participantData.blood_centers.length > 0 && (
-              <div className="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <Heart className="w-5 h-5 mr-2 text-red-600" />
-                  Blood Donation Centers
-                </h3>
-                
-                {/* Info Banner */}
-                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg">
-                  <p className="text-sm text-blue-800 dark:text-blue-200 flex items-start">
-                    <Info className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>
-                      <strong>Interested in saving lives?</strong> Contact these accredited blood donation centers for screening and donation schedules. All centers follow DOH and PRC standards.
-                    </span>
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {participantData.blood_centers.map((center: any, idx: number) => (
-                    <div key={idx} className="bg-white dark:bg-gray-800 border border-red-200 dark:border-red-700 rounded-lg p-4">
-                      <div className="mb-3">
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-lg flex items-center">
-                          <Heart className="w-5 h-5 mr-2 text-red-500" />
-                          {center.name}
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {center.type}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 flex items-start mt-2">
-                          <MapPin className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" />
-                          {center.address}
-                        </p>
-                      </div>
-
-                      {/* Map Embed */}
-                      <div className="mb-3 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                        <iframe
-                          src={`https://www.google.com/maps?q=${encodeURIComponent(center.google_query)}&output=embed`}
-                          width="100%"
-                          height="200"
-                          style={{ border: 0 }}
-                          loading="lazy"
-                          title={center.name}
-                        ></iframe>
-                      </div>
-
-                      {/* Contact Information */}
-                      {center.phone && (
-                        <div className="mb-3">
-                          <a
-                            href={`tel:${center.phone}`}
-                            className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
-                          >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                            </svg>
-                            Call {center.phone}
-                          </a>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                            📞 Call to inquire about donation schedules and requirements
-                          </p>
-                        </div>
-                      )}
-
-                      {/* General Requirements */}
-                      {center.general_requirements && center.general_requirements.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            General Requirements:
-                          </p>
-                          <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                            {center.general_requirements.map((req: string, ridx: number) => (
-                              <li key={ridx}>{req}</li>
-                            ))}
-                          </ul>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
-                            Note: Final eligibility determined by medical staff during screening
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Website/FB Links */}
-                      <div className="flex gap-2">
-                        {center.website && (
-                          <a
-                            href={center.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-lg text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                          >
-                            🌐 Website
-                          </a>
-                        )}
-                        {center.facebook && (
-                          <a
-                            href={center.facebook}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-lg text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                          >
-                            📱 Facebook
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Recommended Health Facilities Section */}
-            {participantData.nearby_facilities && participantData.nearby_facilities.length > 0 && (
-              <div className="bg-gray-50 dark:bg-gray-900/20 border rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <Hospital className="w-5 h-5 mr-2 text-indigo-600" />
-                  Recommended Health Facilities
-                </h3>
-                
-                {/* Important Notice */}
-                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg">
-                  <p className="text-sm text-blue-800 dark:text-blue-200 flex items-start">
-                    <Info className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>
-                      <strong>Verified facilities nearby.</strong> Call each facility directly to confirm current hours, availability, and specialized services.
-                    </span>
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {participantData.nearby_facilities.map((facility: any, idx: number) => (
-                    <div key={idx} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                      <div className="mb-3">
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
-                          {facility.name}
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {facility.type}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 flex items-start mt-2">
-                          <MapPin className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" />
-                          {facility.address}
-                        </p>
-                      </div>
-                      
-                      {/* Map Embed */}
-                      <div className="mb-3 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                        <iframe
-                          src={`https://www.google.com/maps?q=${encodeURIComponent(facility.google_query)}&output=embed`}
-                          width="100%"
-                          height="200"
-                          style={{ border: 0 }}
-                          loading="lazy"
-                          title={facility.name}
-                        ></iframe>
-                      </div>
-
-                      {/* Real Contact Information */}
-                      {facility.phone && (
-                        <div className="mb-3">
-                          <a
-                            href={`tel:${facility.phone}`}
-                            className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
-                          >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                            </svg>
-                            Call {facility.phone}
-                          </a>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                            📞 Call to verify current hours, doctor availability, and services
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Interactive Map Link */}
-                      <div className="mb-2">
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(facility.google_query)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-                        >
-                          <MapPin className="w-4 h-4 mr-2" />
-                          View on Google Maps
-                        </a>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                          🗺️ See real-time hours, reviews, and directions on Google Maps
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons - Bottom */}
-          <div className="flex justify-between items-center pt-6 mt-8 border-t">
-            <Button
-              variant="outline"
-              onClick={() => router.push(ROUTES.CONSENT)}
-              className="px-6 py-3 text-sm"
-            >
-              Back To Consent
-            </Button>
-
-            <Button
-              onClick={handleNewSession}
-              className="px-6 py-3 text-sm bg-[#00c2cb] hover:bg-[#00adb5] text-white"
-            >
-              End Process
-            </Button>
-          </div>
+            <Footer fixed={true} />
+          </main>
         </div>
-      </main>
-      <Footer />
-    </div>
+      </>
+    </ProtectedRoute>
   );
 }

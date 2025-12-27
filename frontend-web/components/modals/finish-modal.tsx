@@ -20,12 +20,14 @@ export const FinishConfirmationModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
       <div
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={onCancel}
+        onClick={loading ? undefined : onCancel}
       />
       <div className="relative bg-white rounded-xl shadow-2xl max-w-xl w-full p-6 border-2 border-teal-100 select-none">
         <div className="flex items-center mb-4">
           <Fingerprint className="w-10 h-10 text-teal-600 mr-3" />
-          <h3 className="text-6xl font-bold text-teal-500">Ready to Finish?</h3>
+          <h3 className="text-3xl font-bold text-teal-500">
+            {loading ? "Processing..." : "Ready to Finish?"}
+          </h3>
         </div>
         <p className="text-gray-700 mb-4 text-xl leading-relaxed">
           Please confirm you have scanned and reviewed all fingerprints. You can
@@ -41,7 +43,8 @@ export const FinishConfirmationModal = ({
             type="button"
             variant="outline"
             onClick={onCancel}
-            className="flex items-center border-2 border-gray-300 hover:bg-gray-50 h-14 px-6 text-base font-bold cursor-pointer rounded-xl"
+            disabled={loading}
+            className="flex items-center border-2 border-gray-300 hover:bg-gray-50 h-14 px-6 text-base font-bold cursor-pointer rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RefreshCcw className="w-6 h-6" />
             Review Again
@@ -50,9 +53,16 @@ export const FinishConfirmationModal = ({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="flex items-center gap-2 px-6 py-2 h-14 rounded-xl bg-[#00c2cb] hover:bg-[#00a8b0] text-white font-bold text-xl shadow-lg cursor-pointer"
+            className="flex items-center gap-2 px-6 py-2 h-14 rounded-xl bg-[#00c2cb] hover:bg-[#00a8b0] text-white font-bold text-xl shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Processing..." : "Yes, Finish & Analyze!"}
+            {loading ? (
+              <>
+                <span className="animate-spin h-6 w-6 border-2 border-white border-t-transparent rounded-full inline-block mr-2" />
+                Analyzing...
+              </>
+            ) : (
+              "Yes, Finish & Analyze!"
+            )}
           </Button>
         </div>
       </div>

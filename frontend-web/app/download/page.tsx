@@ -144,7 +144,7 @@ export default function DownloadPage() {
               )}
 
               <div className="flex items-start gap-2 text-sm text-muted-foreground max-w-sm text-center">
-                <Smartphone className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <Smartphone className="h-4 w-4 mt-0.5 shrink-0" />
                 <p>
                   Scan this QR code with your smartphone to download the PDF report directly to your device
                 </p>

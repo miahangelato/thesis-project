@@ -205,23 +205,32 @@ export default function ScanPage() {
 
       // Trigger analysis
       console.log("Triggering analysis...");
-      try {
-        const analyzeResponse = await sessionAPI.analyze(sessionId);
-        console.log("Analysis API response:", analyzeResponse);
-        console.log("Analysis completed successfully");
-      } catch (analyzeError) {
-        console.error("Analysis API error:", analyzeError);
-        // Error is already logged by api-client logic, but we throw to stop navigation
-        throw analyzeError;
-      }
+      const analyzeResponse = await sessionAPI.analyze(sessionId);
+      console.log("Analysis API response:", analyzeResponse);
+      console.log("Analysis completed successfully");
 
+      // Store results in sessionStorage for the results page
+      const resultsData = {
+        data: analyzeResponse.data,
+        expiry: Date.now() + 3600000, // 1 hour expiry
+      };
+      const encodedData = btoa(JSON.stringify(resultsData));
+      sessionStorage.setItem(sessionId, encodedData);
+      console.log("💾 Stored results in sessionStorage");
+
+      console.log("🔄 Setting current step to RESULTS:", STEPS.RESULTS);
       setCurrentStep(STEPS.RESULTS); // Moving to results page (step 4)
+
+      // Clear loading state BEFORE navigation
+      setLoading(false);
+
+      console.log("🚀 About to navigate to:", ROUTES.RESULTS);
       router.push(ROUTES.RESULTS);
+      console.log("✅ router.push called");
     } catch (err) {
       console.error("Submission failed:", err);
       const message = getErrorMessage(err);
       alert(`Failed to submit: ${message}`);
-    } finally {
       setLoading(false);
     }
   };
@@ -231,8 +240,8 @@ export default function ScanPage() {
   };
 
   const handleFinishConfirm = async () => {
-    setShowFinishModal(false);
     await handleSubmit();
+    // Modal will close automatically when navigation happens
   };
 
   const handleFinishCancel = () => {
@@ -242,6 +251,13 @@ export default function ScanPage() {
   return (
     <ProtectedRoute requireSession={true} requiredStep={STEPS.SCAN}>
       <>
+        <FinishConfirmationModal
+          isOpen={showFinishModal}
+          loading={loading}
+          onConfirm={handleFinishConfirm}
+          onCancel={handleFinishCancel}
+        />
+
         <SessionEndModal
           isOpen={showModal}
           onConfirm={handleConfirm}
@@ -250,14 +266,7 @@ export default function ScanPage() {
 
         <AnalysisLoadingOverlay isOpen={loading} />
 
-        <FinishConfirmationModal
-          isOpen={showFinishModal}
-          loading={loading}
-          onConfirm={handleFinishConfirm}
-          onCancel={handleFinishCancel}
-        />
-
-        <div className="h-screen bg-white flex flex-col overflow-hidden">
+        <div className="h-screen px-28 py-4 bg-white flex flex-col overflow-hidden">
           <main className="flex-1 w-full flex flex-col">
             <div className="h-full flex flex-col px-6">
               <ProgressHeader
@@ -282,42 +291,50 @@ export default function ScanPage() {
                       </CardHeader>
                       <CardContent className="px-5 pb-2 pt-0">
                         {demographics ? (
-                          <div className="grid grid-cols-4 gap-3 text-base">
-                            <div>
-                              <span className="text-gray-600 font-medium">
-                                Age:
+                          <div className="grid grid-cols-5 gap-3 text-base">
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-gray-600 font-medium text-sm truncate">
+                                Age
                               </span>
-                              <span className="ml-2 font-bold text-gray-900">
-                                {demographics.age} years
+                              <span className="font-bold text-gray-900 truncate">
+                                {demographics.age} yrs
                               </span>
                             </div>
-                            <div>
-                              <span className="text-gray-600 font-medium">
-                                Gender:
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-gray-600 font-medium text-sm truncate">
+                                Gender
                               </span>
-                              <span className="ml-2 font-bold text-gray-900 capitalize">
+                              <span className="font-bold text-gray-900 capitalize truncate">
                                 {demographics.gender}
                               </span>
                             </div>
-                            <div>
-                              <span className="text-gray-600 font-medium">
-                                Weight:
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-gray-600 font-medium text-sm truncate">
+                                Weight
                               </span>
-                              <span className="ml-2 font-bold text-gray-900">
+                              <span className="font-bold text-gray-900 truncate">
                                 {demographics.weight_kg} kg
                               </span>
                             </div>
-                            <div>
-                              <span className="text-gray-600 font-medium">
-                                Height:
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-gray-600 font-medium text-sm truncate">
+                                Height
                               </span>
-                              <span className="ml-2 font-bold text-gray-900">
+                              <span className="font-bold text-gray-900 truncate">
                                 {demographics.height_cm} cm
+                              </span>
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-gray-600 font-medium text-sm truncate">
+                                Blood Type
+                              </span>
+                              <span className="font-bold text-gray-900 truncate">
+                                {demographics.blood_type}
                               </span>
                             </div>
                           </div>
                         ) : (
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-600 truncate">
                             Session ID: {sessionId || "N/A"}
                           </p>
                         )}

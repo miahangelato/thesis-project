@@ -163,7 +163,7 @@ export default function FingerprintScanner({
       </div>
 
       {error && (
-        <div className="text-destructive text-sm bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2 text-center">
+        <div className="text-destructive text-xs bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2 text-center">
           {error}
         </div>
       )}
