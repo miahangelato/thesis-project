@@ -292,7 +292,7 @@ export default function DemographicsPage() {
           </div>
         )}
 
-        <div className="h-screen p-5 bg-white flex flex-col overflow-none">
+        <div className="h-screen px-28 py-6 bg-white flex flex-col overflow-none">
           <main className="flex-1 w-full flex flex-col">
             <ProgressHeader
               currentStep={STEPS.DEMOGRAPHICS}
@@ -1023,6 +1023,79 @@ export default function DemographicsPage() {
                                 <AlertDescription className="text-teal-900 text-sm font-semibold leading-relaxed">
                                   ⚠️ For educational purposes only. Always
                                   consult healthcare professionals.
+                                </AlertDescription>
+                              </Alert>
+                            </div>
+                          </div>
+                        )}
+
+                        {willingToDonate === true && (
+                          <div className="bg-linear-to-br from-rose-50 via-red-50 to-pink-50 rounded-3xl p-5 shadow-lg border-2 border-rose-200 hover:shadow-xl transition-shadow duration-300 select-none">
+                            {/* Header */}
+                            <div className="flex items-center mb-4 pb-3 border-b-2 border-rose-200">
+                              <div className="w-10 h-10 bg-linear-to-br from-rose-100 to-pink-100 rounded-2xl flex items-center justify-center mr-3 shadow-sm">
+                                <Heart className="h-5 w-5 text-rose-600" />
+                              </div>
+
+                              <div>
+                                <h3 className="text-xl font-extrabold text-slate-900 leading-tight">
+                                  🩸 Blood Donation: Quick Facts
+                                </h3>
+                                <p className="text-slate-600 text-sm leading-snug font-medium">
+                                  Helpful info if you’re considering donating
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Facts */}
+                            <div className="space-y-3">
+                              <div className="bg-white/90 rounded-xl p-4">
+                                <p className="text-base text-slate-700 leading-relaxed flex items-start">
+                                  <CheckCircle className="h-5 w-5 text-rose-500 mr-3 shrink-0 mt-0.5" />
+                                  <span>
+                                    One whole-blood donation can help multiple
+                                    patients.
+                                  </span>
+                                </p>
+                              </div>
+
+                              <div className="bg-white/90 rounded-xl p-4">
+                                <p className="text-base text-slate-700 leading-relaxed flex items-start">
+                                  <CheckCircle className="h-5 w-5 text-rose-500 mr-3 shrink-0 mt-0.5" />
+                                  <span>
+                                    The donation itself typically takes about
+                                    8–10 minutes; the whole visit is usually
+                                    under an hour.
+                                  </span>
+                                </p>
+                              </div>
+
+                              <div className="bg-white/90 rounded-xl p-4">
+                                <p className="text-base text-slate-700 leading-relaxed flex items-start">
+                                  <CheckCircle className="h-5 w-5 text-rose-500 mr-3 shrink-0 mt-0.5" />
+                                  <span>
+                                    Hydrate and have a light meal beforehand;
+                                    avoid heavy exercise right after donating.
+                                  </span>
+                                </p>
+                              </div>
+
+                              <div className="bg-white/90 rounded-xl p-4">
+                                <p className="text-base text-slate-700 leading-relaxed flex items-start">
+                                  <CheckCircle className="h-5 w-5 text-rose-500 mr-3 shrink-0 mt-0.5" />
+                                  <span>
+                                    Eligibility varies by country and provider;
+                                    tattoos, piercings, travel, or recent
+                                    illnesses can affect timing.
+                                  </span>
+                                </p>
+                              </div>
+
+                              <Alert className="border-2 border-rose-300 bg-rose-50 px-4 py-3 rounded-xl">
+                                <AlertDescription className="text-rose-900 text-sm font-semibold leading-relaxed">
+                                  ℹ️ Always check your local blood center’s
+                                  official guidelines for up‑to‑date eligibility
+                                  criteria.
                                 </AlertDescription>
                               </Alert>
                             </div>

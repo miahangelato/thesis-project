@@ -18,8 +18,8 @@ export function Footer({
 
   return (
     <footer
-      className={`w-full px-6 md:px-8 lg:px-10 xl:px-12 py-1 flex justify-between items-center border-t select-none ${borderClass} ${bgClass} ${
-        fixed ? "absolute bottom-0 left-0 right-0 z-10" : "mt-1"
+      className={`w-full px-28 py-2 flex justify-between items-center select-none ${borderClass} ${bgClass} ${
+        fixed ? "absolute bottom-0 left-0 right-0 z-10" : ""
       } ${className}`}
     >
       <div className="text-xs text-gray-500">

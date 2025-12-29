@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/contexts/session-context";
 import { sessionAPI } from "@/lib/api";
@@ -161,11 +162,16 @@ export default function ScanPage() {
   };
 
   const handleSubmit = async () => {
+    if (loading) return;
     setLoading(true);
     try {
-      if (!sessionId) {
+      let activeSessionId =
+        sessionId || sessionStorage.getItem("current_session_id");
+
+      if (!activeSessionId) {
         console.error("No session ID available");
         alert("No session ID. Please restart the workflow.");
+        setLoading(false);
         return;
       }
 
@@ -182,7 +188,7 @@ export default function ScanPage() {
               const base64 = reader.result as string;
               try {
                 console.log(`Uploading ${finger}...`);
-                await sessionAPI.submitFingerprint(sessionId, {
+                await sessionAPI.submitFingerprint(activeSessionId, {
                   finger_name: finger,
                   image: base64,
                 });
@@ -205,18 +211,35 @@ export default function ScanPage() {
 
       // Trigger analysis
       console.log("Triggering analysis...");
-      try {
-        const analyzeResponse = await sessionAPI.analyze(sessionId);
-        console.log("Analysis API response:", analyzeResponse);
-        console.log("Analysis completed successfully");
-      } catch (analyzeError) {
-        console.error("Analysis API error:", analyzeError);
-        // Error is already logged by api-client logic, but we throw to stop navigation
-        throw analyzeError;
-      }
+      const analyzeResponse = await sessionAPI.analyze(activeSessionId);
+      console.log("Analysis API response:", analyzeResponse);
+      console.log("Analysis completed successfully");
 
-      setCurrentStep(STEPS.RESULTS); // Moving to results page (step 4)
+      // Store results in sessionStorage for the results page
+      const resultsData = {
+        data: analyzeResponse.data,
+        expiry: Date.now() + 3600000, // 1 hour expiry
+      };
+      // Encode with UTF-8 safe base64 to handle emoji/unicode in AI text
+      const json = JSON.stringify(resultsData);
+      const utf8Bytes = new TextEncoder().encode(json);
+      let binary = "";
+      utf8Bytes.forEach((b) => {
+        binary += String.fromCharCode(b);
+      });
+      const encodedData = btoa(binary);
+      sessionStorage.setItem(activeSessionId, encodedData);
+      sessionStorage.setItem("current_session_id", activeSessionId);
+      console.log("💾 Stored results in sessionStorage");
+
+      console.log("🔄 Setting current step to RESULTS:", STEPS.RESULTS);
+      flushSync(() => {
+        setCurrentStep(STEPS.RESULTS); // Moving to results page (step 4)
+      });
+
+      console.log("🚀 About to navigate to:", ROUTES.RESULTS);
       router.push(ROUTES.RESULTS);
+      console.log("✅ router.push called");
     } catch (err) {
       console.error("Submission failed:", err);
       const message = getErrorMessage(err);
@@ -227,12 +250,15 @@ export default function ScanPage() {
   };
 
   const handleFinishClick = () => {
+    if (loading) return;
     setShowFinishModal(true);
   };
 
   const handleFinishConfirm = async () => {
+    if (loading) return;
     setShowFinishModal(false);
     await handleSubmit();
+    // Modal will close automatically when navigation happens
   };
 
   const handleFinishCancel = () => {
@@ -242,6 +268,13 @@ export default function ScanPage() {
   return (
     <ProtectedRoute requireSession={true} requiredStep={STEPS.SCAN}>
       <>
+        <FinishConfirmationModal
+          isOpen={showFinishModal}
+          loading={loading}
+          onConfirm={handleFinishConfirm}
+          onCancel={handleFinishCancel}
+        />
+
         <SessionEndModal
           isOpen={showModal}
           onConfirm={handleConfirm}
@@ -250,14 +283,7 @@ export default function ScanPage() {
 
         <AnalysisLoadingOverlay isOpen={loading} />
 
-        <FinishConfirmationModal
-          isOpen={showFinishModal}
-          loading={loading}
-          onConfirm={handleFinishConfirm}
-          onCancel={handleFinishCancel}
-        />
-
-        <div className="h-screen bg-white flex flex-col overflow-hidden">
+        <div className="h-screen px-28 py-4 bg-white flex flex-col overflow-hidden">
           <main className="flex-1 w-full flex flex-col">
             <div className="h-full flex flex-col px-6">
               <ProgressHeader
@@ -282,42 +308,50 @@ export default function ScanPage() {
                       </CardHeader>
                       <CardContent className="px-5 pb-2 pt-0">
                         {demographics ? (
-                          <div className="grid grid-cols-4 gap-3 text-base">
-                            <div>
-                              <span className="text-gray-600 font-medium">
-                                Age:
+                          <div className="grid grid-cols-5 gap-3 text-base">
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-gray-600 font-medium text-sm truncate">
+                                Age
                               </span>
-                              <span className="ml-2 font-bold text-gray-900">
-                                {demographics.age} years
+                              <span className="font-bold text-gray-900 truncate">
+                                {demographics.age} yrs
                               </span>
                             </div>
-                            <div>
-                              <span className="text-gray-600 font-medium">
-                                Gender:
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-gray-600 font-medium text-sm truncate">
+                                Gender
                               </span>
-                              <span className="ml-2 font-bold text-gray-900 capitalize">
+                              <span className="font-bold text-gray-900 capitalize truncate">
                                 {demographics.gender}
                               </span>
                             </div>
-                            <div>
-                              <span className="text-gray-600 font-medium">
-                                Weight:
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-gray-600 font-medium text-sm truncate">
+                                Weight
                               </span>
-                              <span className="ml-2 font-bold text-gray-900">
+                              <span className="font-bold text-gray-900 truncate">
                                 {demographics.weight_kg} kg
                               </span>
                             </div>
-                            <div>
-                              <span className="text-gray-600 font-medium">
-                                Height:
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-gray-600 font-medium text-sm truncate">
+                                Height
                               </span>
-                              <span className="ml-2 font-bold text-gray-900">
+                              <span className="font-bold text-gray-900 truncate">
                                 {demographics.height_cm} cm
+                              </span>
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-gray-600 font-medium text-sm truncate">
+                                Blood Type
+                              </span>
+                              <span className="font-bold text-gray-900 truncate">
+                                {demographics.blood_type}
                               </span>
                             </div>
                           </div>
                         ) : (
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-600 truncate">
                             Session ID: {sessionId || "N/A"}
                           </p>
                         )}

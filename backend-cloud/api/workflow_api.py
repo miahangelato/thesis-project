@@ -48,7 +48,9 @@ def submit_demographics(request, session_id: str, data: DemographicsRequest):
         "weight_kg": data.weight_kg,
         "height_cm": data.height_cm,
         "gender": data.gender,
-        "bmi": bmi
+        "bmi": bmi,
+        "willing_to_donate": data.willing_to_donate,
+        "blood_type": data.blood_type
     }
     
     session_mgr.update_demographics(session_id, demographics)
@@ -211,9 +213,16 @@ def analyze_patient(request, session_id: str):
             logger.info("ℹ️ User not willing to donate - skipping blood centers")
         
         # Build and store predictions
+        from .constants import HOSPITALS_DB, LABORATORIES_DB, DIABETES_DOCTORS_DB
         predictions = _build_predictions_dict(diabetes_result, blood_group_result, explanation)
         predictions["blood_centers"] = blood_centers
         predictions["nearby_facilities"] = nearby_facilities
+        # Include verified hospitals database so frontend can render full listings
+        predictions["hospitals_db"] = HOSPITALS_DB
+        # Include diabetes-related laboratories and doctors directories
+        predictions["laboratories_db"] = LABORATORIES_DB
+        predictions["diabetes_doctors_db"] = DIABETES_DOCTORS_DB
+        predictions["willing_to_donate"] = demographics.get("willing_to_donate", False)
         session_mgr.store_predictions(session_id, predictions)
         
         # Mark session as completed

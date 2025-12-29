@@ -87,7 +87,7 @@ export default function ConsentPage() {
           </div>
         )}
 
-        <div className="h-screen p-5 bg-white flex flex-col overflow-hidden select-none">
+        <div className="h-screen px-28 py-6 bg-white flex flex-col overflow-hidden select-none">
           <main className="w-full flex-1 flex flex-col overflow-hidden">
             <div className="w-full flex flex-col">
               <ProgressHeader
@@ -339,7 +339,7 @@ export default function ConsentPage() {
                     )}
                   </Button>
 
-                  <p className="text-sm mt-3 text-gray-500 font-medium">
+                  <p className="text-sm mt-1 text-gray-500 font-medium">
                     Takes less than 2 minutes • No needles • Non-invasive
                   </p>
                 </div>
