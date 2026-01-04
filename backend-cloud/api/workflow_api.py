@@ -194,13 +194,24 @@ def analyze_patient(request, session_id: str):
         # Generate AI explanation
         patient_data = _prepare_patient_data_for_gemini(demographics, diabetes_result, blood_group_result)
         gemini = get_gemini_service()
-        explanation = gemini.generate_risk_explanation(patient_data)
+        # Ensure we use the robust generate_patient_explanation method
+        explanation = gemini.generate_patient_explanation(
+             {"diabetes_risk_score": diabetes_result["risk_score"], 
+              "diabetes_risk_level": diabetes_result["risk_level"],
+              "predicted_blood_group": blood_group_result["blood_group"],
+              "pattern_counts": diabetes_result["pattern_counts"],
+              "bmi": demographics["bmi"],
+              "diabetes_confidence": diabetes_result.get("confidence", 0.0)},
+             demographics
+        )
         logger.info("🤖 AI explanation generated")
         
-        # Generate health facility recommendations
-        logger.info(f"🏥 Requesting facility recommendations for {diabetes_result['risk_level']} risk")
-        nearby_facilities = gemini.generate_health_facilities(diabetes_result['risk_level'])
-        logger.info(f"✅ Received {len(nearby_facilities)} facility recommendations")
+        # Use static facility list to avoid hitting API quota limits
+        # AI facility generation disabled to conserve API calls
+        logger.info(f"🏥 Using static facility recommendations for {diabetes_result['risk_level']} risk")
+        from .constants import FACILITIES_DB
+        nearby_facilities = FACILITIES_DB.get("Angeles", [])[:3]  # Return first 3 from Angeles
+        logger.info(f"✅ Provided {len(nearby_facilities)} static facility recommendations")
         
         # Get blood donation centers (only if user is willing)
         blood_centers = []

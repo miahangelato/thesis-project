@@ -16,8 +16,8 @@ class GeminiService:
             raise ValueError("Missing GEMINI_API_KEY in environment")
         
         genai.configure(api_key=api_key)
-        # Use gemini-1.5-flash for better free tier quotas
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        # Use gemini-flash-latest (Stable Flash with best free tier quotas)
+        self.model = genai.GenerativeModel('gemini-flash-latest')
         logger.info("Gemini Flash service initialized")
     
     def generate_risk_explanation(self, patient_data: Dict) -> str:
@@ -89,7 +89,7 @@ Do not include medical advice or recommendations.
         """Generate comprehensive explanation for patient results."""
         
         prompt = f"""
-You are a compassionate medical AI assistant. Generate a clear, personable health report for a patient.
+You are a medical health screening assistant. Generate a scientifically accurate, calm health screening report.
 
 PATIENT PROFILE:
 - Age: {demographics['age']} years
@@ -103,56 +103,98 @@ ANALYSIS RESULTS:
 - Predicted Blood Group (from fingerprint AI): {analysis_results['predicted_blood_group']}
 - Fingerprint Patterns: {analysis_results['pattern_counts']['Whorl']} Whorls, {analysis_results['pattern_counts']['Loop']} Loops, {analysis_results['pattern_counts']['Arc']} Arcs
 
-SCIENTIFIC CONTEXT (Use this to explain HOW the result was calculated):
-1. **"No-Age" Diabetes Model**:
-   - The model EXPLICITLY excludes age to prevent discrimination. It relies on biology, not age.
-   - **Key Features by Importance**: 
-     1. #1 Height ({demographics.get('height_cm', 'N/A')}cm) - Strongest predictor.
-     2. #2 Whorl Patterns (Patient has {analysis_results['pattern_counts']['Whorl']}) - Specific variations correlate with insulin resistance.
-     3. #3 Loop Patterns (Patient has {analysis_results['pattern_counts']['Loop']}) - Secondary marker.
-     4. #4 Arch Patterns (Patient has {analysis_results['pattern_counts']['Arc']}).
-     5. #5 Weight ({demographics.get('weight_kg', 'N/A')}kg) - Metabolic indicator.
-   - **Logic**: Fetal development of fingerprints (weeks 13-19) overlaps with pancreas development, creating a permanent biological marker.
+SCIENTIFIC CONTEXT:
+Dermatoglyphic research suggests that fingerprint patterns may show statistical correlations with certain genetic and metabolic conditions at a population level.
 
-2. **Blood Group Prediction**:
-   - Uses "Deep Metric Learning" (Triplet Loss) to match fingerprint mathematical codes to blood groups.
-   - Based on dermatoglyphic statistical correlations (e.g., Type O often links to Loop patterns).
+Studies have observed that:
+- Whorl patterns appear more frequently in populations with Type 2 Diabetes
+- Loop patterns are the most common in the general population and are considered baseline
+- Arch patterns are less common and show weaker associations with metabolic conditions
 
-INSTRUCTIONS:
-Generate a health report in the following structure:
+⚠️ These patterns do not cause disease. They are considered biological markers that may reflect early developmental influences.
 
-1. **Summary** (2-3 sentences):
-   - Start with their diabetes risk level assessment.
-   - Explain that this result comes from analyzing their unique physiological markers (Height, Weight) and dermatoglyphics (Fingerprints), *not just their age*.
+INSTRUCTIONS - Generate a report with this clean structure (NO markdown symbols like ##, **, etc.):
 
-2. **Scientific Explanation** (The "Why"):
-   - Explain *specifically* for this patient why they got this result using the features above. 
-   - Example: "Your risk is influenced by your height combined with the high frequency of Whorl patterns..." or "Your favorable result is supported by..."
-   - Mention the "No-Age" logic: "Unlike traditional tools, this AI looks at your biology, not your birth year."
+📊 Your Fingerprint Pattern Summary
 
-3. **Key Findings** (bullet points):
-   - Fingerprint Analysis: Specific count of Whorls/Loops and what it suggests.
-   - Blood Group: Mention the AI prediction and confidence.
-   - BMI: Mention if it contributes to the risk.
+Based on your scanned fingerprints:
+- Whorls: {analysis_results['pattern_counts']['Whorl']}
+- Loops: {analysis_results['pattern_counts']['Loop']}
+- Arches: {analysis_results['pattern_counts']['Arc']}
 
-4. **Recommendations** (3-4 actionable tips):
-   - Based on risk level, provide specific health advice.
-   - If moderate/high: recommend doctor visit.
-   - If low: encourage healthy habits.
-   - If willing to donate: mention blood donation.
+[Provide 1-2 sentences explaining what this pattern distribution suggests in correlation with the risk level, without claiming causation]
+
+🤖 How This Affected Your Result
+
+Fingerprint pattern analysis was used as one component of your overall health screening.
+It was combined with:
+- Image-based fingerprint feature extraction (Convolutional Neural Networks - CNNs)
+- Machine-learning risk models (e.g., Random Forest classifiers, trained on population health data)
+
+📌 Fingerprint patterns alone did not determine your result.
+They contributed alongside other factors to generate a screening-level risk assessment.
+
+Recommendations
+
+[Provide 3-4 actionable recommendations based on their risk level]
+
+🛡️ Important Note
+
+This analysis is intended for health screening and research purposes only.
+It does not provide a medical diagnosis. Always consult a licensed healthcare professional for clinical evaluation.
 
 TONE GUIDELINES:
-- **Be Calm and Reassuring**: Do NOT use alarmist words like "Warning", "Danger", "Critical", or "Severe".
-- **Screening, Not Diagnosis**: Emphasize that this is a *statistical screening* based on their unique biology, not a medical diagnosis. Use phrases like "Your indicators suggest..." or "You may benefit from..."
-- **Empowering**: Focus on what they can *do* (actionable steps) rather than just the risk itself.
-- **Clear & Simple**: Avoid jargon. Explain the science as if speaking to a friend.
-
-Keep the tone friendly, professional, encouraging, but scientifically transparent. Use simple language.
+- Use calm, research-based language
+- Emphasize "correlation, not diagnosis"
+- No alarmist words
+- Be clear that this is a screening tool
+- DO NOT include patient demographics (age, gender, BMI) - these are already shown in the UI
+- DO NOT use markdown formatting symbols (no ##, **, ---, etc.)
+- Use only plain text with emoji icons for visual organization
 """
+
         
         try:
-            response = self.model.generate_content(prompt)
-            return response.text.strip()
+            # Apply rate limiting
+            from .rate_limiter import get_gemini_rate_limiter
+            import time
+            import re
+            
+            rate_limiter = get_gemini_rate_limiter()
+            
+            # Simple retry loop for 429 errors
+            max_retries = 3
+            for attempt in range(max_retries):
+                wait_time = rate_limiter.wait_if_needed()
+                if wait_time:
+                    logger.warning(f"Gemini: Local rate limit, waiting {wait_time:.2f}s")
+                    time.sleep(wait_time)
+                
+                try:
+                    response = self.model.generate_content(prompt)
+                    return response.text.strip()
+                except Exception as e:
+                    error_str = str(e)
+                    if "429" in error_str and attempt < max_retries - 1:
+                        print(f"⚠️ Gemini Quota Exceeded (Attempt {attempt+1}/{max_retries}). Retrying...")
+                        logger.warning(f"Gemini 429 error: {e}")
+                        
+                        # Try to extract retry delay or default to 30s
+                        sleep_for = 30
+                        if "retry in" in error_str:
+                            try:
+                                match = re.search(r"retry in (\d+(\.\d+)?)s", error_str)
+                                if match:
+                                    sleep_for = float(match.group(1)) + 1 # Add mild buffer
+                            except:
+                                pass
+                        
+                        print(f"⏳ Sleeping for {sleep_for:.1f}s before retry...")
+                        time.sleep(sleep_for)
+                        continue
+                    else:
+                        raise e # Re-raise if not 429 or out of retries
+
         except Exception as e:
             print(f"❌ GEMINI ERROR: {str(e)}")  # Visible in console
             logger.error(f"Gemini generation failed: {e}")
