@@ -20,6 +20,7 @@ import {
 import { useSession } from "@/contexts/session-context";
 import { ProgressHeader } from "@/components/layout/progress-header";
 import { Footer } from "@/components/layout/footer";
+import { StepNavigation } from "@/components/layout/step-navigation";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
 import { SessionEndModal } from "@/components/modals/session-end-modal";
@@ -68,9 +69,9 @@ export default function ConsentPage() {
           <div className="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center">
             <div className="flex flex-col items-center gap-5">
               <div className="relative">
-                <div className="w-20 h-20 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin" />
+                <div className="w-20 h-20 border-4 border-[#e4f7f8] border-t-[#00c2cb] rounded-full animate-spin" />
                 <div
-                  className="absolute inset-0 w-20 h-20 border-4 border-transparent border-b-teal-400 rounded-full animate-spin"
+                  className="absolute inset-0 w-20 h-20 border-4 border-transparent border-b-[#00adb5] rounded-full animate-spin"
                   style={{
                     animationDirection: "reverse",
                     animationDuration: "1s",
@@ -94,17 +95,18 @@ export default function ConsentPage() {
                 currentStep={STEPS.CONSENT}
                 totalSteps={4}
                 title="Your Privacy Comes First"
-                subtitle="Before we analyze your fingerprints, here’s exactly what happens to your data — and what doesn’t."
-                accentColor="#14b8a6"
+                subtitle="Before we analyze your fingerprints, here's exactly what happens to your data and what doesn't."
+                accentColor="#00c2cb"
               />
 
               {/* Bigger spacing + larger default text for kiosk */}
               <div className="grid md:grid-cols-2 gap-4 mb-4">
                 {/* Card 1: What We Analyze */}
-                <div className="bg-white rounded-3xl p-8 border-2 border-teal-100 hover:shadow-xl transition-all duration-200 h-fit">
+                {/* Card 1: What We Analyze */}
+                <div className="bg-white rounded-3xl p-8 border-2 border-[#00c2cb]/20 hover:shadow-xl transition-all duration-200 h-fit">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-linear-to-br from-teal-100 to-cyan-100 shrink-0">
-                      <TestTube className="text-teal-700 h-6 w-6" />
+                    <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-[#e4f7f8] shrink-0">
+                      <TestTube className="text-[#00c2cb] h-6 w-6" />
                     </div>
                     <h2 className="text-3xl font-bold text-gray-900">
                       What We Analyze
@@ -117,7 +119,7 @@ export default function ConsentPage() {
 
                   <div className="space-y-4 mb-3">
                     <div className="flex items-start gap-4">
-                      <CheckCircle className="h-6 w-6 text-teal-600 shrink-0 mt-0.5" />
+                      <CheckCircle className="h-6 w-6 text-[#00c2cb] shrink-0 mt-0.5" />
                       <div>
                         <p className="font-bold text-gray-900 text-lg">
                           Blood type prediction
@@ -129,7 +131,7 @@ export default function ConsentPage() {
                     </div>
 
                     <div className="flex items-start gap-4">
-                      <CheckCircle className="h-6 w-6 text-teal-600 shrink-0 mt-0.5" />
+                      <CheckCircle className="h-6 w-6 text-[#00c2cb] shrink-0 mt-0.5" />
                       <div>
                         <p className="font-bold text-gray-900 text-lg">
                           Diabetes risk screening
@@ -141,7 +143,7 @@ export default function ConsentPage() {
                     </div>
                   </div>
 
-                  <div className="bg-teal-50 rounded-2xl p-3 border-l-4 border-teal-500 mb-4">
+                  <div className="bg-[#e4f7f8] rounded-2xl p-3 border-l-4 border-[#00c2cb] mb-4">
                     <p className="text-base text-gray-800 leading-relaxed">
                       Fingerprint patterns form before birth. Research suggests
                       some patterns may correlate with genetics and
@@ -159,10 +161,11 @@ export default function ConsentPage() {
                 </div>
 
                 {/* Card 2: Your Privacy */}
-                <div className="bg-white rounded-3xl p-8 border-2 border-teal-100 hover:shadow-xl transition-all duration-200 h-fit">
+                {/* Card 2: Your Privacy */}
+                <div className="bg-white rounded-3xl p-8 border-2 border-[#00c2cb]/20 hover:shadow-xl transition-all duration-200 h-fit">
                   <div className="flex items-center gap-4 mb-5">
-                    <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-linear-to-br from-teal-100 to-cyan-100 shrink-0">
-                      <Shield className="text-teal-700 h-6 w-6" />
+                    <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-[#e4f7f8] shrink-0">
+                      <Shield className="text-[#00c2cb] h-6 w-6" />
                     </div>
                     <h2 className="text-3xl font-bold text-gray-900">
                       Your Privacy, Protected
@@ -171,27 +174,27 @@ export default function ConsentPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-4">
                     <div>
-                      <h3 className="text-base font-extrabold text-teal-700 uppercase tracking-wide">
+                      <h3 className="text-base font-extrabold text-[#00c2cb] uppercase tracking-wide">
                         ✅ We Collect
                       </h3>
 
                       <div className="space-y-1">
                         <div className="flex items-start gap-3">
-                          <CheckCircle className="h-5 w-5 text-teal-600 shrink-0 mt-0.5" />
+                          <CheckCircle className="h-5 w-5 text-[#00c2cb] shrink-0 mt-0.5" />
                           <p className="text-lg text-gray-800">
                             Basic info (age, gender, etc.)
                           </p>
                         </div>
 
                         <div className="flex items-start gap-3">
-                          <CheckCircle className="h-5 w-5 text-teal-600 shrink-0 mt-0.5" />
+                          <CheckCircle className="h-5 w-5 text-[#00c2cb] shrink-0 mt-0.5" />
                           <p className="text-lg text-gray-800">
-                            Fingerprint patterns (session only)
+                            Fingerprint patterns (by consent)
                           </p>
                         </div>
                       </div>
 
-                      <p className="text-sm text-gray-500 mt-4 italic">
+                      <p className="text-sm text-gray-500 mt-2 italic">
                         Used to improve prediction quality.
                       </p>
                     </div>
@@ -227,19 +230,19 @@ export default function ConsentPage() {
                   </div>
 
                   {/* Trust chips - bigger */}
-                  <div className="flex flex-wrap items-center justify-center gap-4 py-2 bg-linear-to-r from-teal-50 to-cyan-50 rounded-2xl border-2 border-teal-100">
-                    <div className="flex items-center gap-2 text-sm font-bold text-gray-700 px-3 py-2 bg-white rounded-xl border border-teal-100">
-                      <Lock className="h-5 w-5 text-teal-600" />
+                  <div className="flex flex-wrap items-center justify-center gap-4 py-2 bg-[#e4f7f8] rounded-2xl border-2 border-[#00c2cb]/20">
+                    <div className="flex items-center gap-2 text-sm font-bold text-gray-700 px-3 py-2 bg-white rounded-xl border border-[#00c2cb]/20">
+                      <Lock className="h-5 w-5 text-[#00c2cb]" />
                       <span>Encrypted</span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-sm font-bold text-gray-700 px-3 py-2 bg-white rounded-xl border border-teal-100">
-                      <Zap className="h-5 w-5 text-teal-600" />
+                    <div className="flex items-center gap-2 text-sm font-bold text-gray-700 px-3 py-2 bg-white rounded-xl border border-[#00c2cb]/20">
+                      <Zap className="h-5 w-5 text-[#00c2cb]" />
                       <span>AI-processed</span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-sm font-bold text-gray-700 px-3 py-2 bg-white rounded-xl border border-teal-100">
-                      <Ban className="h-5 w-5 text-teal-600" />
+                    <div className="flex items-center gap-2 text-sm font-bold text-gray-700 px-3 py-2 bg-white rounded-xl border border-[#00c2cb]/20">
+                      <Ban className="h-5 w-5 text-[#00c2cb]" />
                       <span>Never sold</span>
                     </div>
                   </div>
@@ -250,7 +253,7 @@ export default function ConsentPage() {
                       <strong className="text-gray-900 mr-1">
                         Legal Disclaimer:
                       </strong>
-                      Printalyzer provides predictive insights based on
+                      This tool provides predictive insights based on
                       fingerprint and demographic data. It does not replace
                       laboratory tests, blood typing, or medical diagnosis.
                       Always consult healthcare professionals for clinical
@@ -261,17 +264,17 @@ export default function ConsentPage() {
               </div>
 
               {/* Your Choice Section (bigger + finger-friendly) */}
-              <div className="bg-white rounded-3xl p-8 border-2 border-teal-200 hover:shadow-xl transition-shadow duration-200 mb-4 shrink-0">
+              <div className="bg-white rounded-3xl p-8 border-2 border-[#00c2cb]/30 hover:shadow-xl transition-shadow duration-200 mb-4 shrink-0">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
                   <div className="lg:flex-1">
                     <div className="flex items-center mb-3 gap-4">
-                      <UserCheck className="text-teal-600 h-8 w-8" />
+                      <UserCheck className="text-[#00c2cb] h-8 w-8" />
                       <h2 className="text-3xl font-bold text-gray-900">
                         You're in Control
                       </h2>
                     </div>
 
-                    <p className="text-lg text-gray-700 leading-relaxed mb-2">
+                    <p className="text-lg text-gray-700 leading-relaxed ">
                       Choose whether to save your data for research purposes.
                       Either way, you can continue with the analysis.
                     </p>
@@ -286,8 +289,8 @@ export default function ConsentPage() {
                       onClick={() => setConsent(true)}
                       className={`w-full sm:w-auto flex items-center justify-center gap-3 px-8 h-16 rounded-2xl font-extrabold text-lg transition-all duration-200 shadow-lg cursor-pointer ${
                         consent === true
-                          ? "bg-teal-600 text-white ring-4 ring-teal-200 scale-[1.02]"
-                          : "bg-white text-teal-700 border-2 border-teal-400 hover:bg-teal-50"
+                          ? "bg-[#00c2cb] text-white ring-4 ring-[#00c2cb]/20 scale-[1.02]"
+                          : "bg-white text-[#00c2cb] border-2 border-[#00c2cb] hover:bg-[#e4f7f8]"
                       }`}
                     >
                       <span>Save My Data</span>
@@ -307,47 +310,28 @@ export default function ConsentPage() {
                 </div>
               </div>
 
-              {/* Navigation (bigger buttons + text) */}
-              <div className="flex justify-between items-center">
-                <div className="flex gap-10 justify-center items-center">
-                  <Button
-                    variant="outline"
-                    onClick={handleBack}
-                    className="flex items-center gap-2 border-2 border-gray-300 hover:bg-gray-50 h-14 px-6 text-base font-bold cursor-pointer rounded-xl"
-                  >
-                    <ArrowLeft size={18} />
-                    Back
-                  </Button>
-                </div>
 
-                <div className="flex flex-col items-end">
-                  <Button
-                    onClick={handleNext}
-                    disabled={loading || consent === null}
-                    className="flex items-center gap-3 bg-teal-600 hover:bg-teal-700 text-white px-12 h-14 text-xl font-extrabold rounded-2xl shadow-xl disabled:opacity-50 cursor-pointer"
-                  >
-                    {loading ? (
-                      <>
-                        <span className="animate-spin h-6 w-6 border-2 border-white border-t-transparent rounded-full" />
-                        <span>Processing…</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Continue to Analysis</span>
-                        <ArrowRight size={20} />
-                      </>
-                    )}
-                  </Button>
-
-                  <p className="text-sm mt-1 text-gray-500 font-medium">
-                    Takes less than 2 minutes • No needles • Non-invasive
-                  </p>
-                </div>
-              </div>
             </div>
           </main>
+                      <div className="mt-2 mb-4">
+                <StepNavigation
+                  onBack={handleBack}
+                  onNext={handleNext}
+                  isNextDisabled={loading || consent === null}
+                  nextLabel="Continue to Analysis"
+                  loading={loading}
+                  isSubmit={false}
+                />
+              </div>
 
-          <Footer transparent />
+          <Footer 
+            transparent 
+            customContent={
+              <>
+                No needles • Non-invasive • Privacy-first
+              </>
+            }
+          />
         </div>
       </>
     </ProtectedRoute>

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, Fingerprint, RefreshCcw } from "lucide-react";
+import { CheckCircle, Clock, Fingerprint, RefreshCcw, Loader2 } from "lucide-react";
 
 interface FinishConfirmationModalProps {
   isOpen: boolean;
@@ -17,53 +17,52 @@ export const FinishConfirmationModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={loading ? undefined : onCancel}
       />
-      <div className="relative bg-white rounded-xl shadow-2xl max-w-xl w-full p-6 border-2 border-teal-100 select-none">
-        <div className="flex items-center mb-4">
-          <Fingerprint className="w-10 h-10 text-teal-600 mr-3" />
-          <h3 className="text-3xl font-bold text-teal-500">
-            {loading ? "Processing..." : "Ready to Finish?"}
-          </h3>
-        </div>
-        <p className="text-gray-700 mb-4 text-xl leading-relaxed">
-          Please confirm you have scanned and reviewed all fingerprints. You can
-          still go back and rescan any finger if needed.
-        </p>
-        <ul className="mb-5 space-y-2 text-xl text-gray-600 list-disc list-inside">
-          <li>All 10 fingers captured</li>
-          <li>Images look clear and not blurry</li>
-          <li>No missing or wrong-hand selections</li>
-        </ul>
-        <div className="flex justify-between gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={loading}
-            className="flex items-center border-2 border-gray-300 hover:bg-gray-50 h-14 px-6 text-base font-bold cursor-pointer rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCcw className="w-6 h-6" />
-            Review Again
-          </Button>
-          <Button
-            type="button"
-            onClick={onConfirm}
-            disabled={loading}
-            className="flex items-center gap-2 px-6 py-2 h-14 rounded-xl bg-[#00c2cb] hover:bg-[#00a8b0] text-white font-bold text-xl shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <span className="animate-spin h-6 w-6 border-2 border-white border-t-transparent rounded-full inline-block mr-2" />
-                Analyzing...
-              </>
-            ) : (
-              "Yes, Finish & Analyze!"
-            )}
-          </Button>
+      <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex flex-col items-center text-center">
+            <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-4">
+               <Fingerprint className="w-6 h-6 text-teal-600" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Ready to Finish?</h3>
+            <p className="text-gray-600 mb-6">
+              Please confirm you have scanned and reviewed all 10 fingerprints. You can still review them if needed.
+            </p>
+            
+            <ul className="mb-6 space-y-2 text-sm text-gray-500 text-left bg-gray-50 p-4 rounded-lg">
+               <li className="flex items-center gap-2">
+                 <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                 All 10 fingers captured
+               </li>
+               <li className="flex items-center gap-2">
+                 <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                 Images appear clear
+               </li>
+            </ul>
+
+            <div className="flex gap-3 w-full">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={loading}
+                className="flex-1 h-12 text-base"
+              >
+                Review Again
+              </Button>
+              <Button
+                type="button"
+                onClick={onConfirm}
+                disabled={loading}
+                className="flex-1 h-12 text-base bg-teal-600 hover:bg-teal-700 text-white font-bold"
+              >
+                Yes, Finish!
+              </Button>
+            </div>
         </div>
       </div>
     </div>
@@ -80,26 +79,11 @@ export const AnalysisLoadingOverlay = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-60 bg-linear-to-br from-teal-500 via-cyan-500 to-blue-500 flex items-center justify-center">
+    <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-md flex items-center justify-center">
       <div className="text-center px-8">
-        {/* Animated Fingerprint Icon */}
-        <div className="relative mb-8">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-32 h-32 border-8 border-white/30 rounded-full animate-ping"></div>
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-40 h-40 border-8 border-white/20 rounded-full animate-pulse"></div>
-          </div>
-          <div className="relative flex items-center justify-center w-48 h-48 mx-auto">
-            <div
-              className="absolute inset-0 bg-white/10 rounded-full animate-spin"
-              style={{ animationDuration: "3s" }}
-            ></div>
-            <Fingerprint
-              className="w-24 h-24 text-white animate-pulse"
-              strokeWidth={1.5}
-            />
-          </div>
+        {/* Simple Loader Icon */}
+        <div className="relative mb-8 flex justify-center">
+          <Loader2 className="w-20 h-20 text-white animate-spin" strokeWidth={1.5} />
         </div>
 
         {/* Loading Text */}

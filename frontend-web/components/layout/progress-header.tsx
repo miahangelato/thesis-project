@@ -10,6 +10,7 @@ interface ProgressHeaderProps {
   title?: string;
   subtitle?: string;
   accentColor?: string;
+  onEndSession?: () => void;
 }
 
 export function ProgressHeader({
@@ -19,11 +20,19 @@ export function ProgressHeader({
   title,
   subtitle,
   accentColor = "#00c2cb",
+  onEndSession,
 }: ProgressHeaderProps) {
   // Calculate progress percentage
   const router = useRouter();
   const progress = (currentStep / totalSteps) * 100;
-  const handleBack = () => router.back();
+  
+  const handleBack = () => {
+    if (onEndSession) {
+      onEndSession();
+    } else {
+      router.back();
+    }
+  };
 
   return (
     <div className="w-full mb-6 mt-2 select-none">

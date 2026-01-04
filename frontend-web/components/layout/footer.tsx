@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { ReactNode } from "react";
 
 interface FooterProps {
   className?: string;
   showAllLinks?: boolean;
   fixed?: boolean;
   transparent?: boolean;
+  customContent?: ReactNode;
 }
 
 export function Footer({
@@ -12,6 +14,7 @@ export function Footer({
   showAllLinks = true,
   fixed = true,
   transparent = false,
+  customContent,
 }: FooterProps) {
   const bgClass = transparent ? "bg-transparent" : "bg-white";
   const borderClass = transparent ? "border-teal-100/30" : "border-gray-100";
@@ -22,39 +25,18 @@ export function Footer({
         fixed ? "absolute bottom-0 left-0 right-0 z-10" : ""
       } ${className}`}
     >
+      {/* Left: Copyright */}
       <div className="text-xs text-gray-500">
-        © 2025 Printalyzer - HelMi. All rights reserved.
+        © 2025 Team 3. All rights reserved.
       </div>
-      <div className="flex space-x-2">
-        <Link
-          href="/privacy"
-          className="text-xs text-gray-500 hover:text-[#00c2cb]"
-        >
-          Privacy
-        </Link>
-        <Link
-          href="/terms"
-          className="text-xs text-gray-500 hover:text-[#00c2cb]"
-        >
-          Terms
-        </Link>
-        {showAllLinks && (
-          <>
-            <Link
-              href="/help"
-              className="text-xs text-gray-500 hover:text-[#00c2cb]"
-            >
-              Help
-            </Link>
-            <Link
-              href="/contact"
-              className="text-xs text-gray-500 hover:text-[#00c2cb]"
-            >
-              Contact
-            </Link>
-          </>
-        )}
-      </div>
+
+      {/* Right: Custom content */}
+      {customContent && (
+        <div className="flex items-center text-xs text-gray-500">
+          {customContent}
+        </div>
+      )}
+
     </footer>
   );
 }

@@ -14,9 +14,11 @@ import requests
 from functools import wraps
 
 # Import the working scanner implementation
-from scanner_real import FingerprintScanner, dpfpdd, DPFPDD_SUCCESS, capture_fingerprint_image
+# Import the working scanner implementation
+from scanner_real import capture_fingerprint_image, initialize_sdk, finalize_sdk
 from config import HOST, PORT, DEBUG, CORS_ORIGINS, CORS_ALLOW_ALL
 import os
+import atexit
 from PIL import Image
 import numpy as np
 import io
@@ -78,7 +80,7 @@ def scan_finger(finger_name: str = "index"):
             if bpp == 8:  # 8-bit grayscale
                 print(f"🔄 Converting raw image data: {len(image_bytes)} bytes, {width}x{height}")
                 
-                # Convert raw bytes to numpy array
+                # Create numpy array from image bytes
                 np_image = np.frombuffer(image_bytes, dtype=np.uint8).reshape((height, width))
                 print(f"✅ NumPy array created: shape={np_image.shape}, dtype={np_image.dtype}")
                 print(f"📊 Pixel statistics: min={np_image.min()}, max={np_image.max()}, mean={np_image.mean():.2f}")
@@ -449,15 +451,12 @@ if __name__ == '__main__':
     except:
         pass
     
-    # Initialize scanner on startup (don't fail if it doesn't work)
-    try:
-        # Just check if DLLs are available
-        if dpfpdd:
-            print("✅ Scanner DLLs loaded successfully")
-        else:
-            print("⚠️ Scanner DLLs not available")
-    except Exception as e:
-        print(f"⚠️ Scanner check: {e}")
+    # Initialize scanner on startup
+    if initialize_sdk():
+        print("✅ Scanner SDK initialized successfully")
+        atexit.register(finalize_sdk)
+    else:
+        print("⚠️ Failed to initialize Scanner SDK")
     
     print("🔍 Scanner support: Windows")
     print("=" * 50)

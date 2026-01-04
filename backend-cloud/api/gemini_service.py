@@ -78,9 +78,9 @@ Do not include medical advice or recommendations.
         risk_level = data['risk_level'].lower()
         
         templates = {
-            "low": f"Your diabetes risk assessment shows a low risk level ({data['risk_score']:.1%}). Your current health indicators are within favorable ranges.",
-            "moderate": f"Your assessment indicates a moderate risk level ({data['risk_score']:.1%}). Your BMI of {data['bmi']} and age contribute to this assessment.",
-            "high": f"Your assessment shows an elevated risk level ({data['risk_score']:.1%}). Multiple factors including BMI ({data['bmi']}) contribute to this result."
+            "low": f"Your diabetes risk assessment shows a low risk level ({data['risk_score']:.1%}). Your biological markers (fingerprints and height) and BMI indicate a favorable profile.",
+            "moderate": f"Your assessment indicates a moderate risk level ({data['risk_score']:.1%}). Your BMI of {data['bmi']} and fingerprint patterns contribute to this assessment.",
+            "high": f"Your assessment shows an elevated risk level ({data['risk_score']:.1%}). Biological factors including your height, fingerprint patterns, and BMI ({data['bmi']}) contribute to this result."
         }
         
         return templates.get(risk_level, "Risk assessment completed.")
@@ -103,31 +103,58 @@ ANALYSIS RESULTS:
 - Predicted Blood Group (from fingerprint AI): {analysis_results['predicted_blood_group']}
 - Fingerprint Patterns: {analysis_results['pattern_counts']['Whorl']} Whorls, {analysis_results['pattern_counts']['Loop']} Loops, {analysis_results['pattern_counts']['Arc']} Arcs
 
+SCIENTIFIC CONTEXT (Use this to explain HOW the result was calculated):
+1. **"No-Age" Diabetes Model**:
+   - The model EXPLICITLY excludes age to prevent discrimination. It relies on biology, not age.
+   - **Key Features by Importance**: 
+     1. #1 Height ({demographics.get('height_cm', 'N/A')}cm) - Strongest predictor.
+     2. #2 Whorl Patterns (Patient has {analysis_results['pattern_counts']['Whorl']}) - Specific variations correlate with insulin resistance.
+     3. #3 Loop Patterns (Patient has {analysis_results['pattern_counts']['Loop']}) - Secondary marker.
+     4. #4 Arch Patterns (Patient has {analysis_results['pattern_counts']['Arc']}).
+     5. #5 Weight ({demographics.get('weight_kg', 'N/A')}kg) - Metabolic indicator.
+   - **Logic**: Fetal development of fingerprints (weeks 13-19) overlaps with pancreas development, creating a permanent biological marker.
+
+2. **Blood Group Prediction**:
+   - Uses "Deep Metric Learning" (Triplet Loss) to match fingerprint mathematical codes to blood groups.
+   - Based on dermatoglyphic statistical correlations (e.g., Type O often links to Loop patterns).
+
 INSTRUCTIONS:
 Generate a health report in the following structure:
 
 1. **Summary** (2-3 sentences):
-   - Start with their diabetes risk level assessment
-   - Mention what this means in simple terms
+   - Start with their diabetes risk level assessment.
+   - Explain that this result comes from analyzing their unique physiological markers (Height, Weight) and dermatoglyphics (Fingerprints), *not just their age*.
 
-2. **Key Findings** (bullet points):
-   - Explain the fingerprint pattern analysis briefly
-   - Mention the blood group prediction confidence
-   - Highlight any important BMI considerations
+2. **Scientific Explanation** (The "Why"):
+   - Explain *specifically* for this patient why they got this result using the features above. 
+   - Example: "Your risk is influenced by your height combined with the high frequency of Whorl patterns..." or "Your favorable result is supported by..."
+   - Mention the "No-Age" logic: "Unlike traditional tools, this AI looks at your biology, not your birth year."
 
-3. **Recommendations** (3-4 actionable tips):
-   - Based on their risk level, provide specific health advice
-   - If risk is moderate/high: recommend seeing a doctor, lifestyle changes
-   - If risk is low: encourage maintaining healthy habits
-   - If willing to donate: mention blood donation centers (context: {demographics.get('willing_to_donate', False)})
+3. **Key Findings** (bullet points):
+   - Fingerprint Analysis: Specific count of Whorls/Loops and what it suggests.
+   - Blood Group: Mention the AI prediction and confidence.
+   - BMI: Mention if it contributes to the risk.
 
-Keep the tone friendly, professional, and encouraging. Use simple language.
+4. **Recommendations** (3-4 actionable tips):
+   - Based on risk level, provide specific health advice.
+   - If moderate/high: recommend doctor visit.
+   - If low: encourage healthy habits.
+   - If willing to donate: mention blood donation.
+
+TONE GUIDELINES:
+- **Be Calm and Reassuring**: Do NOT use alarmist words like "Warning", "Danger", "Critical", or "Severe".
+- **Screening, Not Diagnosis**: Emphasize that this is a *statistical screening* based on their unique biology, not a medical diagnosis. Use phrases like "Your indicators suggest..." or "You may benefit from..."
+- **Empowering**: Focus on what they can *do* (actionable steps) rather than just the risk itself.
+- **Clear & Simple**: Avoid jargon. Explain the science as if speaking to a friend.
+
+Keep the tone friendly, professional, encouraging, but scientifically transparent. Use simple language.
 """
         
         try:
             response = self.model.generate_content(prompt)
             return response.text.strip()
         except Exception as e:
+            print(f"❌ GEMINI ERROR: {str(e)}")  # Visible in console
             logger.error(f"Gemini generation failed: {e}")
             return self._fallback_comprehensive_explanation(analysis_results, demographics)
     
@@ -206,12 +233,12 @@ Return ONLY a valid JSON list. Each object must have: name, type, address, googl
         explanation = f"""
 **Health Assessment Summary**
 
-Your diabetes risk assessment indicates a {risk} risk level (confidence: {results['diabetes_confidence']:.1%}). 
+Your diabetes risk assessment indicates a {risk} risk level (confidence: {results['diabetes_confidence']:.1%}). This screening is based on your unique biological markers, not just your age.
 
 **Key Findings:**
-- Your BMI is {results['bmi']}, which is an important health indicator
-- Fingerprint analysis revealed {results['pattern_counts']['Whorl']} whorls, {results['pattern_counts']['Loop']} loops, and {results['pattern_counts']['Arc']} arcs
-- AI predicted blood group: {blood_group} (based on fingerprint patterns)
+- Your BMI is {results['bmi']}
+- Fingerprint analysis revealed {results['pattern_counts']['Whorl']} Whorls, {results['pattern_counts']['Loop']} Loops, and {results['pattern_counts']['Arc']} Arcs
+- AI predicted blood group: {blood_group}
 
 **Recommendations:**
 """

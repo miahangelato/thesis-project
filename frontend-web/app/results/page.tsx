@@ -58,7 +58,7 @@ export default function ResultPage() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
-  const { showModal, handleConfirm, handleCancel } = useBackNavigation(true);
+  const { showModal, handleConfirm, handleCancel, promptBackNavigation } = useBackNavigation(true);
 
   const normalizeBoolean = (value: any): boolean => {
     if (typeof value === "boolean") return value;
@@ -288,6 +288,7 @@ export default function ResultPage() {
                 title="Analysis Results"
                 subtitle="Your health analysis is complete"
                 accentColor="#00c2cb"
+                onEndSession={promptBackNavigation}
               />
 
               <div className="grid grid-cols-12 gap-6 overflow-hidden mb-6">

@@ -1,0 +1,92 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+
+type ScannerState = 'idle' | 'waiting' | 'detecting' | 'captured' | 'paused' | 'error' | 'preparing' | 'completed' | 'retrying' | 'countdown' | 'initializing';
+
+interface ScanAssistantSubtitleProps {
+  scannerState: ScannerState;
+  currentFinger: string;
+  countdown?: number | null;
+  errorMessage?: string;
+  onStartScanning?: () => void;
+  isPaused?: boolean;
+}
+
+export function ScanAssistantSubtitle({
+  scannerState,
+  currentFinger,
+  countdown,
+  errorMessage,
+  onStartScanning,
+  isPaused = false,
+}: ScanAssistantSubtitleProps) {
+  // State configuration - simplified for subtitle display
+  const stateConfig = {
+    idle: {
+      text: "Click 'Start Scanning' below to begin",
+      textClass: "text-teal-700",
+    },
+    initializing: {
+      text: "Preparing the scanner...",
+      textClass: "text-blue-600",
+    },
+    preparing: {
+      text: "Preparing scanner...",
+      textClass: "text-purple-700",
+    },
+    waiting: {
+      text: `Place your ${currentFinger}`,
+      textClass: "text-blue-700",
+    },
+    detecting: {
+      text: "Capturing...",
+      textClass: "text-teal-700",
+    },
+    captured: {
+      text: "Captured",
+      textClass: "text-green-700",
+    },
+    countdown: {
+      text: `Prepare your next finger... (Next in ${countdown})`,
+      textClass: "text-blue-700",
+    },
+    paused: {
+      text: "Scan paused - Click Resume to continue",
+      textClass: "text-amber-700",
+    },
+    completed: {
+      text: "All done! You're amazing!",
+      textClass: "text-purple-700",
+    },
+    retrying: {
+      text: "Let's try that again - place your finger!",
+      textClass: "text-orange-700",
+    },
+    error: {
+      text: errorMessage || "Scan unsuccessful - please try again",
+      textClass: "text-red-700",
+    },
+  };
+
+  const config = stateConfig[scannerState];
+
+  /* logic to override countdown text dynamically */
+  let displayText = config.text;
+  if (scannerState === 'countdown' && countdown !== undefined && countdown !== null) {
+      if (countdown > 3) {
+          displayText = `Prepare your ${currentFinger}...`;
+      } else {
+          displayText = `${currentFinger} in ${countdown}s...`;
+      }
+  }
+
+  return (
+    <div className="text-center mt-1">
+      {/* Instruction Text */}
+      <p className={`text-xl font-bold ${config.textClass} leading-relaxed`}>
+        {displayText}
+      </p>
+    </div>
+  );
+}
