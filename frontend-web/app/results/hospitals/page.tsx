@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/contexts/session-context";
 import { STEPS } from "@/lib/constants";
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 
 interface Facility {
   name: string;
@@ -163,6 +164,11 @@ export default function HospitalsPage() {
   return (
     <ProtectedRoute requireSession={true} requiredStep={STEPS.SCAN}>
       <div className="h-screen bg-white flex flex-col overflow-hidden">
+        <FullScreenLoader
+          isOpen={loading}
+          title="Loading Facilities"
+          subtitle="Please wait a moment…"
+        />
         <main className="flex-1 flex flex-col overflow-hidden select-none">
           <div className="flex flex-col px-28 py-6 overflow-hidden">
             <ProgressHeader
@@ -222,9 +228,7 @@ export default function HospitalsPage() {
             </div>
 
             <div className="flex-1 bg-white rounded-lg shadow-lg border-2 border-gray-200 overflow-y-auto p-5">
-              {loading ? (
-                <p className="text-sm text-gray-600">Loading facilities...</p>
-              ) : filteredFacilities.length === 0 ? (
+              {filteredFacilities.length === 0 ? (
                 <p className="text-sm text-gray-600">
                   No facilities available.
                 </p>

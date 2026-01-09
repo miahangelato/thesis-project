@@ -20,7 +20,7 @@ export function ResultsSidebar({
   demographics: StoredDemographics | null;
 }) {
   return (
-    <div className="col-span-4 flex flex-col">
+    <div className="col-span-4 flex flex-col h-full min-h-0 self-start">
       {/* Profile Card with All Info */}
       <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-5 h-full flex flex-col overflow-hidden">
         {/* BLOOD AND DIABETES RESULTS */}

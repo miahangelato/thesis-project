@@ -2,7 +2,11 @@
 
 from ninja import Router
 from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, HttpResponseRedirect
+from django.conf import settings
 import base64
+import os
+from pathlib import Path
 from .workflow_schemas import (
     SessionStartRequest, SessionStartResponse,
     DemographicsRequest, FingerprintRequest, FingerprintResponse,
@@ -15,6 +19,22 @@ from .pdf_service import get_pdf_generator
 from storage import get_storage
 
 router = Router()
+
+
+def _get_public_base_url(request) -> str:
+    """Public base URL for links/QR codes.
+
+    Prefer PUBLIC_BASE_URL env var (e.g., http://192.168.1.25:8000) so phones can
+    access the backend. Fallback to request host.
+    """
+    env_base = os.getenv("PUBLIC_BASE_URL")
+    if env_base:
+        return env_base.rstrip("/")
+
+    try:
+        return request.build_absolute_uri("/").rstrip("/")
+    except Exception:
+        return "http://localhost:8000"
 
 
 @router.post("/start", response=SessionStartResponse, tags=["Workflow"])
@@ -121,9 +141,8 @@ def _run_ml_predictions(demographics: dict, fingerprint_images: list):
     
     ml_service = get_ml_service()
     
-    # Load models if not already loaded
-    if ml_service.diabetes_model is None:
-        ml_service.load_models()
+    # Ensure all required models are ready (handles partial loads)
+    ml_service.ensure_models_loaded()
     
     # Run predictions
     diabetes_result = ml_service.predict_diabetes_risk(
@@ -323,8 +342,10 @@ def get_results(request, session_id: str):
 def generate_pdf_report(request, session_id: str):
     session_mgr = get_session_manager()
     session = session_mgr.get_session(session_id)
-    if not session or not session.get("completed"):
-        return JsonResponse({"error": "Invalid session"}, status=404)
+    if not session:
+        return JsonResponse({"error": "Invalid or expired session"}, status=404)
+    if not session.get("completed"):
+        return JsonResponse({"error": "Analysis not completed yet"}, status=400)
     predictions = session["predictions"]
     demographics = session["demographics"]
     patient_data = {**demographics, "pattern_arc": predictions["pattern_counts"]["arc"], "pattern_whorl": predictions["pattern_counts"]["whorl"], "pattern_loop": predictions["pattern_counts"]["loop"], "risk_score": predictions["diabetes_risk"], "risk_level": predictions["risk_level"], "blood_group": predictions.get("blood_group", "Not analyzed")}
@@ -333,7 +354,40 @@ def generate_pdf_report(request, session_id: str):
     storage = get_storage()
     filename = f"report_{session_id}.pdf"
     pdf_url = storage.save_file(pdf_bytes, filename, folder="reports")
+
+    # For now, use the direct stored PDF URL (e.g. /media/reports/...) for both
+    # downloads and QR codes. This avoids embedding a LAN IP in the QR.
+    download_url = pdf_url
     qr_bytes = pdf_gen.generate_qr_code(pdf_url)
     qr_filename = f"qr_{session_id}.png"
     qr_url = storage.save_file(qr_bytes, qr_filename, folder="qr_codes")
-    return {"success": True, "pdf_url": pdf_url, "qr_code_url": qr_url, "message": "PDF generated"}
+    return {"success": True, "pdf_url": pdf_url, "download_url": download_url, "qr_code_url": qr_url, "message": "PDF generated"}
+
+
+@router.get("/{session_id}/download-pdf", tags=["Workflow"])
+def download_pdf_report(request, session_id: str):
+    """Direct PDF download endpoint.
+
+    For local storage, returns a FileResponse with Content-Disposition attachment.
+    For remote storage, redirects to the public file URL.
+    """
+    storage = get_storage()
+    filename = f"report_{session_id}.pdf"
+
+    # LocalStorage writes into MEDIA_ROOT/<folder>/<filename>
+    storage_type = type(storage).__name__
+    if storage_type == "LocalStorage":
+        file_path = Path(settings.MEDIA_ROOT) / "reports" / filename
+        if not file_path.exists():
+            return JsonResponse({"error": "PDF not found"}, status=404)
+
+        response = FileResponse(open(file_path, "rb"), content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="health_report_{session_id}.pdf"'
+        return response
+
+    # Fallback: redirect to whatever the storage backend says
+    try:
+        pdf_url = storage.get_file_url(filename, folder="reports")
+        return HttpResponseRedirect(pdf_url)
+    except Exception:
+        return JsonResponse({"error": "PDF not found"}, status=404)

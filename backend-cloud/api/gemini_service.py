@@ -125,7 +125,6 @@ Based on your scanned fingerprints:
 [Provide 1-2 sentences explaining what this pattern distribution suggests in correlation with the risk level, without claiming causation]
 
 🤖 How This Affected Your Result
-
 Fingerprint pattern analysis was used as one component of your overall health screening.
 It was combined with:
 - Image-based fingerprint feature extraction (Convolutional Neural Networks - CNNs)
@@ -135,11 +134,9 @@ It was combined with:
 They contributed alongside other factors to generate a screening-level risk assessment.
 
 Recommendations
-
 [Provide 3-4 actionable recommendations based on their risk level]
 
 🛡️ Important Note
-
 This analysis is intended for health screening and research purposes only.
 It does not provide a medical diagnosis. Always consult a licensed healthcare professional for clinical evaluation.
 
@@ -152,7 +149,6 @@ TONE GUIDELINES:
 - DO NOT use markdown formatting symbols (no ##, **, ---, etc.)
 - Use only plain text with emoji icons for visual organization
 """
-
         
         try:
             # Apply rate limiting

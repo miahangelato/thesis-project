@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, Info, QrCode, Smartphone } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
@@ -18,6 +20,22 @@ export function ResultsDownloadTab({
   onDirectDownload: () => void;
   onReset: () => void;
 }) {
+  const [qrValue, setQrValue] = useState<string>("");
+
+  useEffect(() => {
+    if (!pdfUrl) {
+      setQrValue("");
+      return;
+    }
+
+    const origin = window.location.origin;
+    const session = window.sessionStorage.getItem("current_session_id") || "";
+    const url = session
+      ? `${origin}/download?session=${encodeURIComponent(session)}`
+      : `${origin}/download`;
+    setQrValue(url);
+  }, [pdfUrl]);
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-bold text-gray-800 mb-4">
@@ -61,7 +79,7 @@ export function ResultsDownloadTab({
 
               <div className="bg-white p-4 rounded-lg shadow-inner">
                 <QRCodeSVG
-                  value={pdfUrl}
+                  value={qrValue || pdfUrl}
                   size={200}
                   level="M"
                   includeMargin={true}

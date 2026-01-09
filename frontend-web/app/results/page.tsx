@@ -38,12 +38,14 @@ export default function ResultPage() {
   };
 
   const generatePDF = async () => {
-    if (!sessionId) return;
+    const activeSessionId =
+      sessionId || sessionStorage.getItem("current_session_id");
+    if (!activeSessionId) return;
     try {
       setPdfLoading(true);
       setPdfError(null);
-      const response = await sessionAPI.generatePDF(sessionId);
-      setPdfUrl(response.data.pdf_url);
+      const response = await sessionAPI.generatePDF(activeSessionId);
+      setPdfUrl(response.data.download_url || response.data.pdf_url);
     } catch (err: unknown) {
       console.error("Failed to generate PDF:", err);
 
@@ -73,7 +75,9 @@ export default function ResultPage() {
     try {
       const link = document.createElement("a");
       link.href = pdfUrl;
-      link.download = `health_report_${sessionId}.pdf`;
+      const activeSessionId =
+        sessionId || sessionStorage.getItem("current_session_id");
+      link.download = `health_report_${activeSessionId ?? "report"}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -105,7 +109,7 @@ export default function ResultPage() {
         />
         <div className="h-screen bg-white flex flex-col overflow-hidden">
           <main className="flex-1 flex flex-col overflow-hidden select-none">
-            <div className="flex flex-col px-28 py-6 overflow-hidden">
+            <div className="flex flex-col flex-1 min-h-0 px-28 py-6 overflow-hidden">
               <ProgressHeader
                 currentStep={STEPS.RESULTS}
                 totalSteps={4}
@@ -115,7 +119,7 @@ export default function ResultPage() {
                 onEndSession={promptBackNavigation}
               />
 
-              <div className="grid grid-cols-12 gap-6 overflow-hidden mb-6">
+              <div className="grid grid-cols-12 gap-6 flex-1 min-h-0 pb-4 mb-6">
                 {/* Left Sidebar - Results & Profile */}
                 <ResultsSidebar
                   result={result}
@@ -125,7 +129,7 @@ export default function ResultPage() {
                 />
 
                 {/* Right Content Area - Tabs */}
-                <div className="col-span-8 flex flex-col overflow-hidden">
+                <div className="col-span-8 flex flex-col min-h-0">
                   {/* Tab Navigation */}
                   <ResultsTabs
                     activeTab={activeTab}
