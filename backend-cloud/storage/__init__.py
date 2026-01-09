@@ -12,6 +12,9 @@ def get_storage():
     elif backend == "aws":
         from .aws_storage import AWSStorage
         return AWSStorage()
+    elif backend == "local":
+        from .local_storage import LocalStorage
+        return LocalStorage()
     else:
         raise ValueError(f"Unknown storage backend: '{backend}'")
 

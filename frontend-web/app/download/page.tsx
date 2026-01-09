@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useEffect} from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/contexts/session-context";
 import { sessionAPI } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Download,
@@ -19,23 +26,46 @@ import {
 
 export default function DownloadPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { sessionId } = useSession();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [qrValue, setQrValue] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!sessionId) {
+    const sessionFromQuery = searchParams.get("session");
+    const activeSessionId =
+      sessionFromQuery ||
+      sessionId ||
+      sessionStorage.getItem("current_session_id");
+    if (!activeSessionId) {
       router.push("/");
       return;
     }
 
+    // Persist so the Results tab QR can reuse it.
+    try {
+      sessionStorage.setItem("current_session_id", activeSessionId);
+    } catch {
+      // ignore
+    }
+
+    // QR should point back to this frontend page (dev: localhost:3000).
+    setQrValue(
+      `${window.location.origin}/download?session=${encodeURIComponent(
+        activeSessionId
+      )}`
+    );
+
     const generatePDF = async () => {
       try {
         setLoading(true);
-        const response = await sessionAPI.generatePDF(sessionId);
+        const response = await sessionAPI.generatePDF(activeSessionId);
         setPdfUrl(response.data.pdf_url);
+        setDownloadUrl(response.data.download_url || response.data.pdf_url);
         setQrCodeUrl(response.data.qr_code_url);
       } catch (err: any) {
         console.error("Failed to generate PDF:", err);
@@ -49,11 +79,12 @@ export default function DownloadPage() {
   }, [sessionId, router]);
 
   const handleDirectDownload = async () => {
-    if (!pdfUrl) return;
+    const url = downloadUrl || pdfUrl;
+    if (!url) return;
 
     try {
       const link = document.createElement("a");
-      link.href = pdfUrl;
+      link.href = url;
       link.download = `health_report_${sessionId}.pdf`;
       document.body.appendChild(link);
       link.click();
@@ -66,14 +97,10 @@ export default function DownloadPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardContent className="pt-6">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Generating your PDF report...</p>
-          </CardContent>
-        </Card>
-      </div>
+      <FullScreenLoader
+        title="Generating Your PDF Report"
+        subtitle="Please wait a moment…"
+      />
     );
   }
 
@@ -96,10 +123,7 @@ export default function DownloadPage() {
               >
                 Back to Results
               </Button>
-              <Button
-                onClick={() => router.push("/")}
-                className="flex-1"
-              >
+              <Button onClick={() => router.push("/")} className="flex-1">
                 <Home className="mr-2 h-4 w-4" />
                 Home
               </Button>
@@ -131,11 +155,11 @@ export default function DownloadPage() {
                 <QrCode className="h-6 w-6" />
                 Scan to Download
               </div>
-              
-              {pdfUrl && (
+
+              {(downloadUrl || pdfUrl) && (
                 <div className="bg-white p-6 rounded-lg shadow-inner">
                   <QRCodeSVG
-                    value={pdfUrl}
+                    value={qrValue || downloadUrl || pdfUrl || ""}
                     size={256}
                     level="M"
                     includeMargin={true}
@@ -146,7 +170,8 @@ export default function DownloadPage() {
               <div className="flex items-start gap-2 text-sm text-muted-foreground max-w-sm text-center">
                 <Smartphone className="h-4 w-4 mt-0.5 shrink-0" />
                 <p>
-                  Scan this QR code with your smartphone to download the PDF report directly to your device
+                  Scan this QR code with your smartphone to download the PDF
+                  report directly to your device
                 </p>
               </div>
             </div>
@@ -158,11 +183,7 @@ export default function DownloadPage() {
               Or download directly
             </div>
 
-            <Button
-              onClick={handleDirectDownload}
-              size="lg"
-              className="w-full"
-            >
+            <Button onClick={handleDirectDownload} size="lg" className="w-full">
               <Download className="mr-2 h-5 w-5" />
               Download PDF Report
             </Button>
@@ -172,7 +193,9 @@ export default function DownloadPage() {
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              <strong>Note:</strong> This report is for personal records only. It should not be used for medical diagnosis or treatment without consulting a healthcare professional.
+              <strong>Note:</strong> This report is for personal records only.
+              It should not be used for medical diagnosis or treatment without
+              consulting a healthcare professional.
             </AlertDescription>
           </Alert>
 
@@ -185,10 +208,7 @@ export default function DownloadPage() {
             >
               Back to Results
             </Button>
-            <Button
-              onClick={() => router.push("/")}
-              className="flex-1"
-            >
+            <Button onClick={() => router.push("/")} className="flex-1">
               <Home className="mr-2 h-4 w-4" />
               New Analysis
             </Button>

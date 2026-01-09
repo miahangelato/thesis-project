@@ -43,6 +43,7 @@ class MLService:
             return
             
         self.models_path = Path(__file__).parent.parent.parent / "shared-models"
+        self.support_cache_path = self.models_path / "blood_support_embeddings.npz"
         
         # Diabetes models
         self.diabetes_model = None
@@ -54,6 +55,8 @@ class MLService:
         self.blood_embedding_model = None
         self.support_embeddings = []
         self.support_labels = []
+        self.support_initialized = False
+        self.support_available = False
         
         self._initialized = True
         logger.info("MLService initialized (models not loaded yet)")
@@ -76,18 +79,13 @@ class MLService:
             
             # Load pattern recognition CNN
             logger.info("Loading Pattern CNN...")
-            # Use native Keras 3
-            import keras
-            import tensorflow as tf
+            tf = get_tensorflow()
+            keras = tf.keras
             
             pattern_cnn_path = str(self.models_path / "improved_pattern_cnn_model_retrained.h5")
             logger.info(f"Pattern CNN path: {pattern_cnn_path}")
             
-            self.pattern_cnn = keras.models.load_model(
-                pattern_cnn_path, 
-                compile=False,
-                safe_mode=False
-            )
+            self.pattern_cnn = self._load_pattern_cnn_model(keras, pattern_cnn_path)
             logger.info("✓ Pattern CNN loaded")
             
             # Load blood group embedding model  
@@ -95,6 +93,8 @@ class MLService:
             logger.info("Loading Blood Group model...")
             blood_model_path = str(self.models_path / "blood_type_triplet_embedding.h5")
             logger.info(f"Blood Group model path: {blood_model_path}")
+            tf = get_tensorflow()
+            keras = tf.keras
             
             # Build embedding model architecture (128x128 RGB input, 64-dim output)
             inputs = keras.layers.Input(shape=(128, 128, 3))
@@ -116,7 +116,10 @@ class MLService:
             self.blood_embedding_model.load_weights(blood_model_path)
             logger.info("✓ Blood group embedding model loaded")
             
-            # Initialize support set
+            # Reset support set before initializing
+            self.support_embeddings = []
+            self.support_labels = []
+            self.support_initialized = False
             self._initialize_support_set()
             
             logger.info("All models loaded successfully!")
@@ -124,27 +127,105 @@ class MLService:
         except Exception as e:
             logger.error(f"Error loading models: {e}", exc_info=True)
             raise
+
+    def ensure_models_loaded(self):
+        """Load models if any required component missing."""
+        dataset_path = self.models_path / "dataset" / "train"
+        support_required = dataset_path.exists()
+        support_ready = True
+        if support_required:
+            support_ready = self.support_available and len(self.support_embeddings) > 0
+
+        needs_reload = any([
+            self.diabetes_model is None,
+            self.diabetes_scaler is None,
+            self.diabetes_imputer is None,
+            self.pattern_cnn is None,
+            self.blood_embedding_model is None,
+            not support_ready,
+        ])
+
+        if needs_reload:
+            logger.info("Model components missing; reloading ML artifacts...")
+            self.load_models()
+
+    @staticmethod
+    def _load_pattern_cnn_model(keras, model_path: str):
+        """Load Pattern CNN with compatibility handling for legacy configs."""
+
+        tf = get_tensorflow()
+
+        class InputLayerCompat(keras.layers.InputLayer):
+            def __init__(self, *args, batch_shape=None, **kwargs):
+                if batch_shape is not None and "batch_input_shape" not in kwargs:
+                    kwargs["batch_input_shape"] = batch_shape
+                super().__init__(*args, **kwargs)
+
+        custom_objects = {"InputLayer": InputLayerCompat}
+
+        policy_cls = getattr(tf.keras.mixed_precision, "Policy", None)
+        if policy_cls is not None:
+            custom_objects["DTypePolicy"] = policy_cls
+
+        return keras.models.load_model(
+            model_path,
+            compile=False,
+            safe_mode=False,
+            custom_objects=custom_objects,
+        )
     
     def _initialize_support_set(self):
-        """Pre-compute embeddings for the support set."""
+        """Pre-compute embeddings for the support set (with disk cache)."""
         logger.info("Initializing support set embeddings...")
-        
+
+        # Try fast-path cache load first to avoid recomputing on every boot
+        if self.support_cache_path.exists():
+            try:
+                cache = np.load(self.support_cache_path)
+                embeddings = cache["embeddings"]
+                labels = cache["labels"].tolist()
+                if embeddings.size and labels:
+                    self.support_embeddings = embeddings
+                    self.support_labels = labels
+                    self.support_initialized = True
+                    self.support_available = True
+                    logger.info(
+                        "✓ Loaded support set from cache (%d samples)",
+                        embeddings.shape[0],
+                    )
+                    return
+                logger.warning(
+                    "Support cache at %s was empty; rebuilding from dataset",
+                    self.support_cache_path,
+                )
+            except Exception as cache_err:
+                logger.warning(
+                    "Failed to load support cache at %s: %s",
+                    self.support_cache_path,
+                    cache_err,
+                )
+
         dataset_path = self.models_path / "dataset" / "train"
-        
+
         if not dataset_path.exists():
             logger.warning(f"Support set not found at {dataset_path}")
+            self.support_available = False
+            self.support_initialized = False
             return
-        
+
         cv2 = get_cv2()
-        
+
+        embeddings: List[np.ndarray] = []
+        labels: List[str] = []
+
         # Process each blood group folder
         for blood_type in ['A', 'AB', 'B', 'O']:
             folder = dataset_path / blood_type
             if not folder.exists():
                 continue
-            
+
             images = list(folder.glob("*.png")) + list(folder.glob("*.jpg"))
-            
+
             for img_path in images:
                 try:
                     # Load and preprocess image for Blood Group model (128x128, RGB)
@@ -155,17 +236,46 @@ class MLService:
                     img = cv2.resize(img, (128, 128))
                     img = img.astype('float32') / 255.0
                     img = np.expand_dims(img, axis=0) # Add batch dim -> (1, 128, 128, 3)
-                    
+
                     # Get embedding
                     embedding = self.blood_embedding_model.predict(img, verbose=0)[0]
-                    
-                    self.support_embeddings.append(embedding)
-                    self.support_labels.append(blood_type)
-                    
+
+                    embeddings.append(embedding)
+                    labels.append(blood_type)
+
                 except Exception as e:
                     logger.warning(f"Failed to process {img_path}: {e}")
-        
-        logger.info(f"✓ Support set initialized with {len(self.support_embeddings)} samples")
+
+        if embeddings:
+            self.support_embeddings = np.array(embeddings, dtype=np.float32)
+            self.support_labels = labels
+            self.support_initialized = True
+            self.support_available = True
+            logger.info(
+                "✓ Support set initialized with %d samples",
+                self.support_embeddings.shape[0],
+            )
+
+            try:
+                np.savez(
+                    self.support_cache_path,
+                    embeddings=self.support_embeddings,
+                    labels=np.array(self.support_labels),
+                )
+                logger.info(
+                    "💾 Cached support embeddings to %s",
+                    self.support_cache_path,
+                )
+            except Exception as save_err:
+                logger.warning(
+                    "Failed to cache support embeddings to %s: %s",
+                    self.support_cache_path,
+                    save_err,
+                )
+        else:
+            logger.warning("Support set directory was present but no embeddings were created")
+            self.support_initialized = False
+            self.support_available = False
     
     def predict_pattern(self, image_array: np.ndarray) -> str:
         """Predict fingerprint pattern (Arc/Whorl/Loop)."""
@@ -260,8 +370,19 @@ class MLService:
         if self.blood_embedding_model is None:
             raise RuntimeError("Blood group model not loaded")
         
-        if len(self.support_embeddings) == 0:
-            raise RuntimeError("Support set not initialized")
+        support_count = (
+            len(self.support_embeddings)
+            if self.support_embeddings is not None
+            else 0
+        )
+
+        if not self.support_available or support_count == 0:
+            logger.warning("Support set unavailable; returning default blood group 'Unknown'")
+            return {
+                'blood_group': 'Unknown',
+                'confidence': 0.0,
+                'distance': None
+            }
         
         cv2 = get_cv2()
         
@@ -289,18 +410,20 @@ class MLService:
         # Average embeddings (per-patient aggregation)
         avg_embedding = np.mean(embeddings, axis=0)
         
+        # Ensure support embeddings are numpy array for vectorized distance calc
+        support_embeddings = self.support_embeddings
+        if isinstance(support_embeddings, list):
+            support_embeddings = np.array(support_embeddings, dtype=np.float32)
+
         # Find nearest neighbor in support set
-        distances = []
-        for support_emb in self.support_embeddings:
-            dist = np.linalg.norm(avg_embedding - support_emb)
-            distances.append(dist)
+        distances = np.linalg.norm(support_embeddings - avg_embedding, axis=1)
         
         # Get closest match
-        closest_idx = np.argmin(distances)
+        closest_idx = int(np.argmin(distances))
         predicted_blood_group = self.support_labels[closest_idx]
         
         # Calculate confidence (inverse of distance, normalized)
-        min_distance = distances[closest_idx]
+        min_distance = float(distances[closest_idx])
         confidence = 1.0 / (1.0 + min_distance)
         
         return {

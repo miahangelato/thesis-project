@@ -24,6 +24,7 @@ import { StepNavigation } from "@/components/layout/step-navigation";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
 import { SessionEndModal } from "@/components/modals/session-end-modal";
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 
 import { ROUTES, STEPS } from "@/lib/constants";
 
@@ -64,29 +65,11 @@ export default function ConsentPage() {
           onCancel={handleCancel}
         />
 
-        {/* Loading Overlay (bigger, kiosk-friendly) */}
-        {loading && (
-          <div className="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-5">
-              <div className="relative">
-                <div className="w-20 h-20 border-4 border-[#e4f7f8] border-t-[#00c2cb] rounded-full animate-spin" />
-                <div
-                  className="absolute inset-0 w-20 h-20 border-4 border-transparent border-b-[#00adb5] rounded-full animate-spin"
-                  style={{
-                    animationDirection: "reverse",
-                    animationDuration: "1s",
-                  }}
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-800 mb-1">
-                  Preparing Your Session
-                </p>
-                <p className="text-base text-gray-600">Please wait a moment…</p>
-              </div>
-            </div>
-          </div>
-        )}
+        <FullScreenLoader
+          isOpen={loading}
+          title="Preparing Your Session"
+          subtitle="Please wait a moment…"
+        />
 
         <div className="h-screen px-28 py-6 bg-white flex flex-col overflow-hidden select-none">
           <main className="w-full flex-1 flex flex-col overflow-hidden">
@@ -309,28 +292,22 @@ export default function ConsentPage() {
                   </div>
                 </div>
               </div>
-
-
             </div>
           </main>
-                      <div className="mt-2 mb-4">
-                <StepNavigation
-                  onBack={handleBack}
-                  onNext={handleNext}
-                  isNextDisabled={loading || consent === null}
-                  nextLabel="Continue to Analysis"
-                  loading={loading}
-                  isSubmit={false}
-                />
-              </div>
+          <div className="mt-2 mb-4">
+            <StepNavigation
+              onBack={handleBack}
+              onNext={handleNext}
+              isNextDisabled={loading || consent === null}
+              nextLabel="Continue to Analysis"
+              loading={loading}
+              isSubmit={false}
+            />
+          </div>
 
-          <Footer 
-            transparent 
-            customContent={
-              <>
-                No needles • Non-invasive • Privacy-first
-              </>
-            }
+          <Footer
+            transparent
+            customContent={<>No needles • Non-invasive • Privacy-first</>}
           />
         </div>
       </>

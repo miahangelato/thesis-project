@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/contexts/session-context";
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,15 +11,16 @@ interface ProtectedRouteProps {
   requiredStep?: number; // The minimum step required to access this page
 }
 
-export function ProtectedRoute({ 
-  children, 
+export function ProtectedRoute({
+  children,
   requireSession = true,
-  requiredStep = 0 
+  requiredStep = 0,
 }: ProtectedRouteProps) {
   const router = useRouter();
-  const { sessionId, currentStep } = useSession();
+  const { sessionId, currentStep, isLoading } = useSession();
 
   useEffect(() => {
+    if (isLoading) return;
     if (requireSession && !sessionId) {
       // No session, redirect to landing page
       router.replace("/");
@@ -26,7 +28,13 @@ export function ProtectedRoute({
       // User is trying to access a page they haven't reached yet
       router.replace("/");
     }
-  }, [sessionId, currentStep, requireSession, requiredStep, router]);
+  }, [sessionId, currentStep, requireSession, requiredStep, router, isLoading]);
+
+  if (isLoading) {
+    return (
+      <FullScreenLoader title="Loading" subtitle="Please wait a moment…" />
+    );
+  }
 
   if (requireSession && !sessionId) {
     return null;

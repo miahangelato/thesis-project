@@ -28,12 +28,12 @@ export const FinishConfirmationModal = ({
                <Fingerprint className="w-6 h-6 text-teal-600" />
             </div>
             
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Ready to Finish?</h3>
+            <h3 className="text-4xl font-bold text-gray-900 mb-2">Ready to Finish?</h3>
             <p className="text-gray-600 mb-6">
               Please confirm you have scanned and reviewed all 10 fingerprints. You can still review them if needed.
             </p>
             
-            <ul className="mb-6 space-y-2 text-sm text-gray-500 text-left bg-gray-50 p-4 rounded-lg">
+            <ul className="mb-6 space-y-2 text-lg text-gray-500 text-left bg-gray-50 p-4 rounded-lg">
                <li className="flex items-center gap-2">
                  <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
                  All 10 fingers captured
@@ -50,7 +50,7 @@ export const FinishConfirmationModal = ({
                 variant="outline"
                 onClick={onCancel}
                 disabled={loading}
-                className="flex-1 h-12 text-base"
+                className="flex-1 h-12 text-base cursor-pointer"
               >
                 Review Again
               </Button>
@@ -58,7 +58,7 @@ export const FinishConfirmationModal = ({
                 type="button"
                 onClick={onConfirm}
                 disabled={loading}
-                className="flex-1 h-12 text-base bg-teal-600 hover:bg-teal-700 text-white font-bold"
+                className="flex-1 h-12 text-base bg-teal-600 hover:bg-teal-700 text-white font-bold cursor-pointer"
               >
                 Yes, Finish!
               </Button>
