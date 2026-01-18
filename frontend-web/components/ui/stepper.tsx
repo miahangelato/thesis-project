@@ -21,13 +21,19 @@ export function Stepper({ currentStep, totalSteps, steps }: StepperProps) {
           return (
             <div
               key={idx}
-              className={`flex-1 text-center transition-all ${ 
+              className={`flex-1 text-center transition-all ${
                 idx < steps.length - 1 ? "mr-2" : ""
               }`}
             >
-              <div className={`text-sm font-medium ${
-                isActive ? "text-primary" : isCompleted ? "text-primary/60" : "text-muted-foreground"
-              }`}>
+              <div
+                className={`text-sm font-medium ${
+                  isActive
+                    ? "text-primary"
+                    : isCompleted
+                      ? "text-primary/60"
+                      : "text-muted-foreground"
+                }`}
+              >
                 {step}
               </div>
             </div>

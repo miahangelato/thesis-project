@@ -14,7 +14,7 @@ DEBUG = os.getenv("KIOSK_SCANNER_DEBUG", "True").lower() == "true"
 
 # CORS Configuration - Allow frontend to connect
 CORS_ORIGINS = os.getenv("KIOSK_SCANNER_CORS_ORIGINS", "").split(",")
-CORS_ALLOW_ALL = os.getenv("KIOSK_SCANNER_CORS_ALLOW_ALL", "True").lower() == "true"
+CORS_ALLOW_ALL = os.getenv("KIOSK_SCANNER_CORS_ALLOW_ALL", "False").lower() == "true"
 
 # Cloud Backend Configuration
 CLOUD_API_URL = os.getenv("KIOSK_SCANNER_CLOUD_API_URL")

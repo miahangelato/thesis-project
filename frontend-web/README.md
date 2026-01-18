@@ -93,6 +93,7 @@ python manage.py runserver
 ## 📦 Dependencies
 
 Key packages:
+
 - `next` - React framework
 - `axios` - HTTP client
 - `@radix-ui/*` - Headless UI primitives
@@ -101,6 +102,7 @@ Key packages:
 - `qrcode.react` - QR code generation
 
 Install all:
+
 ```powershell
 npm install
 ```
@@ -115,7 +117,7 @@ npm install
 ✅ PDF report generation  
 ✅ QR code for mobile download  
 ✅ Responsive design  
-✅ Type-safe API integration  
+✅ Type-safe API integration
 
 ## 📄 License
 

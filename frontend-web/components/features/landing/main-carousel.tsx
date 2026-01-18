@@ -56,6 +56,9 @@ export function MainCarousel({
 
   const slide = landingCarouselSlides[currentSlide];
 
+  // All hooks must be called before any conditional returns
+  const [swipeStart, setSwipeStart] = useState<number | null>(null);
+
   // Safety check - if slide is undefined, don't render
   if (!slide) return null;
 
@@ -78,8 +81,6 @@ export function MainCarousel({
     }),
   };
 
-  const [swipeStart, setSwipeStart] = useState<number | null>(null);
-
   return (
     <div className="flex flex-col w-full">
       <div
@@ -88,7 +89,13 @@ export function MainCarousel({
         onMouseUp={(e) => {
           if (swipeStart !== null) {
             const diffX = e.clientX - swipeStart;
-            if (Math.abs(diffX) > 100) diffX > 0 ? prevSlide() : nextSlide();
+            if (Math.abs(diffX) > 100) {
+              if (diffX > 0) {
+                prevSlide();
+              } else {
+                nextSlide();
+              }
+            }
             setSwipeStart(null);
           }
         }}
@@ -96,7 +103,13 @@ export function MainCarousel({
         onTouchEnd={(e) => {
           if (swipeStart !== null) {
             const diffX = e.changedTouches[0].clientX - swipeStart;
-            if (Math.abs(diffX) > 100) diffX > 0 ? prevSlide() : nextSlide();
+            if (Math.abs(diffX) > 100) {
+              if (diffX > 0) {
+                prevSlide();
+              } else {
+                nextSlide();
+              }
+            }
             setSwipeStart(null);
           }
         }}
@@ -135,9 +148,7 @@ export function MainCarousel({
               <div className="space-y-2 mb-10">
                 {slide.content.map((line, idx) => {
                   const isBullet = line.trim().startsWith("•");
-                  const text = isBullet
-                    ? line.trim().substring(1).trim()
-                    : line;
+                  const text = isBullet ? line.trim().substring(1).trim() : line;
 
                   return (
                     <div
@@ -145,9 +156,7 @@ export function MainCarousel({
                       className={`flex items-start ${isBullet ? "pl-2" : ""}`}
                     >
                       {isBullet && (
-                        <span className="text-[#00c2cb] mr-2 font-bold text-lg">
-                          •
-                        </span>
+                        <span className="text-[#00c2cb] mr-2 font-bold text-lg">•</span>
                       )}
                       <p className="text-gray-600 text-base lg:text-lg xl:text-xl leading-relaxed select-none">
                         {text}

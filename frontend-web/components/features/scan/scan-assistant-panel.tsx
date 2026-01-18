@@ -26,7 +26,7 @@ interface ScanAssistantPanelProps {
   fingerIndex: number;
   totalFingers: number;
   previewFrame?: string | null;
-  animationData?: any;
+  animationData?: Record<string, unknown>;
   metrics?: {
     coverage?: number;
     centroid_dx?: number;
@@ -136,6 +136,7 @@ export function ScanAssistantPanel({
           {previewSrc ? (
             // Show live preview
             <div className="w-64 h-64 bg-white rounded-2xl border-2 border-teal-300 overflow-hidden flex items-center justify-center relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={previewSrc}
                 alt="Live preview"
@@ -173,9 +174,7 @@ export function ScanAssistantPanel({
         {/* Primary Status */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
-            <StatusIcon
-              className={`w-6 h-6 ${statusColors[status]} ${iconClass}`}
-            />
+            <StatusIcon className={`w-6 h-6 ${statusColors[status]} ${iconClass}`} />
             <p className={`text-2xl font-bold ${statusColors[status]}`}>
               {primaryMessage}
             </p>

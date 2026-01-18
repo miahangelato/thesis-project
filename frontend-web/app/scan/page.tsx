@@ -51,21 +51,22 @@ export default function ScanPage() {
     handleNextFinger,
     handlePreviousFinger,
     togglePaused,
+    handleRescan,
+    rescanningFinger,
   } = useScanSession();
 
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [showScanConfirmModal, setShowScanConfirmModal] = useState(false); // Confirmation modal for starting scan
   const [showCancelModal, setShowCancelModal] = useState(false); // Cancel session modal
   const { showModal, handleConfirm, handleCancel, promptBackNavigation } =
-    useBackNavigation(true);
+    useBackNavigation(false);
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false); // New modal state
 
   const handleSubmit = async () => {
     if (loading) return;
     setLoading(true);
     try {
-      const activeSessionId =
-        sessionId || sessionStorage.getItem("current_session_id");
+      const activeSessionId = sessionId || sessionStorage.getItem("current_session_id");
 
       if (!activeSessionId) {
         console.error("No session ID available");
@@ -74,36 +75,31 @@ export default function ScanPage() {
         return;
       }
 
-      console.log(
-        `Uploading ${Object.keys(fingerFiles).length} fingerprints...`
-      );
+      console.log(`Uploading ${Object.keys(fingerFiles).length} fingerprints...`);
 
       // Upload all files
-      const uploadPromises = Object.entries(fingerFiles).map(
-        async ([finger, file]) => {
-          return new Promise<void>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-              const base64 = reader.result as string;
-              try {
-                console.log(`Uploading ${finger}...`);
-                await sessionAPI.submitFingerprint(activeSessionId, {
-                  finger_name: finger,
-                  image: base64,
-                });
-                console.log(`${finger} uploaded successfully`);
-                resolve();
-              } catch (e) {
-                console.error(`Failed to upload ${finger}:`, e);
-                reject(e);
-              }
-            };
-            reader.onerror = () =>
-              reject(new Error(`Failed to read file for ${finger}`));
-            reader.readAsDataURL(file);
-          });
-        }
-      );
+      const uploadPromises = Object.entries(fingerFiles).map(async ([finger, file]) => {
+        return new Promise<void>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = async () => {
+            const base64 = reader.result as string;
+            try {
+              console.log(`Uploading ${finger}...`);
+              await sessionAPI.submitFingerprint(activeSessionId, {
+                finger_name: finger,
+                image: base64,
+              });
+              console.log(`${finger} uploaded successfully`);
+              resolve();
+            } catch (e) {
+              console.error(`Failed to upload ${finger}:`, e);
+              reject(e);
+            }
+          };
+          reader.onerror = () => reject(new Error(`Failed to read file for ${finger}`));
+          reader.readAsDataURL(file);
+        });
+      });
 
       await Promise.all(uploadPromises);
       console.log("All fingerprints uploaded successfully");
@@ -114,9 +110,21 @@ export default function ScanPage() {
       console.log("Analysis API response:", analyzeResponse);
       console.log("Analysis completed successfully");
 
+      // Call /results endpoint to save to database AND get QR code URLs
+      console.log("💾 Calling /results to save to database...");
+      let finalData = analyzeResponse.data; // Fallback
+      try {
+        const resultsResponse = await sessionAPI.getResults(activeSessionId);
+        console.log("✅ Database save result:", resultsResponse.data?.saved_to_database);
+        finalData = resultsResponse.data; // Use results response (includes QR URLs!)
+      } catch (resultsError) {
+        console.error("⚠️ Failed to save to database:", resultsError);
+        // Continue anyway - user can still see results
+      }
+
       // Store results in sessionStorage for the results page
       const resultsData = {
-        data: analyzeResponse.data,
+        data: finalData, // Now includes qr_code_url and download_url!
         expiry: Date.now() + 3600000, // 1 hour expiry
       };
       // Encode with UTF-8 safe base64 to handle emoji/unicode in AI text
@@ -225,7 +233,6 @@ export default function ScanPage() {
                       loading={loading}
                       currentFingerIndex={currentFingerIndex}
                       fingerFiles={fingerFiles}
-                      demographics={demographics}
                       countdown={countdown}
                       scannerReady={scannerReady}
                       scanningStarted={scanningStarted}
@@ -238,15 +245,18 @@ export default function ScanPage() {
                       scanAssistantState={scanAssistantState}
                       firstUnscannedIndex={firstUnscannedIndex}
                       setScannerReady={setScannerReady}
-                      onRequestStartScanning={() =>
-                        setShowScanConfirmModal(true)
-                      }
-                      onOpenCancelModal={() => setShowCancelModal(true)}
+                      onRequestStartScanning={() => setShowScanConfirmModal(true)}
+                      onOpenCancelModal={() => {
+                        if (!paused) togglePaused();
+                        setShowCancelModal(true);
+                      }}
                       onOpenResetModal={() => setShowResetConfirmModal(true)}
                       onCapture={handleCapture}
                       onPreviousFinger={handlePreviousFinger}
                       onNextFinger={handleNextFinger}
                       onTogglePaused={togglePaused}
+                      onRescan={handleRescan}
+                      rescanningFinger={rescanningFinger}
                     />
                   </div>
 
@@ -258,7 +268,7 @@ export default function ScanPage() {
 
             <div className="flex justify-between items-center mt-6 mb-4 select-none">
               <StepNavigation
-                onBack={promptBackNavigation}
+                onBack={() => router.back()}
                 isSubmit={false}
                 loading={loading}
                 isNextDisabled={loading || scannedCount < totalFingers}

@@ -1,9 +1,26 @@
 "use client";
 
-import { Fingerprint, Loader2, CheckCircle, AlertCircle, Pause, Play, RotateCcw } from "lucide-react";
+import {
+  Fingerprint,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  Pause,
+  Play,
+  RotateCcw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type ScannerState = 'idle' | 'waiting' | 'detecting' | 'captured' | 'paused' | 'error' | 'preparing' | 'completed' | 'retrying';
+type ScannerState =
+  | "idle"
+  | "waiting"
+  | "detecting"
+  | "captured"
+  | "paused"
+  | "error"
+  | "preparing"
+  | "completed"
+  | "retrying";
 
 interface ScanAssistantProps {
   scannerState: ScannerState;
@@ -34,9 +51,12 @@ export function ScanAssistant({
   onResume,
   onStartScanning,
   isPaused = false,
-  currentFingerIndex = 0,
-  totalFingers = 10,
-  scannedCount = 0,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  currentFingerIndex: _currentFingerIndex = 0,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  totalFingers: _totalFingers = 10,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  scannedCount: _scannedCount = 0,
 }: ScanAssistantProps) {
   // State configuration
   const stateConfig = {
@@ -88,7 +108,12 @@ export function ScanAssistant({
       textClass: "text-green-900",
       subtextClass: "text-green-700",
       title: "Awesome! Got it! 🎉",
-      subtitle: countdown && !isPaused ? `Next finger ready in ${countdown}s...` : isPaused ? "Paused - take your time!" : "Great job! Moving to next finger...",
+      subtitle:
+        countdown && !isPaused
+          ? `Next finger ready in ${countdown}s...`
+          : isPaused
+            ? "Paused - take your time!"
+            : "Great job! Moving to next finger...",
     },
     paused: {
       icon: Pause,
@@ -127,20 +152,24 @@ export function ScanAssistant({
       borderClass: "border-red-200",
       textClass: "text-red-900",
       subtextClass: "text-red-700",
-      title: errorMessage?.includes('after 3 attempts') ? 'No finger detected' : 'Scan unsuccessful',
+      title: errorMessage?.includes("after 3 attempts")
+        ? "No finger detected"
+        : "Scan unsuccessful",
       subtitle: errorMessage || "Please try again",
     },
   };
 
   const config = stateConfig[scannerState];
   const Icon = config.icon;
-  const showActions = scannerState !== 'idle';
-  const isClickable = scannerState === 'idle' && onStartScanning;
+  const showActions = scannerState !== "idle";
+  const isClickable = scannerState === "idle" && onStartScanning;
 
   return (
-    <div 
+    <div
       className={`${config.bgClass} ${config.borderClass} border-3 rounded-3xl p-8 shadow-lg transition-all duration-300 relative h-[480px] flex flex-col justify-between ${
-        isClickable ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02] animate-pulse' : ''
+        isClickable
+          ? "cursor-pointer hover:shadow-xl hover:scale-[1.02] animate-pulse"
+          : ""
       }`}
       onClick={isClickable ? onStartScanning : undefined}
     >
@@ -148,31 +177,33 @@ export function ScanAssistant({
       <div className="flex justify-center mb-6">
         <div className="relative">
           <Icon className={config.iconClass} strokeWidth={2.5} />
-          {scannerState === 'captured' && (
+          {scannerState === "captured" && (
             <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-green-200 opacity-20 animate-ping" />
           )}
         </div>
       </div>
 
       {/* Title */}
-      <h3 className={`${config.textClass} text-3xl font-extrabold text-center mb-3 leading-tight`}>
+      <h3
+        className={`${config.textClass} text-3xl font-extrabold text-center mb-3 leading-tight`}
+      >
         {config.title}
       </h3>
 
       {/* Subtitle */}
-      <p className={`${config.subtextClass} text-lg text-center font-medium leading-relaxed`}>
+      <p
+        className={`${config.subtextClass} text-lg text-center font-medium leading-relaxed`}
+      >
         {config.subtitle}
       </p>
 
       {/* Progress Info */}
       {showActions && (
         <div className="mt-6 pt-6 border-t border-gray-200">
-
-
           {/* Action Buttons */}
           <div className="flex flex-col gap-3">
             {/* Rescan Button - show when captured or error */}
-            {(scannerState === 'captured' || scannerState === 'error') && onRescan && (
+            {(scannerState === "captured" || scannerState === "error") && onRescan && (
               <Button
                 onClick={onRescan}
                 variant="outline"
@@ -184,13 +215,14 @@ export function ScanAssistant({
             )}
 
             {/* Pause/Resume Button - show when countdown active OR when paused */}
-            {((scannerState === 'captured' && countdown !== null) || scannerState === 'paused') && (
+            {((scannerState === "captured" && countdown !== null) ||
+              scannerState === "paused") && (
               <Button
                 onClick={isPaused ? onResume : onPause}
                 className={`w-full font-semibold ${
                   isPaused
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'bg-amber-600 hover:bg-amber-700 text-white'
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-amber-600 hover:bg-amber-700 text-white"
                 }`}
               >
                 {isPaused ? (
@@ -211,31 +243,36 @@ export function ScanAssistant({
       )}
 
       {/* Additional guidance for waiting state */}
-      {scannerState === 'waiting' && (
+      {scannerState === "waiting" && (
         <div className="mt-6 pt-6 border-t border-blue-200">
           <div className="space-y-3">
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold shrink-0 mt-0.5">
                 1
               </div>
-              <p className="text-sm text-blue-800 font-medium">Clean and dry your finger</p>
+              <p className="text-sm text-blue-800 font-medium">
+                Clean and dry your finger
+              </p>
             </div>
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold shrink-0 mt-0.5">
                 2
               </div>
-              <p className="text-sm text-blue-800 font-medium">Press firmly on the scanner</p>
+              <p className="text-sm text-blue-800 font-medium">
+                Press firmly on the scanner
+              </p>
             </div>
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold shrink-0 mt-0.5">
                 3
               </div>
-              <p className="text-sm text-blue-800 font-medium">Hold still until captured</p>
+              <p className="text-sm text-blue-800 font-medium">
+                Hold still until captured
+              </p>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

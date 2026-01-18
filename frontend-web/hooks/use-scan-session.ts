@@ -32,9 +32,36 @@ type StoredDemographics = {
 
 export function useScanSession() {
   const [currentFingerIndex, setCurrentFingerIndex] = useState(0);
-  const [fingerFiles, setFingerFiles] = useState<
-    Partial<Record<FingerName, File>>
-  >({});
+  const [fingerFiles, setFingerFiles] = useState<Partial<Record<FingerName, File>>>(() => {
+    // Load saved fingerprint images from sessionStorage
+    try {
+      const saved = sessionStorage.getItem("scanned_fingerprints");
+      if (saved) {
+        const data = JSON.parse(saved);
+        const files: Partial<Record<FingerName, File>> = {};
+
+        // Convert base64 back to File objects
+        for (const [finger, base64] of Object.entries(data)) {
+          if (typeof base64 === 'string') {
+            // Convert base64 to binary
+            const byteString = atob(base64.split(',')[1]);
+            const mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+              ia[i] = byteString.charCodeAt(i);
+            }
+            const blob = new Blob([ab], { type: mimeString });
+            files[finger as FingerName] = new File([blob], `${finger}.png`, { type: mimeString });
+          }
+        }
+        return files;
+      }
+    } catch (error) {
+      console.error("Failed to load scanned fingerprints from sessionStorage:", error);
+    }
+    return {};
+  });
   const [demographics] = useState<StoredDemographics | null>(() => {
     try {
       const storedDemo = sessionStorage.getItem("demographics");
@@ -50,6 +77,7 @@ export function useScanSession() {
   const [scanningStarted, setScanningStarted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [isFirstScan, setIsFirstScan] = useState(true);
+  const [rescanningFinger, setRescanningFinger] = useState<{ finger: FingerName; file: File } | null>(null);
 
   const totalFingers = FINGER_ORDER.length;
   const scannedCount = Object.keys(fingerFiles).length;
@@ -62,14 +90,43 @@ export function useScanSession() {
   }, [fingerFiles, totalFingers]);
 
   const { hand, highlight } = useMemo(() => {
-    const [handRaw, fingerRaw] = currentFinger
-      ? currentFinger.split("_")
-      : ["", ""];
+    const [handRaw, fingerRaw] = currentFinger ? currentFinger.split("_") : ["", ""];
     return {
       hand: handRaw as "right" | "left",
       highlight: fingerRaw as "thumb" | "index" | "middle" | "ring" | "pinky",
     };
   }, [currentFinger]);
+
+  // Save fingerFiles to sessionStorage whenever they change
+  useEffect(() => {
+    const saveFingerprints = async () => {
+      try {
+        const data: Record<string, string> = {};
+
+        // Convert File objects to base64
+        for (const [finger, file] of Object.entries(fingerFiles)) {
+          if (file) {
+            const reader = new FileReader();
+            await new Promise((resolve) => {
+              reader.onloadend = () => {
+                data[finger] = reader.result as string;
+                resolve(null);
+              };
+              reader.readAsDataURL(file);
+            });
+          }
+        }
+
+        sessionStorage.setItem("scanned_fingerprints", JSON.stringify(data));
+      } catch (error) {
+        console.error("Failed to save scanned fingerprints to sessionStorage:", error);
+      }
+    };
+
+    if (Object.keys(fingerFiles).length > 0) {
+      saveFingerprints();
+    }
+  }, [fingerFiles]);
 
   const scanAssistantState: ScanAssistantState = useMemo(() => {
     if (scannedCount >= totalFingers) return "completed";
@@ -92,8 +149,7 @@ export function useScanSession() {
   // Log state changes
   useEffect(() => {
     console.log(
-      `📊 Scan State: ${
-        scanningStarted ? "ACTIVE" : "STOPPED"
+      `📊 Scan State: ${scanningStarted ? "ACTIVE" : "STOPPED"
       } | Count: ${scannedCount}/${totalFingers}`
     );
   }, [scanningStarted, scannedCount, totalFingers]);
@@ -121,6 +177,7 @@ export function useScanSession() {
     setPaused(false);
     setIsFirstScan(true);
     setCountdown(null);
+    sessionStorage.removeItem("scanned_fingerprints");
     console.log("🔄 Session Reset Confirmed");
   };
 
@@ -134,6 +191,9 @@ export function useScanSession() {
 
     const updatedFiles = { ...fingerFiles, [fingerName]: file };
     setFingerFiles(updatedFiles);
+
+    // Clear rescanning state when capture is complete
+    setRescanningFinger(null);
 
     setScannerReady(false);
     setIsFirstScan(false);
@@ -224,5 +284,23 @@ export function useScanSession() {
     handleNextFinger,
     handlePreviousFinger,
     togglePaused,
+    handleRescan: () => {
+      console.log(`🔄 Rescanning ${currentFinger}...`);
+      // Store the original image before removing it
+      const originalFile = fingerFiles[currentFinger];
+      if (originalFile) {
+        setRescanningFinger({ finger: currentFinger, file: originalFile });
+      }
+
+      // Remove the current finger from captured files
+      const updatedFiles = { ...fingerFiles };
+      delete updatedFiles[currentFinger];
+      setFingerFiles(updatedFiles);
+
+      // Reset scanner state to trigger a new scan
+      setScannerReady(false);
+      setCountdown(3);
+    },
+    rescanningFinger,
   };
 }

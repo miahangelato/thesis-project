@@ -8,7 +8,8 @@ export function useBackNavigation(enabled: boolean = true) {
   const router = useRouter();
   const { clearSession } = useSession();
   const [showModal, setShowModal] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [pendingNavigation, _setPendingNavigation] = useState(false);
 
   useEffect(() => {
     if (!enabled) return;
@@ -18,7 +19,7 @@ export function useBackNavigation(enabled: boolean = true) {
 
       // Show the modal instead of browser confirm
       setShowModal(true);
-      setPendingNavigation(true);
+      _setPendingNavigation(true);
 
       // Push state back to prevent navigation until user confirms
       window.history.pushState(null, "", window.location.pathname);
@@ -36,7 +37,7 @@ export function useBackNavigation(enabled: boolean = true) {
 
   const handleConfirm = () => {
     setShowModal(false);
-    setPendingNavigation(false);
+    _setPendingNavigation(false);
     clearSession();
 
     setTimeout(() => {
@@ -46,14 +47,14 @@ export function useBackNavigation(enabled: boolean = true) {
 
   const handleCancel = () => {
     setShowModal(false);
-    setPendingNavigation(false);
+    _setPendingNavigation(false);
     // Push state again to maintain the current position
     window.history.pushState(null, "", window.location.pathname);
   };
 
   const promptBackNavigation = () => {
     setShowModal(true);
-    setPendingNavigation(true);
+    _setPendingNavigation(true);
   };
 
   return { showModal, handleConfirm, handleCancel, promptBackNavigation };

@@ -13,6 +13,7 @@ export function ScanPreview({ file, alt, className }: ScanPreviewProps) {
 
   useEffect(() => {
     if (!file) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setObjectUrl(null);
       return;
     }
@@ -33,9 +34,7 @@ export function ScanPreview({ file, alt, className }: ScanPreviewProps) {
     <img
       src={objectUrl}
       alt={alt}
-      className={`absolute inset-0 h-full w-full ${
-        className ?? "object-cover"
-      }`}
+      className={`absolute inset-0 h-full w-full ${className ?? "object-cover"}`}
       draggable={false}
     />
   );

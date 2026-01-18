@@ -5,13 +5,7 @@ import { cmToFtIn, ftInToCm, kgToLb, lbToKg } from "@/lib/units";
 
 export type WeightUnit = "kg" | "lb";
 export type HeightUnit = "cm" | "ftin";
-export type ActiveField =
-  | "age"
-  | "weight"
-  | "heightCm"
-  | "heightFt"
-  | "heightIn"
-  | null;
+export type ActiveField = "age" | "weight" | "heightCm" | "heightFt" | "heightIn" | null;
 
 export type DemographicsFormData = {
   age: string;
@@ -22,11 +16,11 @@ export type DemographicsFormData = {
   showDonationCentersLater: boolean;
 };
 
-type BmiCategory =
-  | { label: "Low"; color: "blue" }
-  | { label: "Normal"; color: "green" }
-  | { label: "High"; color: "amber" }
-  | { label: "Very high"; color: "red" };
+export type BmiCategory = {
+  label: string;
+  color: "blue" | "green" | "amber" | "red";
+  description: string;
+};
 
 export function useDemographicsForm() {
   // Unit preferences
@@ -41,13 +35,32 @@ export function useDemographicsForm() {
   const [activeField, setActiveField] = useState<ActiveField>(null);
 
   // Form state (clean: NO blood donation eligibility criteria)
-  const [formData, setFormData] = useState<DemographicsFormData>({
-    age: "",
-    weight: "",
-    heightCm: "", // canonical height in cm
-    gender: "",
-    blood_type: "unknown",
-    showDonationCentersLater: false, // single opt-in only
+  // Load from sessionStorage if available
+  const [formData, setFormData] = useState<DemographicsFormData>(() => {
+    try {
+      const saved = sessionStorage.getItem("demographics");
+      if (saved) {
+        const data = JSON.parse(saved);
+        return {
+          age: data.age ? String(data.age) : "",
+          weight: data.weight_kg ? String(data.weight_kg) : "",
+          heightCm: data.height_cm ? String(data.height_cm) : "",
+          gender: data.gender === "prefer_not_say" ? "prefer_not_to_say" : (data.gender || ""),
+          blood_type: data.blood_type || "unknown",
+          showDonationCentersLater: data.show_donation_centers_later || false,
+        };
+      }
+    } catch (error) {
+      console.error("Failed to load demographics from sessionStorage:", error);
+    }
+    return {
+      age: "",
+      weight: "",
+      heightCm: "",
+      gender: "",
+      blood_type: "unknown",
+      showDonationCentersLater: false,
+    };
   });
 
   const switchWeightUnit = (nextUnit: WeightUnit) => {
@@ -136,26 +149,47 @@ export function useDemographicsForm() {
     const age = parseInt(formData.age || "0", 10);
     if (!bmi || !age || age < 18) return null;
 
-    // Keep labels neutral (avoid “Obese” pill on this step)
-    if (bmi < 18.5) return { label: "Low", color: "blue" };
-    if (bmi < 25) return { label: "Normal", color: "green" };
-    if (bmi < 30) return { label: "High", color: "amber" };
-    return { label: "Very high", color: "red" };
+    // Standard Adult BMI Categories (WHO / CDC)
+    if (bmi < 18.5) {
+      return {
+        label: "Underweight",
+        color: "blue",
+        description:
+          "Your BMI is classified as Underweight. This may indicate nutritional deficiency or other health factors.",
+      };
+    }
+    if (bmi < 25) {
+      return {
+        label: "Normal",
+        color: "green",
+        description:
+          "Your BMI is classified as Normal weight. This range is associated with the lowest health risk.",
+      };
+    }
+    if (bmi < 30) {
+      return {
+        label: "Overweight",
+        color: "amber",
+        description:
+          "Your BMI is classified as Overweight. People in this range may have an increased risk of developing health conditions.",
+      };
+    }
+    return {
+      label: "Obesity",
+      color: "red",
+      description:
+        "Your BMI is classified as Obesity. This is associated with higher health risks. We recommend discussing this with a healthcare professional.",
+    };
   }, [bmiValue, formData.age]);
 
   // -------------------------
   // Keypad handlers
   // -------------------------
-  const handleFieldFocus = (field: Exclude<ActiveField, null>) =>
-    setActiveField(field);
+  const handleFieldFocus = (field: Exclude<ActiveField, null>) => setActiveField(field);
 
   const handleFieldBlur = (e: React.FocusEvent) => {
     const relatedTarget = e.relatedTarget as HTMLElement | null;
-    if (
-      relatedTarget?.tagName === "BUTTON" ||
-      relatedTarget?.tagName === "INPUT"
-    )
-      return;
+    if (relatedTarget?.tagName === "BUTTON" || relatedTarget?.tagName === "INPUT") return;
 
     setTimeout(() => setActiveField(null), 200);
   };
@@ -230,11 +264,7 @@ export function useDemographicsForm() {
       return;
     }
 
-    if (
-      activeField === "age" ||
-      activeField === "weight" ||
-      activeField === "heightCm"
-    ) {
+    if (activeField === "age" || activeField === "weight" || activeField === "heightCm") {
       setFormData((prev) => ({
         ...prev,
         [activeField]: prev[activeField].slice(0, -1),
@@ -248,12 +278,9 @@ export function useDemographicsForm() {
       // Height: if ft/in mode, focus ft; else focus cm height field
       if (heightUnit === "ftin") document.getElementById("height-ft")?.focus();
       else document.getElementById("height")?.focus();
-    } else if (activeField === "heightCm")
-      document.getElementById("gender")?.focus();
-    else if (activeField === "heightFt")
-      document.getElementById("height-in")?.focus();
-    else if (activeField === "heightIn")
-      document.getElementById("gender")?.focus();
+    } else if (activeField === "heightCm") document.getElementById("gender")?.focus();
+    else if (activeField === "heightFt") document.getElementById("height-in")?.focus();
+    else if (activeField === "heightIn") document.getElementById("gender")?.focus();
 
     dismissKeypad();
   };

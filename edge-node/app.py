@@ -4,6 +4,8 @@ Flask-based API server for local scanner operations
 """
 from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import base64
 import logging
 import os
@@ -16,7 +18,7 @@ from functools import wraps
 # Import the working scanner implementation
 # Import the working scanner implementation
 from scanner_real import capture_fingerprint_image, initialize_sdk, finalize_sdk
-from config import HOST, PORT, DEBUG, CORS_ORIGINS, CORS_ALLOW_ALL
+from config import HOST, PORT, DEBUG, CORS_ORIGINS, CORS_ALLOW_ALL, API_KEY
 import os
 import atexit
 from PIL import Image
@@ -37,6 +39,15 @@ logging.basicConfig(
 
 # Create Flask app
 app = Flask(__name__)
+
+# Initialize Rate Limiter
+# Uses in-memory storage by default (good for single edge node)
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
+)
 
 # Configure CORS with comprehensive settings
 if CORS_ALLOW_ALL:
@@ -61,6 +72,36 @@ def handle_preflight():
         response.headers.add('Access-Control-Allow-Headers', "*")
         response.headers.add('Access-Control-Allow-Methods', "*")
         return response
+
+def require_api_key(f):
+    """Decorator to require API key for sensitive endpoints"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Skip for OPTIONS requests (CORS preflight)
+        if request.method == 'OPTIONS':
+            return f(*args, **kwargs)
+            
+        # Skip if no API key is configured (development mode safety, but warn)
+        if not API_KEY:
+            print("⚠️ WARNING: No API_KEY configured for Edge Node. Request allowed.")
+            return f(*args, **kwargs)
+        
+        # Check headers for key
+        request_key = request.headers.get('X-API-Key') or request.headers.get('Authorization')
+        
+        # Handle Bearer token format if present
+        if request_key and request_key.startswith('Bearer '):
+            request_key = request_key.split(' ')[1]
+            
+        if request_key == API_KEY:
+            return f(*args, **kwargs)
+            
+        print(f"🔒 Unauthorized access attempt from {request.remote_addr}")
+        return jsonify({
+            "success": False,
+            "error": "Unauthorized: Invalid or missing API Key"
+        }), 401
+    return decorated_function
 
 # Global scanner instance
 scanner = None
@@ -265,6 +306,8 @@ def scanner_status():
         })
 
 @app.route('/api/scanner/capture', methods=['POST', 'OPTIONS'])
+@require_api_key
+@limiter.limit("10 per minute") # Rate limit: 10 scans per minute to prevent abuses
 def capture_fingerprint_endpoint():
     """Capture fingerprint and forward everything to backend for processing"""
     
@@ -394,6 +437,7 @@ def capture_fingerprint_endpoint():
         }), 500
 
 @app.route('/api/participant/data', methods=['POST'])
+@require_api_key
 def receive_participant_data():
     """Endpoint to receive and display participant data without scanning"""
     try:

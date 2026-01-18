@@ -31,7 +31,9 @@ export function StepNavigation({
   form,
 }: StepNavigationProps) {
   return (
-    <div className={cn("flex justify-between items-center w-full select-none", className)}>
+    <div
+      className={cn("flex justify-between items-center w-full select-none", className)}
+    >
       <div className="flex items-center gap-4">
         {onBack && (
           <Button

@@ -4,7 +4,7 @@ import { ResultsAnalysisTab } from "@/components/results/tabs/results-analysis-t
 import { ResultsBloodTab } from "@/components/results/tabs/results-blood-tab";
 import { ResultsDownloadTab } from "@/components/results/tabs/results-download-tab";
 import { ResultsFacilitiesTab } from "@/components/results/tabs/results-facilities-tab";
-import type { ResultsParticipantData } from "@/types/results";
+import type { MapPlace, ResultsParticipantData } from "@/types/results";
 
 type TabType = "analysis" | "facilities" | "blood" | "download";
 
@@ -12,30 +12,17 @@ export function ResultsTabContent({
   activeTab,
   participantData,
   canShowBloodTab,
-  pdfUrl,
-  pdfLoading,
-  pdfError,
-  onGeneratePDF,
-  onDirectDownload,
-  onResetPDF,
+  onOpenQR,
 }: {
   activeTab: TabType;
   participantData: ResultsParticipantData;
   canShowBloodTab: boolean;
-  pdfUrl: string | null;
-  pdfLoading: boolean;
-  pdfError: string | null;
-  onGeneratePDF: () => void;
-  onDirectDownload: () => void;
-  onResetPDF: () => void;
+  onOpenQR: (facility: MapPlace) => void;
 }) {
-  const contentClassName =
-    activeTab === "analysis"
-      ? "h-full overflow-hidden p-5"
-      : "h-full overflow-y-auto p-5";
+  const contentClassName = "h-full overflow-hidden";
 
   return (
-    <div className="flex-1 bg-white rounded-lg shadow-lg border-2 border-gray-200 overflow-hidden min-h-0">
+    <div className="flex-1 bg-white rounded-b-xl rounded-tr-xl shadow-sm border-2 border-gray-200 overflow-hidden min-h-0 relative z-0">
       <div className={contentClassName}>
         {/* RESULTS */}
         {activeTab === "analysis" && (
@@ -44,7 +31,10 @@ export function ResultsTabContent({
 
         {/* FACILITIES */}
         {activeTab === "facilities" && (
-          <ResultsFacilitiesTab participantData={participantData} />
+          <ResultsFacilitiesTab 
+            participantData={participantData} 
+            onOpenQR={onOpenQR}
+          />
         )}
 
         {/* BLOOD DONATION */}
@@ -52,17 +42,14 @@ export function ResultsTabContent({
           <ResultsBloodTab
             participantData={participantData}
             canShowBloodTab={canShowBloodTab}
+            onOpenQR={onOpenQR}
           />
         )}
 
         {activeTab === "download" && (
           <ResultsDownloadTab
-            pdfUrl={pdfUrl}
-            pdfLoading={pdfLoading}
-            pdfError={pdfError}
-            onGeneratePDF={onGeneratePDF}
-            onDirectDownload={onDirectDownload}
-            onReset={onResetPDF}
+            qrCodeUrl={participantData.qr_code_url}
+            downloadUrl={participantData.download_url}
           />
         )}
       </div>

@@ -79,21 +79,9 @@ export function NumericKeypad({
   inValue,
   onFtInChange,
 }: NumericKeypadProps) {
-  // For modal mode, handle scrolling
-  useEffect(() => {
-    if (variant === "modal" && isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, variant]);
+  // ----- All hooks MUST be at the top level, before any conditional returns -----
 
-  if (!isOpen) return null;
-
-  // ----- Unit state -----
+  // Unit state - always initialize
   const defaultUnit = useMemo(() => {
     if (unitMode === "weight") return (initialUnit as WeightUnit) ?? "kg";
     if (unitMode === "height") return (initialUnit as HeightUnit) ?? "cm";
@@ -112,6 +100,8 @@ export function NumericKeypad({
   const [ftLocal, setFtLocal] = useState("");
   const [inLocal, setInLocal] = useState("");
 
+  const [activePart, setActivePart] = useState<"ft" | "in">("ft");
+
   // Controlled vs local ft/in
   const ft = ftValue ?? ftLocal;
   const inch = inValue ?? inLocal;
@@ -126,16 +116,14 @@ export function NumericKeypad({
     else setInLocal(v);
   };
 
-  const [activePart, setActivePart] = useState<"ft" | "in">("ft");
-
-  // ----- Helpers -----
+  // Helpers
   const isFtIn = unitMode === "height" && heightUnit === "ftin";
 
   const displayValue = useMemo(() => {
     if (isFtIn) {
       const f = ft || "0";
       const i = inch || "0";
-      return `${f}' ${i}"`;
+      return `${f}&apos; ${i}&quot;`;
     }
     return value || "";
   }, [isFtIn, ft, inch, value]);
@@ -145,6 +133,21 @@ export function NumericKeypad({
     if (isFtIn) return false;
     return allowDecimal;
   }, [allowDecimal, isFtIn]);
+
+  // For modal mode, handle scrolling
+  useEffect(() => {
+    if (variant === "modal" && isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, variant]);
+
+  // ----- NOW we can have conditional returns -----
+  if (!isOpen) return null;
 
   const handleKey = (k: string) => {
     if (isFtIn) {
@@ -274,7 +277,7 @@ export function NumericKeypad({
                       : "text-slate-800"
                   }`}
                 >
-                  {ft || "0"}'
+                  {ft || "0"}&apos;
                 </span>
                 <span
                   className={`px-1 rounded transition ${
@@ -283,7 +286,7 @@ export function NumericKeypad({
                       : "text-slate-800"
                   }`}
                 >
-                  {inch || "0"}"
+                  {inch || "0"}&quot;
                 </span>
               </>
             ) : (

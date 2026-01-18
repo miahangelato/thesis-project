@@ -5,18 +5,13 @@ import { useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { ProgressHeader } from "@/components/layout/progress-header";
 import { Footer } from "@/components/layout/footer";
-import {
-  Heart,
-  MapPin,
-  ArrowLeft,
-  Phone,
-  Globe,
-  Facebook,
-  Mail,
-} from "lucide-react";
+import { Heart, MapPin, ArrowLeft, Phone, Globe, Facebook, Mail, Smartphone } from "lucide-react";
 import { useSession } from "@/contexts/session-context";
 import { STEPS } from "@/lib/constants";
 import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+import { FacilityQRModal } from "@/components/modals/facility-qr-modal";
+import { SessionEndModal } from "@/components/modals/session-end-modal";
+import { useBackNavigation } from "@/hooks/use-back-navigation";
 
 interface BloodCenter {
   name: string;
@@ -51,12 +46,18 @@ export default function BloodCentersPage() {
   const [cityFilter, setCityFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
 
-  const pageSize = 3;
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCenter, setSelectedCenter] = useState<BloodCenter | null>(null);
+
+  const { showModal, handleConfirm, handleCancel, promptBackNavigation } =
+    useBackNavigation(false);
+
+  const pageSize = 9;
 
   useEffect(() => {
     const load = () => {
-      const activeSessionId =
-        sessionId || sessionStorage.getItem("current_session_id");
+      const activeSessionId = sessionId || sessionStorage.getItem("current_session_id");
       if (!activeSessionId) {
         setLoading(false);
         return;
@@ -84,9 +85,7 @@ export default function BloodCentersPage() {
         : [];
 
       const willingToDonate =
-        typeof data.willing_to_donate === "boolean"
-          ? data.willing_to_donate
-          : false;
+        typeof data.willing_to_donate === "boolean" ? data.willing_to_donate : false;
 
       setCenters(bloodCenters);
       setWilling(willingToDonate || bloodCenters.length > 0);
@@ -111,10 +110,12 @@ export default function BloodCentersPage() {
   const totalPages = Math.max(1, Math.ceil(filteredCenters.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * pageSize;
-  const paginatedCenters = filteredCenters.slice(
-    pageStart,
-    pageStart + pageSize
-  );
+  const paginatedCenters = filteredCenters.slice(pageStart, pageStart + pageSize);
+
+  const handleOpenModal = (center: BloodCenter) => {
+    setSelectedCenter(center);
+    setIsModalOpen(true);
+  };
 
   return (
     <ProtectedRoute requireSession={true} requiredStep={STEPS.SCAN}>
@@ -124,6 +125,19 @@ export default function BloodCentersPage() {
           title="Loading Blood Centers"
           subtitle="Please wait a moment…"
         />
+
+        <SessionEndModal
+          isOpen={showModal}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
+
+        <FacilityQRModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          facility={selectedCenter}
+        />
+
         <main className="flex-1 flex flex-col overflow-hidden select-none">
           <div className="flex flex-col px-28 py-6 overflow-hidden">
             <ProgressHeader
@@ -131,8 +145,10 @@ export default function BloodCentersPage() {
               totalSteps={4}
               title="Blood Donation Centers"
               subtitle="Full list based on your choice to donate"
-              accentColor="#f43f5e"
+              accentColor="#00c2cb"
+              onEndSession={promptBackNavigation}
             />
+
 
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <button
@@ -144,16 +160,14 @@ export default function BloodCentersPage() {
 
               <div className="flex flex-wrap items-center justify-end gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-base font-semibold text-gray-700">
-                    City
-                  </span>
+                  <span className="text-base font-semibold text-gray-700">City</span>
                   <select
                     value={cityFilter}
                     onChange={(e) => {
                       setCityFilter(e.target.value);
                       setPage(1);
                     }}
-                    className="h-12 rounded-xl border-2 cursor-pointer border-gray-200 bg-white px-4 text-base font-semibold text-gray-700 shadow-sm outline-none focus:border-rose-500"
+                    className="h-12 rounded-xl border-2 cursor-pointer border-gray-200 bg-white px-4 text-base font-semibold text-gray-700 shadow-sm outline-none focus:border-teal-500"
                   >
                     <option value="all">All Cities</option>
                     <option value="angeles">Angeles</option>
@@ -164,11 +178,10 @@ export default function BloodCentersPage() {
               </div>
             </div>
 
-            <div className="flex-1 bg-white rounded-lg shadow-lg border-2 border-gray-200 overflow-y-auto p-5">
+            <div className="flex-1">
               {!willing ? (
                 <p className="text-sm text-gray-600">
-                  Blood donation centers are hidden because you chose not to
-                  donate.
+                  Blood donation centers are hidden because you chose not to donate.
                 </p>
               ) : filteredCenters.length === 0 ? (
                 <p className="text-sm text-gray-600">
@@ -176,152 +189,95 @@ export default function BloodCentersPage() {
                 </p>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                     {paginatedCenters.map((center, idx) => (
                       <div
                         key={`${center.name}-${idx}`}
-                        className="bg-linear-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-xl p-4 hover:shadow-lg transition-shadow"
+                        className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all flex flex-col h-full min-h-[520px]"
                       >
-                        <h4 className="font-bold text-lg text-gray-900 mb-2 flex items-center">
-                          <Heart className="w-5 h-5 mr-2 text-red-500" />
-                          {center.name}
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-3 flex items-center">
-                          <MapPin className="w-4 h-4 mr-2" />
-                          {center.address}
-                        </p>
-
-                        {center.website && (
-                          <div className="mb-2">
-                            <a
-                              href={center.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs font-medium text-blue-700 underline break-all"
-                            >
-                              {center.website}
-                            </a>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center shrink-0 border border-teal-100">
+                              <Heart className="w-6 h-6 text-teal-600" />
+                            </div>
+                            <h4 className="font-bold text-2xl text-gray-900 leading-tight">
+                              {center.name}
+                            </h4>
                           </div>
-                        )}
 
-                        {/* Contact Info */}
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {center.type && (
-                            <span className="inline-flex items-center px-2 py-1 bg-gray-200 text-gray-800 rounded-md text-xs font-medium">
-                              {center.type}
-                            </span>
-                          )}
-                          {center.phone && (
-                            <span className="inline-flex items-center px-2 py-1 bg-green-600 text-white rounded-md text-xs font-medium">
-                              <Phone className="w-3 h-3 mr-1" /> {center.phone}
-                            </span>
-                          )}
-                          {Array.isArray(center.mobile) &&
-                            center.mobile.map((m: string, i: number) => (
-                              <span
-                                key={i}
-                                className="inline-flex items-center px-2 py-1 bg-emerald-600 text-white rounded-md text-xs font-medium"
-                              >
-                                <Phone className="w-3 h-3 mr-1" /> {m}
+                          <div className="flex items-start gap-3 mb-6">
+                            <MapPin className="w-5 h-5 text-gray-400 mt-1 shrink-0" />
+                            <p className="text-lg text-gray-500 font-medium leading-relaxed">
+                              {center.address}
+                            </p>
+                          </div>
+
+                          {/* Info Tags */}
+                          <div className="flex flex-wrap gap-2 mb-8">
+                            {center.type && (
+                              <span className="inline-flex items-center px-4 py-2 bg-teal-50 text-teal-700 rounded-xl text-sm font-bold border border-teal-100">
+                                {center.type}
                               </span>
-                            ))}
-                          {center.email && (
-                            <a
-                              href={`mailto:${center.email}`}
-                              className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded-md text-xs font-medium"
-                            >
-                              <Mail className="w-3 h-3 mr-1" /> {center.email}
-                            </a>
-                          )}
-                          {center.website && (
-                            <a
-                              href={center.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center px-2 py-1 bg-cyan-600 text-white rounded-md text-xs font-medium break-all"
-                            >
-                              <Globe className="w-3 h-3 mr-1" />{" "}
-                              {center.website}
-                            </a>
-                          )}
-                          {center.facebook && (
-                            <a
-                              href={center.facebook}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center px-2 py-1 bg-indigo-600 text-white rounded-md text-xs font-medium"
-                            >
-                              <Facebook className="w-3 h-3 mr-1" />{" "}
-                              {center.facebook}
-                            </a>
-                          )}
+                            )}
+                          </div>
+
+                          {/* Static Contact Info */}
+                          <div className="space-y-4 mb-8">
+                            {center.phone && (
+                              <div className="flex items-center gap-3 text-gray-600 font-bold text-lg">
+                                <Phone className="w-5 h-5 text-teal-500" /> {center.phone}
+                              </div>
+                            )}
+                            {center.email && (
+                              <div className="flex items-center gap-3 text-gray-500 font-medium">
+                                <Mail className="w-5 h-5 text-gray-400" /> {center.email}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="mb-3 rounded-lg overflow-hidden border-2 border-gray-300">
-                          <iframe
-                            src={`https://www.google.com/maps?q=${encodeURIComponent(
-                              center.google_query
-                            )}&output=embed`}
-                            width="100%"
-                            height="200"
-                            style={{ border: 0 }}
-                            loading="lazy"
-                            title={center.name}
-                          ></iframe>
-                        </div>
-
-                        <div className="flex gap-3">
-                          {center.phone && (
-                            <a
-                              href={`tel:${center.phone}`}
-                              className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
-                            >
-                              📞 {center.phone}
-                            </a>
-                          )}
-                          <a
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                              center.google_query
-                            )}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
-                          >
-                            <MapPin className="w-4 h-4 mr-2" />
-                            View on Map
-                          </a>
-                        </div>
+                        {/* Kiosk Action Button */}
+                        <button
+                          onClick={() => handleOpenModal(center)}
+                          className="w-full group relative overflow-hidden bg-white border-2 border-teal-500 hover:bg-teal-50 p-6 rounded-2xl transition-all active:scale-[0.98]"
+                        >
+                          <div className="flex items-center justify-center gap-4">
+                            <Smartphone className="w-8 h-8 text-teal-600" />
+                            <div className="text-left">
+                              <p className="text-xl font-bold text-teal-900">Get Info on Mobile</p>
+                              <p className="text-sm font-bold text-teal-600/70 uppercase tracking-wider">Scan QR Code</p>
+                            </div>
+                          </div>
+                        </button>
                       </div>
                     ))}
                   </div>
 
                   {totalPages > 1 && (
-                    <div className="mt-6 flex items-center justify-center gap-3">
+                    <div className="mt-8 flex items-center justify-center gap-4">
                       <button
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage <= 1}
-                        className={`px-4 py-2 rounded-lg border text-base font-semibold transition-colors ${
+                        className={`h-14 px-8 rounded-2xl border-2 text-lg font-bold transition-all ${
                           currentPage <= 1
-                            ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                            : "bg-white text-gray-700 border-gray-300 hover:border-gray-400 cursor-pointer"
+                            ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
+                            : "bg-white text-gray-700 border-gray-200 hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm"
                         }`}
                       >
                         Previous
                       </button>
 
-                      <div className="text-base font-semibold text-gray-700">
+                      <div className="h-14 px-6 flex items-center bg-gray-50 rounded-2xl text-lg font-bold text-gray-600 border border-gray-100">
                         Page {currentPage} of {totalPages}
                       </div>
 
                       <button
-                        onClick={() =>
-                          setPage((p) => Math.min(totalPages, p + 1))
-                        }
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage >= totalPages}
-                        className={`px-4 py-2 rounded-lg border text-base font-semibold transition-colors ${
+                        className={`h-14 px-8 rounded-2xl border-2 text-lg font-bold transition-all ${
                           currentPage >= totalPages
-                            ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                            : "bg-white text-gray-700 border-gray-300 hover:border-gray-400 cursor-pointer"
+                            ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
+                            : "bg-white text-gray-700 border-gray-200 hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm"
                         }`}
                       >
                         Next

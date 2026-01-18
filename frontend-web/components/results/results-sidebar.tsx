@@ -47,7 +47,7 @@ export function ResultsSidebar({
               </div>
               <div className="min-w-0">
                 <p
-                  className={`text-[11px] font-semibold mb-0.5 ${
+                  className={`text-lg font-bold mb-1 ${
                     result?.diabetes_risk?.toLowerCase() === "diabetic" ||
                     result?.diabetes_risk?.toLowerCase() === "high"
                       ? "text-red-700"
@@ -57,7 +57,7 @@ export function ResultsSidebar({
                   Diabetes Risk Assessment
                 </p>
                 <p
-                  className={`text-2xl font-bold truncate ${
+                  className={`text-4xl font-bold truncate ${
                     result?.diabetes_risk?.toLowerCase() === "diabetic" ||
                     result?.diabetes_risk?.toLowerCase() === "high"
                       ? "text-red-900"
@@ -78,7 +78,7 @@ export function ResultsSidebar({
                 }`}
               >
                 <p
-                  className={`text-xs ${
+                  className={`text-base ${
                     result?.diabetes_risk?.toLowerCase() === "diabetic" ||
                     result?.diabetes_risk?.toLowerCase() === "high"
                       ? "text-red-600"
@@ -86,7 +86,7 @@ export function ResultsSidebar({
                   }`}
                 >
                   Confidence Level:{" "}
-                  <span className="font-bold text-base">
+                  <span className="font-bold text-xl">
                     {(result.confidence * 100).toFixed(1)}%
                   </span>
                 </p>
@@ -101,19 +101,19 @@ export function ResultsSidebar({
                 <Droplets className="w-6 h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold text-blue-700 mb-0.5">
+                <p className="text-lg font-bold text-blue-700 mb-1">
                   Predicted Blood Type
                 </p>
-                <p className="text-2xl font-bold text-blue-900 truncate">
+                <p className="text-4xl font-bold text-blue-900 truncate">
                   {bloodGroupResult?.predicted_blood_group || "Unknown"}
                 </p>
               </div>
             </div>
             {bloodGroupResult?.confidence && (
               <div className="mt-3 pt-3 border-t border-blue-200">
-                <p className="text-xs text-blue-600">
+                <p className="text-base text-blue-600">
                   Confidence Level:{" "}
-                  <span className="font-bold text-base">
+                  <span className="font-bold text-xl">
                     {(bloodGroupResult.confidence * 100).toFixed(1)}%
                   </span>
                 </p>
@@ -124,51 +124,60 @@ export function ResultsSidebar({
 
         {/* Demographics Section */}
         <div className="flex-1 overflow-y-auto">
-          <h4 className="text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
-            <User className="w-4 h-4 inline mr-2" />
+          <h4 className="text-xl font-bold text-slate-800 mb-4 uppercase tracking-wide flex items-center border-b pb-2">
+            <User className="w-6 h-6 mr-2 text-slate-500" />
             Demographics
           </h4>
           {demographics ? (
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2">
-                <span className="text-sm text-gray-600">Age</span>
-                <span className="text-sm font-bold text-gray-900">
-                  {demographics?.age || "N/A"} years
-                </span>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-5 pt-2 px-6">
+              {/* Left Column */}
+              <div className="space-y-5">
+                <div className="flex flex-col">
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Age</span>
+                  <span className="text-2xl font-bold text-slate-900">
+                    {demographics?.age || "N/A"} <span className="text-lg text-slate-500 font-normal">years</span>
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Weight</span>
+                  <span className="text-2xl font-bold text-slate-900">
+                    {demographics?.weight_kg || "N/A"} <span className="text-lg text-slate-500 font-normal">kg</span>
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Height</span>
+                  <span className="text-2xl font-bold text-slate-900">
+                    {demographics?.height_cm || "N/A"} <span className="text-lg text-slate-500 font-normal">cm</span>
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2">
-                <span className="text-sm text-gray-600">Gender</span>
-                <span className="text-sm font-bold text-gray-900 capitalize">
-                  {demographics?.gender || "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2.5">
-                <span className="text-sm text-gray-600">Blood Type</span>
-                <span className="text-sm font-bold text-gray-900 capitalize">
-                  {demographics?.blood_type || "Unknown"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2.5">
-                <span className="text-sm text-gray-600">Height</span>
-                <span className="text-sm font-bold text-gray-900">
-                  {demographics?.height_cm || "N/A"} cm
-                </span>
-              </div>
-              <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2.5">
-                <span className="text-sm text-gray-600">Weight</span>
-                <span className="text-sm font-bold text-gray-900">
-                  {demographics?.weight_kg || "N/A"} kg
-                </span>
-              </div>
-              <div className="flex justify-between items-center bg-gray-50 rounded-lg p-2.5">
-                <span className="text-sm text-gray-600">BMI</span>
-                <span className="text-sm font-bold text-gray-900">
-                  {participantData?.bmi?.toFixed(1) || "N/A"}
-                </span>
+
+              {/* Right Column */}
+              <div className="space-y-5">
+                <div className="flex flex-col">
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Gender</span>
+                  <span className="text-2xl font-bold text-slate-900 capitalize">
+                    {demographics?.gender || "N/A"}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Blood Type</span>
+                  <span className="text-2xl font-bold text-slate-900 capitalize">
+                    {demographics?.blood_type || "Unknown"}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">BMI</span>
+                  <span className="text-2xl font-bold text-slate-900">
+                    {participantData?.bmi?.toFixed(1) || "N/A"}
+                  </span>
+                </div>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-gray-500">Loading demographics...</p>
+            <div className="flex flex-col items-center justify-center h-32 text-slate-400">
+              <p className="text-lg">Loading demographics...</p>
+            </div>
           )}
         </div>
       </div>

@@ -112,3 +112,7 @@ cython_debug/
 # Storage/Uploads (be careful with this - adjust as needed)
 # storage/
 # /uploads/
+
+# ML Models (large files downloaded from GitHub releases)
+shared-models/
+

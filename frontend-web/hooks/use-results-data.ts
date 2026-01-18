@@ -58,10 +58,10 @@ const readRecord = (value: unknown): Record<string, unknown> | null => {
 
 export function useResultsData(sessionId: string | null) {
   const [result, setResult] = useState<DiabetesResult | null>(null);
-  const [bloodGroupResult, setBloodGroupResult] =
-    useState<BloodGroupResult | null>(null);
-  const [participantData, setParticipantData] =
-    useState<ResultsParticipantData | null>(null);
+  const [bloodGroupResult, setBloodGroupResult] = useState<BloodGroupResult | null>(null);
+  const [participantData, setParticipantData] = useState<ResultsParticipantData | null>(
+    null
+  );
   const [demographics] = useState<StoredDemographics | null>(
     readDemographicsFromSessionStorage
   );
@@ -75,10 +75,7 @@ export function useResultsData(sessionId: string | null) {
       let activeSessionId = sessionId;
       if (!activeSessionId) {
         activeSessionId = sessionStorage.getItem("current_session_id");
-        console.log(
-          "⚠️ No sessionId from context, using fallback:",
-          activeSessionId
-        );
+        console.log("⚠️ No sessionId from context, using fallback:", activeSessionId);
       }
 
       if (!activeSessionId) {
@@ -88,7 +85,7 @@ export function useResultsData(sessionId: string | null) {
       }
 
       try {
-        // Try to get data from sessionStorage first
+        // Try to get data from sessionStorage
         const encodedData = sessionStorage.getItem(activeSessionId);
 
         if (encodedData) {
@@ -127,25 +124,21 @@ export function useResultsData(sessionId: string | null) {
           ) as MapPlace[];
 
           const patternCounts =
-            readRecord(dataObj.pattern_counts) ??
-            ({} as Record<string, unknown>);
+            readRecord(dataObj.pattern_counts) ?? ({} as Record<string, unknown>);
 
           // Pull stored demographics for willingness fallback
           let storedDemographics: StoredDemographics | null = null;
           const storedDemoRaw = sessionStorage.getItem("demographics");
           if (storedDemoRaw) {
             try {
-              storedDemographics = JSON.parse(
-                storedDemoRaw
-              ) as StoredDemographics;
+              storedDemographics = JSON.parse(storedDemoRaw) as StoredDemographics;
             } catch (err) {
               console.error("Failed to parse stored demographics", err);
             }
           }
 
           const hasBloodCenters =
-            Array.isArray(dataObj.blood_centers) &&
-            dataObj.blood_centers.length > 0;
+            Array.isArray(dataObj.blood_centers) && dataObj.blood_centers.length > 0;
 
           const willingToDonate =
             normalizeBoolean(demographicsObj?.willing_to_donate) ||
@@ -156,13 +149,10 @@ export function useResultsData(sessionId: string | null) {
           // Map API response to component state
           setResult({
             diabetes_risk:
-              (typeof dataObj.risk_level === "string"
-                ? dataObj.risk_level
-                : undefined) || "Unknown",
+              (typeof dataObj.risk_level === "string" ? dataObj.risk_level : undefined) ||
+              "Unknown",
             confidence:
-              typeof dataObj.diabetes_risk === "number"
-                ? dataObj.diabetes_risk
-                : 0,
+              typeof dataObj.diabetes_risk === "number" ? dataObj.diabetes_risk : 0,
           });
 
           setBloodGroupResult({
@@ -181,26 +171,26 @@ export function useResultsData(sessionId: string | null) {
               (typeof demographicsObj?.age === "number"
                 ? demographicsObj.age
                 : typeof dataObj.age === "number"
-                ? dataObj.age
-                : 0) || 0,
+                  ? dataObj.age
+                  : 0) || 0,
             weight:
               (typeof demographicsObj?.weight_kg === "number"
                 ? demographicsObj.weight_kg
                 : typeof dataObj.weight_kg === "number"
-                ? dataObj.weight_kg
-                : 0) || 0,
+                  ? dataObj.weight_kg
+                  : 0) || 0,
             height:
               (typeof demographicsObj?.height_cm === "number"
                 ? demographicsObj.height_cm
                 : typeof dataObj.height_cm === "number"
-                ? dataObj.height_cm
-                : 0) || 0,
+                  ? dataObj.height_cm
+                  : 0) || 0,
             gender:
               (typeof demographicsObj?.gender === "string"
                 ? demographicsObj.gender
                 : typeof dataObj.gender === "string"
-                ? dataObj.gender
-                : "N/A") || "N/A",
+                  ? dataObj.gender
+                  : "N/A") || "N/A",
             blood_type:
               (typeof dataObj.blood_group === "string"
                 ? dataObj.blood_group
@@ -212,13 +202,14 @@ export function useResultsData(sessionId: string | null) {
                 : false,
             participant_id: activeSessionId,
             explanation:
-              typeof dataObj.explanation === "string"
-                ? dataObj.explanation
-                : "",
+              typeof dataObj.explanation === "string" ? dataObj.explanation : "",
             blood_centers: bloodCenters,
             nearby_facilities: nearbyFacilities,
             pattern_counts: patternCounts,
             bmi: typeof dataObj.bmi === "number" ? dataObj.bmi : 0,
+            // QR Code & PDF Download
+            qr_code_url: typeof dataObj.qr_code_url === "string" ? dataObj.qr_code_url : undefined,
+            download_url: typeof dataObj.download_url === "string" ? dataObj.download_url : undefined,
           });
 
           console.log("✅ State updated successfully");

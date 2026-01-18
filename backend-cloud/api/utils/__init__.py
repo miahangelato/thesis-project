@@ -7,7 +7,7 @@ from .image_processing import (
 )
 
 __all__ = [
-    'decode_base64_image',
-    'decode_base64_images',
-    'decode_fingerprints_from_dict',
+    "decode_base64_image",
+    "decode_base64_images",
+    "decode_fingerprints_from_dict",
 ]

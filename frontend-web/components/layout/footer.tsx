@@ -1,4 +1,4 @@
-import Link from "next/link";
+"use client";
 import { ReactNode } from "react";
 
 interface FooterProps {
@@ -11,7 +11,8 @@ interface FooterProps {
 
 export function Footer({
   className = "",
-  showAllLinks = true,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  showAllLinks: _showAllLinks = false, // Reserved for future use
   fixed = true,
   transparent = false,
   customContent,
@@ -26,17 +27,12 @@ export function Footer({
       } ${className}`}
     >
       {/* Left: Copyright */}
-      <div className="text-xs text-gray-500">
-        © 2025 Team 3. All rights reserved.
-      </div>
+      <div className="text-xs text-gray-500">© 2025 Team 3. All rights reserved.</div>
 
       {/* Right: Custom content */}
       {customContent && (
-        <div className="flex items-center text-xs text-gray-500">
-          {customContent}
-        </div>
+        <div className="flex items-center text-xs text-gray-500">{customContent}</div>
       )}
-
     </footer>
   );
 }

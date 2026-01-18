@@ -1,15 +1,16 @@
 """Test configuration and fixtures."""
 
-import pytest
-import django
 import os
 import sys
+
+import django
+import pytest
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Configure Django settings
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 # Setup Django
 django.setup()
@@ -27,13 +28,11 @@ def mock_session_data():
             "weight_kg": 75,
             "height_cm": 170,
             "gender": "Male",
-            "bmi": 25.95
+            "bmi": 25.95,
         },
-        "fingerprints": {
-            f"finger_{i}": f"base64_data_{i}" for i in range(10)
-        },
+        "fingerprints": {f"finger_{i}": f"base64_data_{i}" for i in range(10)},
         "predictions": None,
-        "completed": False
+        "completed": False,
     }
 
 
@@ -45,17 +44,10 @@ def mock_ml_results():
             "risk_score": 0.65,
             "risk_level": "Moderate",
             "confidence": 0.87,
-            "pattern_counts": {
-                "Arc": 2,
-                "Whorl": 5,
-                "Loop": 3
-            },
-            "bmi": 25.95
+            "pattern_counts": {"Arc": 2, "Whorl": 5, "Loop": 3},
+            "bmi": 25.95,
         },
-        "blood_group": {
-            "blood_group": "O+",
-            "confidence": 0.92
-        }
+        "blood_group": {"blood_group": "O+", "confidence": 0.92},
     }
 
 
@@ -73,5 +65,5 @@ def sample_patient_data():
         "pattern_whorl": 5,
         "pattern_loop": 3,
         "risk_score": 0.65,
-        "risk_level": "Moderate"
+        "risk_level": "Moderate",
     }

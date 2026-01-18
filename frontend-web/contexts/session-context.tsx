@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { storage } from "@/lib/storage";
 import { STORAGE_KEYS, STEPS } from "@/lib/constants";
 
@@ -84,6 +78,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     // Clear demographics data from sessionStorage
     sessionStorage.removeItem("demographics");
     sessionStorage.removeItem("current_session_id");
+    sessionStorage.removeItem("scanned_fingerprints");
     // Clear analysis results from sessionStorage
     if (currentSessionId) {
       sessionStorage.removeItem(currentSessionId);

@@ -1,0 +1,99 @@
+[project]
+name = "backend-cloud"
+version = "1.0.0"
+description = "Django backend for fingerprint analysis"
+requires-python = ">=3.8"
+
+[tool.ruff]
+# Set the maximum line length to 88 (Black's default)
+line-length = 88
+
+# Target Python 3.8+
+target-version = "py38"
+
+# Exclude common directories
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "*.pyc",
+    "migrations",
+    "htmlcov",
+    ".pytest_cache",
+    "*.egg-info",
+]
+
+[tool.ruff.lint]
+# Enable these rule sets
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort (import sorting)
+    "N",      # pep8-naming
+    "UP",     # pyupgrade (modern Python syntax)
+    "B",      # flake8-bugbear (common bugs)
+    "C4",     # flake8-comprehensions
+    "DTZ",    # flake8-datetimez
+    "T10",    # flake8-debugger
+    "DJ",     # flake8-django
+    "PL",     # pylint
+    "RUF",    # Ruff-specific rules
+]
+
+# Ignore specific rules
+ignore = [
+    "E501",   # Line too long (handled by formatter)
+    "PLR0913", # Too many arguments
+    "PLR2004", # Magic value comparison
+    "DJ001",  # Django model without __str__
+]
+
+# Allow fix for all enabled rules (when `--fix` is provided)
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore certain rules in specific files
+"__init__.py" = ["F401"]  # Allow unused imports
+"settings.py" = ["F405"]  # Allow star imports
+"**/migrations/*.py" = ["ALL"]  # Ignore all in migrations
+"tests/**/*.py" = ["PLR2004"]  # Allow magic values in tests
+# Test and debug scripts require Django setup before imports
+"check_*.py" = ["E402", "PLR1722"]  # Module import after setup, sys.exit
+"debug_*.py" = ["E402", "PLC0415"]  # Module import after setup, lazy import in exception
+"test_*.py" = ["E402"]  # Module import after setup
+"simple_check.py" = ["E402"]  # Module import after setup
+"verify_schema_presence.py" = ["E402", "PLR1722"]  # Module import after setup, sys.exit
+
+[tool.ruff.lint.isort]
+# Configure import sorting (isort)
+known-first-party = ["api", "config"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.format]
+# Use double quotes for strings
+quote-style = "double"
+
+# Indent with spaces
+indent-style = "space"
+
+# Respect magic trailing commas
+skip-magic-trailing-comma = false
+
+# Format docstrings
+docstring-code-format = true
+
+[tool.pytest.ini_options]
+# Exclude debug/utility scripts from test collection
+python_files = ["tests/test_*.py", "tests/**/test_*.py"]
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::RuntimeWarning",
+    "ignore::FutureWarning",
+    "ignore::DeprecationWarning",
+]

@@ -22,6 +22,10 @@ export interface MapPlace {
   address: string;
   google_query: string;
   phone?: string;
+  type?: string;
+  email?: string;
+  website?: string;
+  facebook?: string;
 }
 
 export interface ResultsParticipantData {
@@ -38,4 +42,7 @@ export interface ResultsParticipantData {
   nearby_facilities: MapPlace[];
   pattern_counts: Record<string, unknown>;
   bmi: number;
+  // QR Code & PDF Download
+  qr_code_url?: string;
+  download_url?: string;
 }

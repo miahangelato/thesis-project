@@ -18,8 +18,7 @@ function safeSessionStorageRemove(key: string) {
 export function clearClientSessionState() {
   try {
     const sessionIdFromStorage = storage.get<string>(STORAGE_KEYS.SESSION_ID);
-    const sessionIdFromSessionStorage =
-      sessionStorage.getItem("current_session_id");
+    const sessionIdFromSessionStorage = sessionStorage.getItem("current_session_id");
     const activeSessionId = sessionIdFromStorage || sessionIdFromSessionStorage;
 
     // Clears diabetes_kiosk_* localStorage keys via wrapper

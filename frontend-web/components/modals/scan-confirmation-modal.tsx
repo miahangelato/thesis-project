@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Fingerprint, AlertCircle, CheckCircle } from "lucide-react";
+import { Fingerprint, AlertCircle, CheckCircle, Sparkles } from "lucide-react";
 
 interface ScanConfirmationModalProps {
   isOpen: boolean;
@@ -20,93 +20,110 @@ export function ScanConfirmationModal({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 animate-in fade-in duration-200"
+        className="fixed inset-0 bg-teal-950/40 backdrop-blur-md z-50 animate-in fade-in duration-300"
         onClick={onCancel}
       />
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none">
         <div
-          className="bg-white rounded-2xl shadow-2xl max-w-lg w-full pointer-events-auto animate-in zoom-in-95 duration-200"
+          className="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full pointer-events-auto animate-in zoom-in-95 duration-300 border border-teal-100 overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="p-9">
+          {/* Decorative Top Bar */}
+          <div className="h-2 w-full bg-gradient-to-r from-teal-400 to-cyan-400" />
+
+          <div className="p-10">
             {/* Header */}
-            <div className="flex items-center gap-5 mb-7">
-              <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
-                <Fingerprint className="w-8 h-8 text-teal-600" />
+            <div className="flex flex-col items-center text-center gap-6 mb-10">
+              <div className="w-24 h-24 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-3xl flex items-center justify-center shadow-sm border border-teal-100">
+                <Fingerprint className="w-12 h-12 text-teal-600" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-gray-900">
+                <h2 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">
                   Start Automatic Scanning
                 </h2>
-                <p className="text-base text-gray-600">
-                  10 fingers will be scanned
+                <p className="text-xl text-gray-500 font-medium">
+                  10 fingers will be scanned sequentially
                 </p>
               </div>
             </div>
 
-            {/* Description */}
-            <div className="space-y-5 mb-7">
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 text-blue-600 mt-0.5 shrink-0" />
+            {/* Content Blocks */}
+            <div className="space-y-6 mb-10">
+              {/* Automatic Process - Hero Block */}
+              <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-start gap-5">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-teal-100">
+                    <Sparkles className="w-6 h-6 text-teal-600" />
+                  </div>
                   <div>
-                    <p className="text-base font-semibold text-blue-900 mb-1">
+                    <p className="text-xl font-bold text-teal-900 mb-2">
                       Automatic Process
                     </p>
-                    <p className="text-base text-blue-800">
-                      The scanner will automatically capture each finger and
-                      move to the next one after 5 seconds.
+                    <p className="text-lg text-teal-800/80 leading-relaxed">
+                      The scanner will automatically capture each finger and move
+                      to the next one after <span className="font-bold">5 seconds</span>.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-6 h-6 text-amber-600 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-base font-semibold text-amber-900 mb-1">
+              {/* Info Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Failure Handling */}
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <AlertCircle className="w-6 h-6 text-amber-600" />
+                    <p className="text-lg font-bold text-amber-900">
                       If Scanning Fails
                     </p>
-                    <p className="text-base text-amber-800">
-                      Don&apos;t worry! You can easily rescan any finger that
-                      fails. Just click the &quot;Rescan This Finger&quot;
-                      button.
+                  </div>
+                  <p className="text-base text-amber-800/90 leading-relaxed font-medium">
+                    Don&apos;t worry! You can review and retake any finger after the scanning process is complete.
+                  </p>
+                </div>
+
+                {/* Quick Tips */}
+                <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <CheckCircle className="w-6 h-6 text-gray-600" />
+                    <p className="text-lg font-bold text-gray-900">
+                      Best Results
                     </p>
                   </div>
+                  <ul className="space-y-2">
+                    <li className="flex items-center gap-2 text-base text-gray-600 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                      Clean & dry fingers
+                    </li>
+                    <li className="flex items-center gap-2 text-base text-gray-600 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                      Press firmly
+                    </li>
+                    <li className="flex items-center gap-2 text-base text-gray-600 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                      Keep still
+                    </li>
+                  </ul>
                 </div>
-              </div>
-
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4">
-                <p className="text-base text-gray-700">
-                  <strong className="text-gray-900">
-                    Tips for best results:
-                  </strong>
-                  <br />
-                  • Clean and dry your fingers
-                  <br />
-                  • Press firmly on the scanner
-                  <br />• Keep your finger still during capture
-                </p>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <Button
                 onClick={onCancel}
                 variant="outline"
-                className="flex-1 h-12 text-base font-semibold cursor-pointer"
+                className="flex-1 h-16 text-lg font-bold border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-600 rounded-xl transition-all"
               >
                 Cancel
               </Button>
               <Button
                 onClick={onConfirm}
-                className="flex-1 h-12 bg-teal-600 hover:bg-teal-700 text-white text-base font-semibold cursor-pointer"
+                className="flex-[2] h-16 bg-[#00c2cb] hover:bg-[#00adb5] text-white text-xl font-bold rounded-xl shadow-lg shadow-teal-200/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                <Fingerprint className="w-5 h-5 mr-2" />
+                <Fingerprint className="w-6 h-6 mr-3" />
                 Start Scanning
               </Button>
             </div>
@@ -116,3 +133,4 @@ export function ScanConfirmationModal({
     </>
   );
 }
+

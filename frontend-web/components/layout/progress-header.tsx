@@ -25,7 +25,7 @@ export function ProgressHeader({
   // Calculate progress percentage
   const router = useRouter();
   const progress = (currentStep / totalSteps) * 100;
-  
+
   const handleBack = () => {
     if (onEndSession) {
       onEndSession();
@@ -39,29 +39,22 @@ export function ProgressHeader({
       {/* Step indicator text */}
       <div className="flex justify-between items-center mb-2">
         <div>
-          {title && (
-            <h1 className="text-5xl font-bold text-gray-800 mt-1">{title}</h1>
-          )}
-          {subtitle && (
-            <p className="text-gray-600 text-base mt-3">{subtitle}</p>
-          )}
+          {title && <h1 className="text-5xl font-bold text-gray-800 mt-1">{title}</h1>}
+          {subtitle && <p className="text-gray-600 text-2xl mt-3">{subtitle}</p>}
         </div>
         <div className="flex flex-row items-end gap-4">
           <div className="flex flex-col">
-            <div
-              className="text-base font-medium"
-              style={{ color: accentColor }}
-            >
+            <div className="text-lg font-medium" style={{ color: accentColor }}>
               Step {currentStep} of {totalSteps}
             </div>
-            <div className="text-md text-gray-500 hidden md:block">
+            <div className="text-lg text-gray-500 hidden md:block">
               {steps[currentStep - 1]}
             </div>
           </div>
           <Button
             variant="outline"
             onClick={handleBack}
-            className="flex items-center gap-2 h-14 px-6 rounded-xl border-2 border-red-300 text-red-700 font-semibold hover:bg-red-50 cursor-pointer text-base"
+            className="flex items-center gap-2 h-14 px-6 rounded-xl border-2 border-red-300 text-red-700 font-semibold hover:bg-red-50 cursor-pointer text-lg"
           >
             <X size={18} />
             End Session
@@ -85,7 +78,7 @@ export function ProgressHeader({
         {steps.map((step, index) => (
           <div
             key={index}
-            className={`text-sm transition-colors duration-200 ${
+            className={`text-base transition-colors duration-200 ${
               index + 1 <= currentStep ? "font-medium" : "text-gray-400"
             }`}
             style={{

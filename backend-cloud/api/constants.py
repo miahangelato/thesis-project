@@ -36,7 +36,7 @@ HOSPITALS_DB = [
         "facebook": "https://www.facebook.com/JBLMGHOfficial",
         "google_query": "Jose B. Lingad Memorial General Hospital San Fernando Pampanga",
         "city": "San Fernando",
-        "verification_status": "verified"
+        "verification_status": "verified",
     },
     {
         "name": "The Medical City Clark",
@@ -48,7 +48,7 @@ HOSPITALS_DB = [
         "facebook": "https://www.facebook.com/TheMedicalCityClark/",
         "google_query": "The Medical City Clark Mabalacat Pampanga",
         "city": "Mabalacat",
-        "verification_status": "verified"
+        "verification_status": "verified",
     },
     {
         "name": "Pampanga Medical Specialist Hospital",
@@ -58,7 +58,7 @@ HOSPITALS_DB = [
         "website": "https://pmsh.com.ph",
         "google_query": "Pampanga Medical Specialist Hospital Guagua",
         "city": "Guagua",
-        "verification_status": "verified"
+        "verification_status": "verified",
     },
     {
         "name": "V. L. Makabali Memorial Hospital",
@@ -67,7 +67,7 @@ HOSPITALS_DB = [
         "phone": "+63 45 961 2239",
         "google_query": "V. L. Makabali Memorial Hospital San Fernando Pampanga",
         "city": "San Fernando",
-        "verification_status": "verified"
+        "verification_status": "verified",
     },
     {
         "name": "R. P. Rodriguez Memorial Hospital",
@@ -76,7 +76,7 @@ HOSPITALS_DB = [
         "phone": "+63 45 961 3456",
         "google_query": "R. P. Rodriguez Memorial Hospital San Fernando Pampanga",
         "city": "San Fernando",
-        "verification_status": "verified"
+        "verification_status": "verified",
     },
     # --- Added from Facilities list: Diabetes Hospitals ---
     {
@@ -89,7 +89,7 @@ HOSPITALS_DB = [
         "website": "http://www.aufmc.com.ph/",
         "google_query": "Angeles University Foundation Medical Center Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Sacred Heart Medical Center",
@@ -101,7 +101,7 @@ HOSPITALS_DB = [
         "facebook": "https://www.facebook.com/acshmcofficial/",
         "google_query": "Sacred Heart Medical Center Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "PRI Medical Center",
@@ -113,7 +113,7 @@ HOSPITALS_DB = [
         "website": "https://primedical.com.ph/",
         "google_query": "PRI Medical Center Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Ospital Ning Angeles Multipurpose Cooperative",
@@ -125,7 +125,7 @@ HOSPITALS_DB = [
         "facebook": "https://www.facebook.com/p/Ospital-Ning-Angeles-Management-100068082903021/",
         "google_query": "Ospital Ning Angeles Multipurpose Cooperative Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Our Lady of Mt. Carmel Medical Center - Clark",
@@ -135,7 +135,7 @@ HOSPITALS_DB = [
         "website": "https://olmcmc.com/services/clark",
         "google_query": "Our Lady of Mt. Carmel Medical Center Clark",
         "city": "Mabalacat",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "MALIWAT ENT MEDICAL CLINIC",
@@ -146,7 +146,7 @@ HOSPITALS_DB = [
         "facebook": "https://www.facebook.com/maliwatentmedicalclinic/",
         "google_query": "Maliwat ENT Medical Clinic Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "The Medical City - Angeles",
@@ -156,7 +156,7 @@ HOSPITALS_DB = [
         "website": "https://www.themedicalcity.com/",
         "google_query": "The Medical City Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Angeles Medical Center",
@@ -166,7 +166,7 @@ HOSPITALS_DB = [
         "website": "https://www.angelesmed.com/",
         "google_query": "Angeles Medical Center Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Pineda Medical Clinic",
@@ -176,7 +176,7 @@ HOSPITALS_DB = [
         "facebook": "https://www.facebook.com/profile.php?id=100092741389883",
         "google_query": "Pineda Medical Clinic Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Tiglao Medical Center Foundation",
@@ -186,7 +186,7 @@ HOSPITALS_DB = [
         "facebook": "https://www.facebook.com/p/Tiglao-Medical-Center-Foundation-Inc-100071678898209/",
         "google_query": "Tiglao Medical Center Foundation Mabalacat",
         "city": "Mabalacat",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "San Fernandino Hospital Inc.",
@@ -196,13 +196,13 @@ HOSPITALS_DB = [
         "website": "https://sanfernandinohospitalinc.com/",
         "google_query": "San Fernandino Hospital San Fernando",
         "city": "San Fernando",
-        "verification_status": "community"
-    }
+        "verification_status": "community",
+    },
 ]
 
 BLOOD_CENTERS_DB = [
     {
-        "name": "Philippine Red Cross – Pampanga Chapter",
+        "name": "Philippine Red Cross - Pampanga Chapter",
         "address": "Brgy. Matulungin, Diosdado Macapagal Government Center, San Fernando, Pampanga",
         "type": "Blood Donation Center",
         "phone": "+63 45 961 4117",
@@ -217,8 +217,8 @@ BLOOD_CENTERS_DB = [
             "Age 18-65 years",
             "Weight 50kg minimum",
             "Good health condition",
-            "No medication or illness in past 2 weeks"
-        ]
+            "No medication or illness in past 2 weeks",
+        ],
     },
     {
         "name": "Central Luzon Regional Blood Center",
@@ -234,8 +234,8 @@ BLOOD_CENTERS_DB = [
             "Age 18-65 years",
             "Weight 50kg minimum",
             "Must pass medical screening",
-            "Bring valid ID"
-        ]
+            "Bring valid ID",
+        ],
     },
     # --- Added from Facilities list: Angeles ---
     {
@@ -247,7 +247,7 @@ BLOOD_CENTERS_DB = [
         "facebook": "https://www.facebook.com/scafmc.philippines/",
         "google_query": "St. Catherine of Alexandria Foundation and Medical Center Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Angeles University Foundation Medical Center",
@@ -259,7 +259,7 @@ BLOOD_CENTERS_DB = [
         "website": "http://www.aufmc.com.ph/",
         "google_query": "Angeles University Foundation Medical Center Blood Bank",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "PRI Medical Center",
@@ -271,7 +271,7 @@ BLOOD_CENTERS_DB = [
         "website": "https://primedical.com.ph/",
         "google_query": "PRI Medical Center Blood Bank Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Ospital Ning Angeles Multipurpose Cooperative",
@@ -283,7 +283,7 @@ BLOOD_CENTERS_DB = [
         "facebook": "https://www.facebook.com/p/Ospital-Ning-Angeles-Management-100068082903021/",
         "google_query": "Ospital Ning Angeles Multipurpose Cooperative Blood Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Philippine Rehabilitation Center Medical Clinic",
@@ -292,7 +292,7 @@ BLOOD_CENTERS_DB = [
         "mobile": ["0949-654-8521"],
         "google_query": "Philippine Rehabilitation Center Medical Clinic Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Angeles City Hall",
@@ -302,7 +302,7 @@ BLOOD_CENTERS_DB = [
         "website": "https://www.angelescity.gov.ph/",
         "google_query": "Angeles City Hall",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Sacred Heart Medical Center",
@@ -314,7 +314,7 @@ BLOOD_CENTERS_DB = [
         "facebook": "https://www.facebook.com/acshmcofficial/",
         "google_query": "Sacred Heart Medical Center Blood Bank Angeles",
         "city": "Angeles",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     # --- Mabalacat ---
     {
@@ -327,7 +327,7 @@ BLOOD_CENTERS_DB = [
         "website": "https://straphaelmc.com/",
         "google_query": "St. Raphael Foundation and Medical Center Mabalacat",
         "city": "Mabalacat",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Mabalacat District Hospital",
@@ -337,7 +337,7 @@ BLOOD_CENTERS_DB = [
         "facebook": "https://www.facebook.com/profile.php?id=100090356352203",
         "google_query": "Mabalacat District Hospital",
         "city": "Mabalacat",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Mabalacat City Rural Health Unit IV (RHU4)",
@@ -347,7 +347,7 @@ BLOOD_CENTERS_DB = [
         "facebook": "https://www.facebook.com/profile.php?id=100059135710735",
         "google_query": "Mabalacat City Rural Health Unit IV",
         "city": "Mabalacat",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Mabalacat City Hemodialysis Center",
@@ -357,7 +357,7 @@ BLOOD_CENTERS_DB = [
         "facebook": "https://www.facebook.com/mchclgu/",
         "google_query": "Mabalacat City Hemodialysis Center",
         "city": "Mabalacat",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Adult and Child Medical Clinic (ACMC)",
@@ -368,7 +368,7 @@ BLOOD_CENTERS_DB = [
         "facebook": "https://www.facebook.com/acmc2018/",
         "google_query": "Adult and Child Medical Clinic ACMC Mabalacat",
         "city": "Mabalacat",
-        "verification_status": "community"
+        "verification_status": "community",
     },
     {
         "name": "Centralle Medical Diagnostics and Polyclinic - Pampanga",
@@ -379,43 +379,187 @@ BLOOD_CENTERS_DB = [
         "website": "http://www.centrallemedical.com/",
         "google_query": "Centralle Medical Diagnostics and Polyclinic Mabalacat",
         "city": "Mabalacat",
-        "verification_status": "community"
-    }
+        "verification_status": "community",
+    },
 ]
 
 # Diabetes Laboratories (community-sourced)
 LABORATORIES_DB = [
     # Angeles
-    {"name": "Bio R9L Diagnostic Center", "address": "1232 Miranda Street, Pulung Bulu, Angeles City, Pampanga", "phone": "+63 45 322 2898", "city": "Angeles", "google_query": "Bio R9L Diagnostic Center Angeles", "verification_status": "community"},
-    {"name": "Ace Hub Medical Diagnostic Laboratory", "address": "Teodoro St, Angeles, Pampanga", "mobile": ["0925-778-4948"], "email": "acemedlaboratory@gmail.com", "facebook": "https://www.facebook.com/acemedlab/", "city": "Angeles", "google_query": "Ace Hub Medical Diagnostic Laboratory Angeles", "verification_status": "community"},
-    {"name": "MDLab Diagnostic Center, Inc.", "address": "Block 23, Lot 11, 1st St, Angeles, 2009 Pampanga", "phone": "+63 45 458 2614", "city": "Angeles", "google_query": "MDLab Diagnostic Center Inc Angeles", "verification_status": "community"},
+    {
+        "name": "Bio R9L Diagnostic Center",
+        "address": "1232 Miranda Street, Pulung Bulu, Angeles City, Pampanga",
+        "phone": "+63 45 322 2898",
+        "city": "Angeles",
+        "google_query": "Bio R9L Diagnostic Center Angeles",
+        "verification_status": "community",
+    },
+    {
+        "name": "Ace Hub Medical Diagnostic Laboratory",
+        "address": "Teodoro St, Angeles, Pampanga",
+        "mobile": ["0925-778-4948"],
+        "email": "acemedlaboratory@gmail.com",
+        "facebook": "https://www.facebook.com/acemedlab/",
+        "city": "Angeles",
+        "google_query": "Ace Hub Medical Diagnostic Laboratory Angeles",
+        "verification_status": "community",
+    },
+    {
+        "name": "MDLab Diagnostic Center, Inc.",
+        "address": "Block 23, Lot 11, 1st St, Angeles, 2009 Pampanga",
+        "phone": "+63 45 458 2614",
+        "city": "Angeles",
+        "google_query": "MDLab Diagnostic Center Inc Angeles",
+        "verification_status": "community",
+    },
     # Mabalacat
-    {"name": "BioVie Diagnostic and Medical Corporation", "address": "Unit 101 Baronesa Place Building 2, Mabalacat City, Pampanga", "mobile": ["0927 076 5170"], "email": "bioviediagnostic.medcorp@gmail.com", "facebook": "https://www.facebook.com/BioVieDiagnostic/", "city": "Mabalacat", "google_query": "BioVie Diagnostic and Medical Corporation Mabalacat", "verification_status": "community"},
-    {"name": "BioChem Healthcare Services Inc.", "address": "2/F No. 71 MacArthur Hwy, Mabalacat City, 2010 Pampanga", "phone": "+63 45 402 5809", "facebook": "https://www.facebook.com/biochemph/", "website": "https://www.biochem.ph/", "city": "Mabalacat", "google_query": "BioChem Healthcare Services Inc Mabalacat", "verification_status": "community"},
+    {
+        "name": "BioVie Diagnostic and Medical Corporation",
+        "address": "Unit 101 Baronesa Place Building 2, Mabalacat City, Pampanga",
+        "mobile": ["0927 076 5170"],
+        "email": "bioviediagnostic.medcorp@gmail.com",
+        "facebook": "https://www.facebook.com/BioVieDiagnostic/",
+        "city": "Mabalacat",
+        "google_query": "BioVie Diagnostic and Medical Corporation Mabalacat",
+        "verification_status": "community",
+    },
+    {
+        "name": "BioChem Healthcare Services Inc.",
+        "address": "2/F No. 71 MacArthur Hwy, Mabalacat City, 2010 Pampanga",
+        "phone": "+63 45 402 5809",
+        "facebook": "https://www.facebook.com/biochemph/",
+        "website": "https://www.biochem.ph/",
+        "city": "Mabalacat",
+        "google_query": "BioChem Healthcare Services Inc Mabalacat",
+        "verification_status": "community",
+    },
     # San Fernando
-    {"name": "Medisense Laboratory Center Inc", "address": "Plaza Garcia, San Fernando, 2000 Pampanga", "city": "San Fernando", "google_query": "Medisense Laboratory Center Inc San Fernando", "verification_status": "community"},
-    {"name": "PDDL Diagnostic Laboratory", "address": "442 MacArthur Hwy, San Fernando, Pampanga", "mobile": ["0942-833-3854"], "city": "San Fernando", "google_query": "PDDL Diagnostic Laboratory San Fernando", "verification_status": "community"},
-    {"name": "Fhey Laboratory & Diagnostic Clinic", "address": "Sto Rosario, Abad Santos St., OPM, San Fernando, Pampanga", "phone": "+63 45 477 9443", "city": "San Fernando", "google_query": "Fhey Laboratory Diagnostic Clinic San Fernando", "verification_status": "community"},
-    {"name": "R & R Holistic Laboratory and Diagnostic Center", "address": "Manila N Rd, San Fernando, Pampanga", "phone": "+63 45 455 3413", "website": "https://www.rnrdiagnostics.com/", "city": "San Fernando", "google_query": "R & R Holistic Laboratory and Diagnostic Center San Fernando", "verification_status": "community"},
-    {"name": "Clinitech Medical Laboratory", "address": "MacArthur Hwy, San Fernando, 2000 Pampanga", "phone": "+63 45 961 1555", "facebook": "https://facebook.com/clinitechofficial", "city": "San Fernando", "google_query": "Clinitech Medical Laboratory San Fernando", "verification_status": "community"},
-    {"name": "Macapagal Pampanga Doctor's Laboratory", "address": "2MHJ+GPP, Venus Street, San Fernando Subdivision, San Nicolas, San Fernando, 2000 Pampanga", "phone": "+63 45 861 3615", "city": "San Fernando", "google_query": "Macapagal Pampanga Doctor's Laboratory San Fernando", "verification_status": "community"},
-    {"name": "Ideal Health Diagnostics", "address": "5J's Building, MacArthur Hwy, San Fernando, 2000 Pampanga", "mobile": ["0956-546-6667"], "facebook": "https://www.facebook.com/idealhealthdiagnostics", "city": "San Fernando", "google_query": "Ideal Health Diagnostics San Fernando", "verification_status": "community"}
+    {
+        "name": "Medisense Laboratory Center Inc",
+        "address": "Plaza Garcia, San Fernando, 2000 Pampanga",
+        "city": "San Fernando",
+        "google_query": "Medisense Laboratory Center Inc San Fernando",
+        "verification_status": "community",
+    },
+    {
+        "name": "PDDL Diagnostic Laboratory",
+        "address": "442 MacArthur Hwy, San Fernando, Pampanga",
+        "mobile": ["0942-833-3854"],
+        "city": "San Fernando",
+        "google_query": "PDDL Diagnostic Laboratory San Fernando",
+        "verification_status": "community",
+    },
+    {
+        "name": "Fhey Laboratory & Diagnostic Clinic",
+        "address": "Sto Rosario, Abad Santos St., OPM, San Fernando, Pampanga",
+        "phone": "+63 45 477 9443",
+        "city": "San Fernando",
+        "google_query": "Fhey Laboratory Diagnostic Clinic San Fernando",
+        "verification_status": "community",
+    },
+    {
+        "name": "R & R Holistic Laboratory and Diagnostic Center",
+        "address": "Manila N Rd, San Fernando, Pampanga",
+        "phone": "+63 45 455 3413",
+        "website": "https://www.rnrdiagnostics.com/",
+        "city": "San Fernando",
+        "google_query": "R & R Holistic Laboratory and Diagnostic Center San Fernando",
+        "verification_status": "community",
+    },
+    {
+        "name": "Clinitech Medical Laboratory",
+        "address": "MacArthur Hwy, San Fernando, 2000 Pampanga",
+        "phone": "+63 45 961 1555",
+        "facebook": "https://facebook.com/clinitechofficial",
+        "city": "San Fernando",
+        "google_query": "Clinitech Medical Laboratory San Fernando",
+        "verification_status": "community",
+    },
+    {
+        "name": "Macapagal Pampanga Doctor's Laboratory",
+        "address": "2MHJ+GPP, Venus Street, San Fernando Subdivision, San Nicolas, San Fernando, 2000 Pampanga",
+        "phone": "+63 45 861 3615",
+        "city": "San Fernando",
+        "google_query": "Macapagal Pampanga Doctor's Laboratory San Fernando",
+        "verification_status": "community",
+    },
+    {
+        "name": "Ideal Health Diagnostics",
+        "address": "5J's Building, MacArthur Hwy, San Fernando, 2000 Pampanga",
+        "mobile": ["0956-546-6667"],
+        "facebook": "https://www.facebook.com/idealhealthdiagnostics",
+        "city": "San Fernando",
+        "google_query": "Ideal Health Diagnostics San Fernando",
+        "verification_status": "community",
+    },
 ]
 
 # Diabetes Doctors (community-sourced)
 DIABETES_DOCTORS_DB = [
     # Angeles
-    {"name": "Dr. Rommel G. Malonzo", "clinic": "Room 228, AUF Medical Center, MacArthur Hwy, Angeles, 2009 Pampanga", "mobile": ["0985-833-0379"], "city": "Angeles"},
-    {"name": "Dr. Edgar S. Nicolas Jr.", "clinic": "Room 216, AUF Medical Center, MacArthur Hwy, Angeles, 2009 Pampanga", "phone": "+63 45 625 2999", "city": "Angeles"},
-    {"name": "Carlo Rodrigo S. Carreon, M.D.", "clinic": "Room 228, Medical Tower Clinic, AUFMC, MacArthur Highway, Angeles City, Pampanga, 2009", "phone": "+63 45 625 2999", "city": "Angeles"},
-    {"name": "Nines P. Bautista", "clinic": "Room 209, AUF Medical Center, Angeles City", "mobile": ["0998-308-1425"], "city": "Angeles"},
-    {"name": "Jose Tranquilino P. Jr., MD", "clinic": "Room 213, Angeles Medical Center, 641 Rizal Street, Angeles City, Pampanga", "mobile": ["0932-725-3024"], "city": "Angeles"},
-    {"name": "Eric B. Cruz, MD", "clinic": "Rm 209, 2F Medical Tower Clinic, AUFMC, MacArthur Hwy, Angeles City, Pampanga", "mobile": ["0915-626-6013"], "website": "https://thefilipinodoctor.com/doctor/eric-cruz/clinic-schedule", "city": "Angeles"},
-    {"name": "Leonardo Dungca, M.D.", "clinic": "Room 218, Angeles Medical Center Inc., Rizal St, Angeles, 2009 Pampanga", "mobile": ["0969-646-2687"], "city": "Angeles"},
-    {"name": "Dr. Amiel S. Valerio", "clinic": "Amiel S. Valerio Medical Clinic, Diaserv Building, Zamora Street, Sindalan, Angeles, 2009 Pampanga", "phone": "+63 45 860 5956", "website": "https://ph948296-dr-amiel-s-valerio.contact.page/", "city": "Angeles"},
-    {"name": "Carlo Rodrigo Carreon, M.D., FPCP, FPSEDM", "clinic": "Room 210, Angeles Medical Center", "mobile": ["0919-316-9646"], "city": "Angeles"},
+    {
+        "name": "Dr. Rommel G. Malonzo",
+        "clinic": "Room 228, AUF Medical Center, MacArthur Hwy, Angeles, 2009 Pampanga",
+        "mobile": ["0985-833-0379"],
+        "city": "Angeles",
+    },
+    {
+        "name": "Dr. Edgar S. Nicolas Jr.",
+        "clinic": "Room 216, AUF Medical Center, MacArthur Hwy, Angeles, 2009 Pampanga",
+        "phone": "+63 45 625 2999",
+        "city": "Angeles",
+    },
+    {
+        "name": "Carlo Rodrigo S. Carreon, M.D.",
+        "clinic": "Room 228, Medical Tower Clinic, AUFMC, MacArthur Highway, Angeles City, Pampanga, 2009",
+        "phone": "+63 45 625 2999",
+        "city": "Angeles",
+    },
+    {
+        "name": "Nines P. Bautista",
+        "clinic": "Room 209, AUF Medical Center, Angeles City",
+        "mobile": ["0998-308-1425"],
+        "city": "Angeles",
+    },
+    {
+        "name": "Jose Tranquilino P. Jr., MD",
+        "clinic": "Room 213, Angeles Medical Center, 641 Rizal Street, Angeles City, Pampanga",
+        "mobile": ["0932-725-3024"],
+        "city": "Angeles",
+    },
+    {
+        "name": "Eric B. Cruz, MD",
+        "clinic": "Rm 209, 2F Medical Tower Clinic, AUFMC, MacArthur Hwy, Angeles City, Pampanga",
+        "mobile": ["0915-626-6013"],
+        "website": "https://thefilipinodoctor.com/doctor/eric-cruz/clinic-schedule",
+        "city": "Angeles",
+    },
+    {
+        "name": "Leonardo Dungca, M.D.",
+        "clinic": "Room 218, Angeles Medical Center Inc., Rizal St, Angeles, 2009 Pampanga",
+        "mobile": ["0969-646-2687"],
+        "city": "Angeles",
+    },
+    {
+        "name": "Dr. Amiel S. Valerio",
+        "clinic": "Amiel S. Valerio Medical Clinic, Diaserv Building, Zamora Street, Sindalan, Angeles, 2009 Pampanga",
+        "phone": "+63 45 860 5956",
+        "website": "https://ph948296-dr-amiel-s-valerio.contact.page/",
+        "city": "Angeles",
+    },
+    {
+        "name": "Carlo Rodrigo Carreon, M.D., FPCP, FPSEDM",
+        "clinic": "Room 210, Angeles Medical Center",
+        "mobile": ["0919-316-9646"],
+        "city": "Angeles",
+    },
     # Mabalacat
-    {"name": "Carlo Rodrigo S. Carreon, M.D.", "clinic": "AccuMed Diagnostic Center, MacArthur Hwy, Mabalacat City, Pampanga", "mobile": ["0916-362-4447"], "city": "Mabalacat"}
+    {
+        "name": "Carlo Rodrigo S. Carreon, M.D.",
+        "clinic": "AccuMed Diagnostic Center, MacArthur Hwy, Mabalacat City, Pampanga",
+        "mobile": ["0916-362-4447"],
+        "city": "Mabalacat",
+    },
 ]
 
 # Legacy compatibility - map cities to hospitals
@@ -424,7 +568,7 @@ FACILITIES_DB = {
     "Mabalacat": [h for h in HOSPITALS_DB if h.get("city") == "Mabalacat"],
     "Guagua": [h for h in HOSPITALS_DB if h.get("city") == "Guagua"],
     # Fallback uses first 3 hospitals
-    "Angeles": HOSPITALS_DB[:3]
+    "Angeles": HOSPITALS_DB[:3],
 }
 
 
@@ -449,7 +593,7 @@ MAX_DIABETES_RISK_FOR_DONATION = 0.7  # Allow moderate risk, not high
 # Image Processing
 MAX_IMAGE_SIZE_MB = 10
 MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
-ALLOWED_IMAGE_FORMATS = ['JPEG', 'JPG', 'PNG', 'BMP']
+ALLOWED_IMAGE_FORMATS = ["JPEG", "JPG", "PNG", "BMP"]
 
 # Gemini AI Configuration
 GEMINI_MODEL = "gemini-1.5-flash"

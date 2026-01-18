@@ -31,9 +31,7 @@ export function ProtectedRoute({
   }, [sessionId, currentStep, requireSession, requiredStep, router, isLoading]);
 
   if (isLoading) {
-    return (
-      <FullScreenLoader title="Loading" subtitle="Please wait a moment…" />
-    );
+    return <FullScreenLoader title="Loading" subtitle="Please wait a moment…" />;
   }
 
   if (requireSession && !sessionId) {

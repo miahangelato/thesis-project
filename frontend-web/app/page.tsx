@@ -12,26 +12,22 @@ import { ROUTES, STEPS } from "@/lib/constants";
 const features = [
   {
     title: "Consent",
-    description:
-      "Review and agree to our privacy-first consent form before starting.",
+    description: "Review and agree to our privacy-first consent form before starting.",
     icon: <FileText />,
   },
   {
     title: "Personal Information",
-    description:
-      "Enter your age, gender, height, weight, and donation eligibility.",
+    description: "Enter your age, gender, height, weight, and donation eligibility.",
     icon: <User />,
   },
   {
     title: "Fingerprint Scan & Analysis",
-    description:
-      "Scan your fingerprint for AI-powered dermatoglyphic analysis.",
+    description: "Scan your fingerprint for AI-powered dermatoglyphic analysis.",
     icon: <ScanLine />,
   },
   {
     title: "Results & Recommendations",
-    description:
-      "Get instant predictions, risk assessment, and donation guidance.",
+    description: "Get instant predictions, risk assessment, and donation guidance.",
     icon: <BarChart3 />,
   },
 ];
@@ -46,10 +42,10 @@ export default function LandingPage() {
     try {
       // Start session immediately (consent status pending)
       const response = await sessionAPI.start(false); // Start without consent
-      
+
       // Use logical OR to handle different response structures if backend API varies
       const session_id = response.data?.session_id || response.data?.sessionId;
-      
+
       if (session_id) {
         setSession(session_id, false);
         setCurrentStep(STEPS.CONSENT);

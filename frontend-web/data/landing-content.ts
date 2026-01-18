@@ -23,8 +23,7 @@ export const landingCarouselSlides: CarouselSlide[] = [
   {
     id: "hero",
     title: "Your Fingerprints Are More Than Just Identity. They Are Data.",
-    subtitle:
-      "Unlocking the health secrets hidden in your unique biometric code.",
+    subtitle: "Unlocking the health secrets hidden in your unique biometric code.",
     content: [
       "Fingerprints form between weeks 5-21 of pregnancy—and never change.",
       "Printalyzer uses dermatoglyphic science to translate patterns into accessible health insights.",
