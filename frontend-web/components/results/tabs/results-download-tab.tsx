@@ -3,6 +3,7 @@
 import React from "react";
 import { QrCode, Smartphone, Info } from "lucide-react";
 import Image from "next/image";
+import { Spinner } from "@/components/ui/spinner";
 
 export function ResultsDownloadTab({
   qrCodeUrl,
@@ -15,7 +16,13 @@ export function ResultsDownloadTab({
   if (!qrCodeUrl || !downloadUrl) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <div className="animate-spin h-12 w-12 border-4 border-teal-500 border-t-transparent rounded-full mb-4" />
+        <Spinner
+          size="lg"
+          className="mb-4"
+          label="Generating your report"
+          trackClassName="border-teal-100"
+          indicatorClassName="border-teal-600 border-t-transparent"
+        />
         <p className="text-gray-600">Generating your report...</p>
       </div>
     );
@@ -60,9 +67,12 @@ export function ResultsDownloadTab({
                     <Smartphone className="h-8 w-8 text-teal-600" />
                   </div>
                   <div>
-                    <h4 className="text-2xl font-bold text-gray-900 mb-2">Open your phone camera</h4>
+                    <h4 className="text-2xl font-bold text-gray-900 mb-2">
+                      Open your phone camera
+                    </h4>
                     <p className="text-xl text-gray-600 leading-relaxed">
-                      Point it at this QR code and your PDF report will download automatically to your device.
+                      Point it at this QR code and your PDF report will download
+                      automatically to your device.
                     </p>
                   </div>
                 </div>
@@ -72,9 +82,12 @@ export function ResultsDownloadTab({
                     <span className="text-3xl">✅</span>
                   </div>
                   <div>
-                    <h4 className="text-2xl font-bold text-gray-900 mb-2">Ready for Safekeeping</h4>
+                    <h4 className="text-2xl font-bold text-gray-900 mb-2">
+                      Ready for Safekeeping
+                    </h4>
                     <p className="text-xl text-gray-600 leading-relaxed">
-                      Your report is generated and ready to be saved for your future reference.
+                      Your report is generated and ready to be saved for your future
+                      reference.
                     </p>
                   </div>
                 </div>
@@ -85,8 +98,8 @@ export function ResultsDownloadTab({
                 <p className="text-base text-gray-600 flex items-start">
                   <Info className="w-6 h-6 mr-3 mt-0.5 shrink-0 text-gray-400" />
                   <span>
-                    <strong>Important:</strong> This report is for informational purposes only and
-                    should not replace professional medical advice.
+                    <strong>Important:</strong> This report is for informational purposes
+                    only and should not replace professional medical advice.
                   </span>
                 </p>
               </div>

@@ -2,8 +2,9 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
 
 interface StepNavigationProps {
   onBack?: () => void;
@@ -63,7 +64,13 @@ export function StepNavigation({
       >
         {loading ? (
           <>
-            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+            <Spinner
+              size="sm"
+              className="mr-2"
+              label="Processing"
+              trackClassName="border-slate-300"
+              indicatorClassName="border-slate-500 border-t-transparent"
+            />
             Processing...
           </>
         ) : (

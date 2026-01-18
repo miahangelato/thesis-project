@@ -1,0 +1,6 @@
+# Ignore local/production env files (secrets)
+.env
+.env.*
+
+# Keep the template tracked
+!.env.example

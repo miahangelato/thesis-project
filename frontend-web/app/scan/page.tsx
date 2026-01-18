@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/contexts/session-context";
@@ -23,11 +23,36 @@ import { useScanSession } from "@/hooks/use-scan-session";
 import { ScanAssistantCard } from "@/components/scan/scan-assistant-card";
 import { ScanInfoPanel } from "@/components/scan/scan-info-panel";
 import { ScanSessionModals } from "@/components/scan/scan-session-modals";
+import { Toast } from "@/components/ui/toast";
 
 export default function ScanPage() {
   const router = useRouter();
   const { sessionId, setCurrentStep } = useSession();
   const [loading, setLoading] = useState(false);
+
+  const [analysisOverlayOpen, setAnalysisOverlayOpen] = useState(false);
+  const [analysisOverlayState, setAnalysisOverlayState] = useState<"loading" | "error">(
+    "loading"
+  );
+  const [analysisOverlayError, setAnalysisOverlayError] = useState<string | undefined>(
+    undefined
+  );
+
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const overlayTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      const overlayTimeoutId = overlayTimeoutRef.current;
+      if (overlayTimeoutId) window.clearTimeout(overlayTimeoutId);
+    };
+  }, []);
+
+  const showErrorToast = (message: string) => {
+    setToastMessage(message);
+    setToastOpen(true);
+  };
 
   const {
     currentFingerIndex,
@@ -65,12 +90,20 @@ export default function ScanPage() {
   const handleSubmit = async () => {
     if (loading) return;
     setLoading(true);
+    setAnalysisOverlayOpen(true);
+    setAnalysisOverlayState("loading");
+    setAnalysisOverlayError(undefined);
     try {
       const activeSessionId = sessionId || sessionStorage.getItem("current_session_id");
 
       if (!activeSessionId) {
         console.error("No session ID available");
-        alert("No session ID. Please restart the workflow.");
+        setAnalysisOverlayState("error");
+        setAnalysisOverlayError("No session ID. Please restart the workflow.");
+        overlayTimeoutRef.current = window.setTimeout(() => {
+          setAnalysisOverlayOpen(false);
+          showErrorToast("No session ID. Please restart the workflow.");
+        }, 1400);
         setLoading(false);
         return;
       }
@@ -145,12 +178,21 @@ export default function ScanPage() {
       });
 
       console.log("🚀 About to navigate to:", ROUTES.RESULTS);
+      setAnalysisOverlayOpen(false);
       router.push(ROUTES.RESULTS);
       console.log("✅ router.push called");
     } catch (err) {
       console.error("Submission failed:", err);
       const message = getErrorMessage(err);
-      alert(`Failed to submit: ${message}`);
+
+      setAnalysisOverlayState("error");
+      setAnalysisOverlayError(message);
+
+      // Show the failure state briefly, then dismiss and toast.
+      overlayTimeoutRef.current = window.setTimeout(() => {
+        setAnalysisOverlayOpen(false);
+        showErrorToast("Analyzing fingerprints failed. Please try submitting again.");
+      }, 1400);
     } finally {
       setLoading(false);
     }
@@ -175,6 +217,13 @@ export default function ScanPage() {
   return (
     <ProtectedRoute requireSession={true} requiredStep={STEPS.SCAN}>
       <>
+        <Toast
+          open={toastOpen}
+          message={toastMessage}
+          variant="error"
+          onClose={() => setToastOpen(false)}
+        />
+
         <FinishConfirmationModal
           isOpen={showFinishModal}
           loading={loading}
@@ -212,7 +261,11 @@ export default function ScanPage() {
           }}
         />
 
-        <AnalysisLoadingOverlay isOpen={loading} />
+        <AnalysisLoadingOverlay
+          isOpen={analysisOverlayOpen}
+          state={analysisOverlayState}
+          errorMessage={analysisOverlayError}
+        />
 
         <div className="h-screen px-28 py-4 bg-white flex flex-col overflow-hidden">
           <main className="flex-1 w-full flex flex-col">

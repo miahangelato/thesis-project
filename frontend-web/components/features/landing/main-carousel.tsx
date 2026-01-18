@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Fingerprint } from "lucide-react";
+import { Fingerprint } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { landingCarouselSlides } from "@/data/landing-content";
+import { Spinner } from "@/components/ui/spinner";
 
 interface MainCarouselProps {
   autoPlayInterval?: number;
@@ -13,7 +14,7 @@ interface MainCarouselProps {
 }
 
 export function MainCarousel({
-  autoPlayInterval = 5000,
+  autoPlayInterval = 9000,
   onStartClick,
   loading = false,
 }: MainCarouselProps) {
@@ -22,22 +23,15 @@ export function MainCarousel({
 
   const totalSlides = landingCarouselSlides.length;
 
-  // Reset currentSlide if out of bounds (when slides change)
-  useEffect(() => {
-    if (currentSlide >= totalSlides) {
-      setCurrentSlide(0);
-    }
-  }, [currentSlide, totalSlides]);
-
   // Auto-play
   useEffect(() => {
     const timer = setInterval(() => {
-      nextSlide();
+      setDirection(1);
+      setCurrentSlide((prev) => (prev + 1) % totalSlides);
     }, autoPlayInterval);
 
     return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSlide, autoPlayInterval]);
+  }, [autoPlayInterval, totalSlides]);
 
   const nextSlide = () => {
     setDirection(1);
@@ -255,17 +249,17 @@ export function MainCarousel({
                             alt="Slide visual"
                             fill
                             draggable={false}
-                            className="object-contain p-6"
+                            className="object-contain"
                             sizes="(min-width: 1280px) 340px, (min-width: 1024px) 320px, 280px"
                             priority
                           />
                         ) : (
-                          Icon && (
-                            <Icon
-                              className="w-[68%] h-[68%] text-[#00c2cb]"
-                              strokeWidth={1.5}
-                            />
-                          )
+                          <div className="flex flex-col items-center justify-center p-6">
+                            {Icon && <Icon className="w-20 h-20 text-gray-300 mb-4" />}
+                            <p className="text-gray-400 text-center">
+                              No Image Available
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -284,7 +278,13 @@ export function MainCarousel({
             >
               {loading ? (
                 <div className="flex items-center">
-                  <Loader2 className="animate-spin h-8 w-8 mr-3" />
+                  <Spinner
+                    size="md"
+                    className="mr-3"
+                    label="Starting"
+                    trackClassName="border-white/30"
+                    indicatorClassName="border-white border-t-transparent"
+                  />
                   <span>Starting...</span>
                 </div>
               ) : (
