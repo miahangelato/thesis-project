@@ -201,7 +201,7 @@ export function ScanAssistantCard({
               <div className="h-5 mb-2" />
             )}
 
-            <div className="w-[12.5rem] h-[12.5rem] bg-gray-100 rounded-2xl border-3 border-gray-300 flex items-center justify-center overflow-hidden relative shadow-lg">
+            <div className="w-50 h-50 bg-gray-100 rounded-2xl border-3 border-gray-300 flex items-center justify-center overflow-hidden relative shadow-lg">
               {preview.fileToShow ? (
                 <>
                   <div className="relative w-full h-full">
@@ -236,8 +236,8 @@ export function ScanAssistantCard({
                 </div>
               )}
             </div>
-
-            {/* <div className="w-[12.5rem] mt-2">
+{/* 
+            <div className="w-50 mt-2">
               <FingerprintUpload
                 disabled={loading}
                 label={FINGER_NAMES[currentFinger]}
@@ -251,7 +251,7 @@ export function ScanAssistantCard({
                 onClick={onRescan}
                 variant="outline"
                 size="lg"
-                className="w-[12.5rem] h-12 mt-3 text-red-600 border-2 border-red-500 hover:bg-red-50 hover:text-red-700 hover:border-red-600 font-bold text-lg cursor-pointer transition-all shadow-sm"
+                className="w-50 h-12 mt-3 text-red-600 border-2 border-red-500 hover:bg-red-50 hover:text-red-700 hover:border-red-600 font-bold text-lg cursor-pointer transition-all shadow-sm"
               >
                 Retake this Finger
               </Button>
@@ -281,7 +281,7 @@ export function ScanAssistantCard({
               <Button
                 onClick={onTogglePaused}
                 variant={paused ? "default" : "outline"}
-                className={`min-w-[160px] font-bold h-14 text-lg cursor-pointer ${
+                className={`min-w-40 font-bold h-14 text-lg cursor-pointer ${
                   paused
                     ? "bg-green-600 hover:bg-green-700 text-white"
                     : "border-amber-500 text-amber-700 hover:bg-amber-50"

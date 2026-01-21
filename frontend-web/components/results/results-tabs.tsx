@@ -13,7 +13,7 @@ export function ResultsTabs({
   canShowBloodTab: boolean;
 }) {
   return (
-    <div className="flex space-x-1 shrink-0 px-2 relative z-10 top-[2px]">
+    <div className="flex space-x-1 shrink-0 px-2 relative z-10 top-0.5">
       <button
         onClick={() => onTabChange("analysis")}
         className={`py-3 px-5 rounded-t-lg font-bold text-base whitespace-nowrap transition-all cursor-pointer border-t-2 border-x-2 relative ${

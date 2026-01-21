@@ -91,7 +91,7 @@ export function ModalShell({
           aria-labelledby={labelledById}
           className={cn(
             "pointer-events-auto select-none bg-white shadow-2xl w-full overflow-hidden animate-in zoom-in-95 duration-300",
-            "rounded-[2rem] border border-teal-100",
+            "rounded-4xl border border-teal-100",
             panelClassName
           )}
           onClick={(e) => e.stopPropagation()}
@@ -99,7 +99,7 @@ export function ModalShell({
           {showTopBar && (
             <div
               className={cn(
-                "h-2 w-full bg-gradient-to-r from-teal-400 to-cyan-400",
+                "h-2 w-full bg-linear-to-r from-teal-400 to-cyan-400",
                 topBarClassName
               )}
             />

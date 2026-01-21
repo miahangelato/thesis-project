@@ -36,7 +36,7 @@ export function ScanInfoPanel({ demographics }: Props) {
   return (
     <div className="col-span-5 flex flex-col gap-4">
       {/* User Info Card */}
-      <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-300 rounded-2xl px-6 py-4 flex items-center gap-4 shadow-sm overflow-hidden">
+      <div className="bg-linear-to-r from-teal-50 to-cyan-50 border-2 border-teal-300 rounded-2xl px-6 py-4 flex items-center gap-4 shadow-sm overflow-hidden">
         <User className="w-7 h-7 text-teal-600 shrink-0" />
         <div className="flex items-center gap-x-3 text-xl font-bold text-teal-900 whitespace-nowrap overflow-hidden text-ellipsis">
           <span>{demographics?.age || "--"} yrs</span>

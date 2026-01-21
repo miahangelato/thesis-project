@@ -32,36 +32,40 @@ type StoredDemographics = {
 
 export function useScanSession() {
   const [currentFingerIndex, setCurrentFingerIndex] = useState(0);
-  const [fingerFiles, setFingerFiles] = useState<Partial<Record<FingerName, File>>>(() => {
-    // Load saved fingerprint images from sessionStorage
-    try {
-      const saved = sessionStorage.getItem("scanned_fingerprints");
-      if (saved) {
-        const data = JSON.parse(saved);
-        const files: Partial<Record<FingerName, File>> = {};
+  const [fingerFiles, setFingerFiles] = useState<Partial<Record<FingerName, File>>>(
+    () => {
+      // Load saved fingerprint images from sessionStorage
+      try {
+        const saved = sessionStorage.getItem("scanned_fingerprints");
+        if (saved) {
+          const data = JSON.parse(saved);
+          const files: Partial<Record<FingerName, File>> = {};
 
-        // Convert base64 back to File objects
-        for (const [finger, base64] of Object.entries(data)) {
-          if (typeof base64 === 'string') {
-            // Convert base64 to binary
-            const byteString = atob(base64.split(',')[1]);
-            const mimeString = base64.split(',')[0].split(':')[1].split(';')[0];
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) {
-              ia[i] = byteString.charCodeAt(i);
+          // Convert base64 back to File objects
+          for (const [finger, base64] of Object.entries(data)) {
+            if (typeof base64 === "string") {
+              // Convert base64 to binary
+              const byteString = atob(base64.split(",")[1]);
+              const mimeString = base64.split(",")[0].split(":")[1].split(";")[0];
+              const ab = new ArrayBuffer(byteString.length);
+              const ia = new Uint8Array(ab);
+              for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+              }
+              const blob = new Blob([ab], { type: mimeString });
+              files[finger as FingerName] = new File([blob], `${finger}.png`, {
+                type: mimeString,
+              });
             }
-            const blob = new Blob([ab], { type: mimeString });
-            files[finger as FingerName] = new File([blob], `${finger}.png`, { type: mimeString });
           }
+          return files;
         }
-        return files;
+      } catch (error) {
+        console.error("Failed to load scanned fingerprints from sessionStorage:", error);
       }
-    } catch (error) {
-      console.error("Failed to load scanned fingerprints from sessionStorage:", error);
+      return {};
     }
-    return {};
-  });
+  );
   const [demographics] = useState<StoredDemographics | null>(() => {
     try {
       const storedDemo = sessionStorage.getItem("demographics");
@@ -77,7 +81,10 @@ export function useScanSession() {
   const [scanningStarted, setScanningStarted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [isFirstScan, setIsFirstScan] = useState(true);
-  const [rescanningFinger, setRescanningFinger] = useState<{ finger: FingerName; file: File } | null>(null);
+  const [rescanningFinger, setRescanningFinger] = useState<{
+    finger: FingerName;
+    file: File;
+  } | null>(null);
 
   const totalFingers = FINGER_ORDER.length;
   const scannedCount = Object.keys(fingerFiles).length;
@@ -148,10 +155,11 @@ export function useScanSession() {
 
   // Log state changes
   useEffect(() => {
-    console.log(
-      `📊 Scan State: ${scanningStarted ? "ACTIVE" : "STOPPED"
-      } | Count: ${scannedCount}/${totalFingers}`
-    );
+    if (process.env.NODE_ENV !== "production") {
+      console.log(
+        `📊 Scan State: ${scanningStarted ? "ACTIVE" : "STOPPED"} | Count: ${scannedCount}/${totalFingers}`
+      );
+    }
   }, [scanningStarted, scannedCount, totalFingers]);
 
   // Countdown timer effect - manages countdown and respects paused state
@@ -178,16 +186,20 @@ export function useScanSession() {
     setIsFirstScan(true);
     setCountdown(null);
     sessionStorage.removeItem("scanned_fingerprints");
-    console.log("🔄 Session Reset Confirmed");
+    if (process.env.NODE_ENV !== "production") {
+      console.log("🔄 Session Reset Confirmed");
+    }
   };
 
   const handleCapture = (fingerName: FingerName, file: File) => {
     // Treat upload like a real scan
     if (!scanningStarted) setScanningStarted(true);
 
-    console.log("\n🎉 === FINGER CAPTURE COMPLETE ===");
-    console.log(`📸 Captured: ${fingerName}`);
-    console.log(`📁 File size: ${file.size} bytes`);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("\n🎉 === FINGER CAPTURE COMPLETE ===");
+      console.log(`📸 Captured: ${fingerName}`);
+      console.log(`📁 File size: ${file.size} bytes`);
+    }
 
     const updatedFiles = { ...fingerFiles, [fingerName]: file };
     setFingerFiles(updatedFiles);
@@ -285,7 +297,9 @@ export function useScanSession() {
     handlePreviousFinger,
     togglePaused,
     handleRescan: () => {
-      console.log(`🔄 Rescanning ${currentFinger}...`);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`🔄 Rescanning ${currentFinger}...`);
+      }
       // Store the original image before removing it
       const originalFile = fingerFiles[currentFinger];
       if (originalFile) {

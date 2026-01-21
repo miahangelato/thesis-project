@@ -5,13 +5,24 @@ import { useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { ProgressHeader } from "@/components/layout/progress-header";
 import { Footer } from "@/components/layout/footer";
-import { Heart, MapPin, ArrowLeft, Phone, Globe, Facebook, Mail, Smartphone } from "lucide-react";
+import {
+  Heart,
+  MapPin,
+  ArrowLeft,
+  Phone,
+  Globe,
+  Facebook,
+  Mail,
+  Smartphone,
+} from "lucide-react";
 import { useSession } from "@/contexts/session-context";
 import { STEPS } from "@/lib/constants";
 import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 import { FacilityQRModal } from "@/components/modals/facility-qr-modal";
 import { SessionEndModal } from "@/components/modals/session-end-modal";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
+import { BLOOD_CENTERS_DB } from "@/data/facilities";
+import { API_CONFIG } from "@/lib/constants";
 
 interface BloodCenter {
   name: string;
@@ -53,7 +64,7 @@ export default function BloodCentersPage() {
   const { showModal, handleConfirm, handleCancel, promptBackNavigation } =
     useBackNavigation(false);
 
-  const pageSize = 9;
+  const pageSize = 3;
 
   useEffect(() => {
     const load = () => {
@@ -87,8 +98,48 @@ export default function BloodCentersPage() {
       const willingToDonate =
         typeof data.willing_to_donate === "boolean" ? data.willing_to_donate : false;
 
-      setCenters(bloodCenters);
-      setWilling(willingToDonate || bloodCenters.length > 0);
+      const finalCenters = [
+        ...bloodCenters,
+        ...BLOOD_CENTERS_DB.filter(
+          (c) => !bloodCenters.some((b) => (b.name || "") === c.name)
+        ),
+      ];
+
+      setCenters(finalCenters);
+      setWilling(willingToDonate || finalCenters.length > 0);
+
+      // Try fetching authoritative blood centers from backend and merge
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      void (async () => {
+        try {
+          const base = API_CONFIG.BASE_URL.replace(/\/+$/, "");
+          const resp = await fetch(`${base}/facilities/blood`, {
+            signal: controller.signal,
+          });
+          if (resp.ok) {
+            const payload = await resp.json();
+            const serverCenters = Array.isArray(payload.blood_centers)
+              ? payload.blood_centers
+              : [];
+            if (serverCenters.length > 0) {
+              const mergedServer = [
+                ...finalCenters,
+                ...serverCenters.filter(
+                  (s: any) => !finalCenters.some((f) => (f.name || "") === s.name)
+                ),
+              ];
+              setCenters(mergedServer);
+              setWilling(willingToDonate || mergedServer.length > 0);
+            }
+          }
+        } catch (e) {
+          if (process.env.NODE_ENV !== "production")
+            console.warn("Failed to fetch blood centers:", e);
+        } finally {
+          clearTimeout(timeout);
+        }
+      })();
       setLoading(false);
     };
     load();
@@ -111,6 +162,28 @@ export default function BloodCentersPage() {
   const currentPage = Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * pageSize;
   const paginatedCenters = filteredCenters.slice(pageStart, pageStart + pageSize);
+
+  // Helper to compute page numbers with ellipses (same logic as hospitals page)
+  const getPageNumbers = (current: number, total: number): (number | string)[] => {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages = new Set<number>();
+    pages.add(1);
+    pages.add(2);
+    pages.add(total - 1);
+    pages.add(total);
+    for (let i = current - 2; i <= current + 2; i++) {
+      if (i > 2 && i < total - 1) pages.add(i);
+    }
+    const sorted = Array.from(pages)
+      .filter((n) => n >= 1 && n <= total)
+      .sort((a, b) => a - b);
+    const out: (number | string)[] = [];
+    for (let i = 0; i < sorted.length; i++) {
+      if (i > 0 && sorted[i] - sorted[i - 1] > 1) out.push("...");
+      out.push(sorted[i]);
+    }
+    return out;
+  };
 
   const handleOpenModal = (center: BloodCenter) => {
     setSelectedCenter(center);
@@ -149,7 +222,6 @@ export default function BloodCentersPage() {
               onEndSession={promptBackNavigation}
             />
 
-
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <button
                 onClick={() => router.push("/results")}
@@ -173,6 +245,13 @@ export default function BloodCentersPage() {
                     <option value="angeles">Angeles</option>
                     <option value="san fernando">San Fernando</option>
                     <option value="mabalacat">Mabalacat</option>
+                    <option value="guagua">Guagua</option>
+                    <option value="apalit">Apalit</option>
+                    <option value="lubao">Lubao</option>
+                    <option value="arayat">Arayat</option>
+                    <option value="porac">Porac</option>
+                    <option value="magalang">Magalang</option>
+                    <option value="floridablanca">Floridablanca</option>
                   </select>
                 </div>
               </div>
@@ -193,7 +272,7 @@ export default function BloodCentersPage() {
                     {paginatedCenters.map((center, idx) => (
                       <div
                         key={`${center.name}-${idx}`}
-                        className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all flex flex-col h-full min-h-[520px]"
+                        className="bg-white border-2 border-gray-100 rounded-4xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col h-full min-h-[520px]"
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-4">
@@ -244,8 +323,12 @@ export default function BloodCentersPage() {
                           <div className="flex items-center justify-center gap-4">
                             <Smartphone className="w-8 h-8 text-teal-600" />
                             <div className="text-left">
-                              <p className="text-xl font-bold text-teal-900">Get Info on Mobile</p>
-                              <p className="text-sm font-bold text-teal-600/70 uppercase tracking-wider">Scan QR Code</p>
+                              <p className="text-xl font-bold text-teal-900">
+                                Get Info on Mobile
+                              </p>
+                              <p className="text-sm font-bold text-teal-600/70 uppercase tracking-wider">
+                                Scan QR Code
+                              </p>
                             </div>
                           </div>
                         </button>
@@ -254,27 +337,50 @@ export default function BloodCentersPage() {
                   </div>
 
                   {totalPages > 1 && (
-                    <div className="mt-8 flex items-center justify-center gap-4">
+                    <nav
+                      aria-label="Pagination"
+                      className="mt-8 flex items-center justify-center gap-2 flex-wrap"
+                    >
                       <button
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage <= 1}
-                        className={`h-14 px-8 rounded-2xl border-2 text-lg font-bold transition-all ${
+                        className={`h-12 px-4 rounded-2xl border-2 text-lg font-bold transition-all ${
                           currentPage <= 1
                             ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
                             : "bg-white text-gray-700 border-gray-200 hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm"
                         }`}
                       >
-                        Previous
+                        Prev
                       </button>
 
-                      <div className="h-14 px-6 flex items-center bg-gray-50 rounded-2xl text-lg font-bold text-gray-600 border border-gray-100">
-                        Page {currentPage} of {totalPages}
-                      </div>
+                      {getPageNumbers(currentPage, totalPages).map((p, idx) =>
+                        typeof p === "string" ? (
+                          <span
+                            key={`sep-${idx}`}
+                            className="px-3 text-gray-500 select-none"
+                          >
+                            {p}
+                          </span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => setPage(p as number)}
+                            aria-current={p === currentPage ? "page" : undefined}
+                            className={`h-12 px-4 rounded-2xl border-2 text-lg font-bold transition-all ${
+                              p === currentPage
+                                ? "bg-teal-500 text-white border-teal-600"
+                                : "bg-white text-gray-700 border-gray-200 hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      )}
 
                       <button
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage >= totalPages}
-                        className={`h-14 px-8 rounded-2xl border-2 text-lg font-bold transition-all ${
+                        className={`h-12 px-4 rounded-2xl border-2 text-lg font-bold transition-all ${
                           currentPage >= totalPages
                             ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
                             : "bg-white text-gray-700 border-gray-200 hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm"
@@ -282,7 +388,7 @@ export default function BloodCentersPage() {
                       >
                         Next
                       </button>
-                    </div>
+                    </nav>
                   )}
                 </>
               )}

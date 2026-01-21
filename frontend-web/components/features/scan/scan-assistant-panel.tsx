@@ -55,15 +55,17 @@ export function ScanAssistantPanel({
   }, [previewFrame]);
 
   // DEBUG: Log to verify component is rendering and receiving props
-  console.log("[ScanAssistantPanel] Rendering with:", {
-    status,
-    hint,
-    fingerName,
-    hasPreviewFrame: !!previewFrame,
-    previewFrameLength: previewFrame?.length,
-    hasAnimationData: !!animationData,
-    metrics,
-  });
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[ScanAssistantPanel] Rendering with:", {
+      status,
+      hint,
+      fingerName,
+      hasPreviewFrame: !!previewFrame,
+      previewFrameLength: previewFrame?.length,
+      hasAnimationData: !!animationData,
+      metrics,
+    });
+  }
 
   // Map status to primary message
   const primaryMessage = {

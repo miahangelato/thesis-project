@@ -113,7 +113,7 @@ export function FacilityQRModal({ isOpen, onClose, facility }: FacilityQRModalPr
         </div>
 
         {/* QR Code Area */}
-        <div className="flex flex-col items-center justify-center bg-white border-2 border-dashed border-teal-100 rounded-[2rem] p-6 mb-6">
+        <div className="flex flex-col items-center justify-center bg-white border-2 border-dashed border-teal-100 rounded-4xl p-6 mb-6">
           <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
             <QRCodeSVG
               value={currentTab.value}

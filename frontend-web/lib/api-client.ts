@@ -167,7 +167,9 @@ async function retryRequest<T>(
       const delay = API_CONFIG.RETRY_DELAY * Math.pow(2, attempt);
       await new Promise((resolve) => setTimeout(resolve, delay));
 
-      console.log(`Retrying request... (${attempt + 1}/${maxRetries})`);
+      if (env.NODE_ENV === "development") {
+        console.log(`Retrying request... (${attempt + 1}/${maxRetries})`);
+      }
     }
   }
 

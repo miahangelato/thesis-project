@@ -43,7 +43,7 @@ export function ResultsDownloadTab({
           <div className="grid grid-cols-2 gap-8 items-center max-w-4xl w-full">
             {/* Left Panel: QR Code */}
             <div className="flex flex-col items-center">
-              <div className="bg-white p-6 rounded-[2rem] shadow-2xl shadow-teal-100/50 border border-gray-100">
+              <div className="bg-white p-6 rounded-4xl shadow-2xl shadow-teal-100/50 border border-gray-100">
                 <Image
                   src={qrCodeUrl}
                   alt="Download QR Code"

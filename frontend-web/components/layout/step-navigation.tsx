@@ -76,7 +76,7 @@ export function StepNavigation({
         ) : (
           <>
             {nextLabel}
-            <ArrowRight size={24} className="stroke-[3]" />
+            <ArrowRight size={24} className="stroke-3" />
           </>
         )}
       </Button>

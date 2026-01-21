@@ -108,7 +108,9 @@ export default function ScanPage() {
         return;
       }
 
-      console.log(`Uploading ${Object.keys(fingerFiles).length} fingerprints...`);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`Uploading ${Object.keys(fingerFiles).length} fingerprints...`);
+      }
 
       // Upload all files
       const uploadPromises = Object.entries(fingerFiles).map(async ([finger, file]) => {
@@ -117,12 +119,16 @@ export default function ScanPage() {
           reader.onloadend = async () => {
             const base64 = reader.result as string;
             try {
-              console.log(`Uploading ${finger}...`);
+              if (process.env.NODE_ENV !== "production") {
+                console.log(`Uploading ${finger}...`);
+              }
               await sessionAPI.submitFingerprint(activeSessionId, {
                 finger_name: finger,
                 image: base64,
               });
-              console.log(`${finger} uploaded successfully`);
+              if (process.env.NODE_ENV !== "production") {
+                console.log(`${finger} uploaded successfully`);
+              }
               resolve();
             } catch (e) {
               console.error(`Failed to upload ${finger}:`, e);
@@ -135,20 +141,33 @@ export default function ScanPage() {
       });
 
       await Promise.all(uploadPromises);
-      console.log("All fingerprints uploaded successfully");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("All fingerprints uploaded successfully");
+      }
 
       // Trigger analysis
-      console.log("Triggering analysis...");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Triggering analysis...");
+      }
       const analyzeResponse = await sessionAPI.analyze(activeSessionId);
-      console.log("Analysis API response:", analyzeResponse);
-      console.log("Analysis completed successfully");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Analysis API response:", analyzeResponse);
+        console.log("Analysis completed successfully");
+      }
 
       // Call /results endpoint to save to database AND get QR code URLs
-      console.log("💾 Calling /results to save to database...");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("💾 Calling /results to save to database...");
+      }
       let finalData = analyzeResponse.data; // Fallback
       try {
         const resultsResponse = await sessionAPI.getResults(activeSessionId);
-        console.log("✅ Database save result:", resultsResponse.data?.saved_to_database);
+        if (process.env.NODE_ENV !== "production") {
+          console.log(
+            "✅ Database save result:",
+            resultsResponse.data?.saved_to_database
+          );
+        }
         finalData = resultsResponse.data; // Use results response (includes QR URLs!)
       } catch (resultsError) {
         console.error("⚠️ Failed to save to database:", resultsError);
@@ -170,17 +189,21 @@ export default function ScanPage() {
       const encodedData = btoa(binary);
       sessionStorage.setItem(activeSessionId, encodedData);
       sessionStorage.setItem("current_session_id", activeSessionId);
-      console.log("💾 Stored results in sessionStorage");
-
-      console.log("🔄 Setting current step to RESULTS:", STEPS.RESULTS);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("💾 Stored results in sessionStorage");
+        console.log("🔄 Setting current step to RESULTS:", STEPS.RESULTS);
+      }
       flushSync(() => {
         setCurrentStep(STEPS.RESULTS); // Moving to results page (step 4)
       });
-
-      console.log("🚀 About to navigate to:", ROUTES.RESULTS);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("🚀 About to navigate to:", ROUTES.RESULTS);
+      }
       setAnalysisOverlayOpen(false);
       router.push(ROUTES.RESULTS);
-      console.log("✅ router.push called");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("✅ router.push called");
+      }
     } catch (err) {
       console.error("Submission failed:", err);
       const message = getErrorMessage(err);

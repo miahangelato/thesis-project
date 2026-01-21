@@ -5,13 +5,24 @@ import { useRouter } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { ProgressHeader } from "@/components/layout/progress-header";
 import { Footer } from "@/components/layout/footer";
-import { Hospital, MapPin, ArrowLeft, Phone, Globe, Facebook, Mail, Smartphone } from "lucide-react";
+import {
+  Hospital,
+  MapPin,
+  ArrowLeft,
+  Phone,
+  Globe,
+  Facebook,
+  Mail,
+  Smartphone,
+} from "lucide-react";
 import { useSession } from "@/contexts/session-context";
 import { STEPS } from "@/lib/constants";
 import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 import { FacilityQRModal } from "@/components/modals/facility-qr-modal";
 import { SessionEndModal } from "@/components/modals/session-end-modal";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
+import { HOSPITALS_DB } from "@/data/facilities";
+import { API_CONFIG } from "@/lib/constants";
 
 interface Facility {
   name: string;
@@ -46,7 +57,7 @@ export default function HospitalsPage() {
   const [filter, setFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
-  
+
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
@@ -54,7 +65,7 @@ export default function HospitalsPage() {
   const { showModal, handleConfirm, handleCancel, promptBackNavigation } =
     useBackNavigation(false);
 
-  const pageSize = 9;
+  const pageSize = 3;
 
   useEffect(() => {
     const load = () => {
@@ -105,7 +116,47 @@ export default function HospitalsPage() {
         ...normalizedDoctors,
         ...nearby,
       ];
-      setFacilities(merged);
+
+      // Append fallback hospitals from bundled constants if not already present
+      const mergedWithFallback = [
+        ...merged,
+        ...HOSPITALS_DB.filter((h) => !merged.some((m) => (m.name || "") === h.name)),
+      ];
+
+      setFacilities(mergedWithFallback);
+
+      // Try fetching authoritative hospitals from backend and merge (timeout applied)
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      void (async () => {
+        try {
+          const base = API_CONFIG.BASE_URL.replace(/\/+$/, "");
+          const resp = await fetch(`${base}/facilities/hospitals`, {
+            signal: controller.signal,
+          });
+          if (resp.ok) {
+            const payload = await resp.json();
+            const serverHospitals = Array.isArray(payload.hospitals)
+              ? payload.hospitals
+              : [];
+            if (serverHospitals.length > 0) {
+              const mergedServer = [
+                ...mergedWithFallback,
+                ...serverHospitals.filter(
+                  (s: any) => !mergedWithFallback.some((m) => (m.name || "") === s.name)
+                ),
+              ];
+              setFacilities(mergedServer);
+            }
+          }
+        } catch (e) {
+          // swallow - fallback already present
+          if (process.env.NODE_ENV !== "production")
+            console.warn("Failed to fetch hospitals:", e);
+        } finally {
+          clearTimeout(timeout);
+        }
+      })();
       setLoading(false);
     };
     load();
@@ -159,6 +210,28 @@ export default function HospitalsPage() {
   const pageStart = (currentPage - 1) * pageSize;
   const paginatedFacilities = filteredFacilities.slice(pageStart, pageStart + pageSize);
 
+  // Helper to compute page numbers with ellipses
+  const getPageNumbers = (current: number, total: number): (number | string)[] => {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages = new Set<number>();
+    pages.add(1);
+    pages.add(2);
+    pages.add(total - 1);
+    pages.add(total);
+    for (let i = current - 2; i <= current + 2; i++) {
+      if (i > 2 && i < total - 1) pages.add(i);
+    }
+    const sorted = Array.from(pages)
+      .filter((n) => n >= 1 && n <= total)
+      .sort((a, b) => a - b);
+    const out: (number | string)[] = [];
+    for (let i = 0; i < sorted.length; i++) {
+      if (i > 0 && sorted[i] - sorted[i - 1] > 1) out.push("...");
+      out.push(sorted[i]);
+    }
+    return out;
+  };
+
   const handleOpenModal = (facility: Facility) => {
     setSelectedFacility(facility);
     setIsModalOpen(true);
@@ -172,17 +245,17 @@ export default function HospitalsPage() {
           title="Loading Facilities"
           subtitle="Please wait a moment…"
         />
-        
+
         <SessionEndModal
           isOpen={showModal}
           onConfirm={handleConfirm}
           onCancel={handleCancel}
         />
-        
-        <FacilityQRModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
-          facility={selectedFacility} 
+
+        <FacilityQRModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          facility={selectedFacility}
         />
 
         <main className="flex-1 flex flex-col overflow-hidden select-none">
@@ -195,7 +268,6 @@ export default function HospitalsPage() {
               accentColor="#00c2cb"
               onEndSession={promptBackNavigation}
             />
-
 
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <button
@@ -236,6 +308,13 @@ export default function HospitalsPage() {
                     <option value="angeles">Angeles</option>
                     <option value="san fernando">San Fernando</option>
                     <option value="mabalacat">Mabalacat</option>
+                    <option value="guagua">Guagua</option>
+                    <option value="apalit">Apalit</option>
+                    <option value="lubao">Lubao</option>
+                    <option value="arayat">Arayat</option>
+                    <option value="porac">Porac</option>
+                    <option value="magalang">Magalang</option>
+                    <option value="floridablanca">Floridablanca</option>
                   </select>
                 </div>
               </div>
@@ -250,7 +329,7 @@ export default function HospitalsPage() {
                     {paginatedFacilities.map((facility, idx) => (
                       <div
                         key={`${facility.name}-${idx}`}
-                        className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all flex flex-col h-full min-h-[520px]"
+                        className="bg-white border-2 border-gray-100 rounded-4xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col h-full min-h-[520px]"
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-4">
@@ -279,15 +358,20 @@ export default function HospitalsPage() {
                           </div>
 
                           {/* Static Contact Info */}
-                          <div className="space-y-4 mb-8">
+                          <div className="flex flex-wrap gap-2 mb-3">
                             {facility.phone && (
                               <div className="flex items-center gap-3 text-gray-600 font-bold text-lg">
-                                <Phone className="w-5 h-5 text-teal-500" /> {facility.phone}
+                                <Phone className="w-5 h-5 text-teal-500" />{" "}
+                                {facility.phone}
                               </div>
                             )}
+                          </div>
+
+                          <div>
                             {facility.email && (
                               <div className="flex items-center gap-3 text-gray-500 font-medium">
-                                <Mail className="w-5 h-5 text-gray-400" /> {facility.email}
+                                <Mail className="w-5 h-5 text-gray-400" />{" "}
+                                {facility.email}
                               </div>
                             )}
                           </div>
@@ -301,8 +385,12 @@ export default function HospitalsPage() {
                           <div className="flex items-center justify-center gap-4">
                             <Smartphone className="w-8 h-8 text-teal-600" />
                             <div className="text-left">
-                              <p className="text-xl font-bold text-teal-900">Get Info on Mobile</p>
-                              <p className="text-sm font-bold text-teal-600/70 uppercase tracking-wider">Scan QR Code</p>
+                              <p className="text-xl font-bold text-teal-900">
+                                Get Info on Mobile
+                              </p>
+                              <p className="text-sm font-bold text-teal-600/70 uppercase tracking-wider">
+                                Scan QR Code
+                              </p>
                             </div>
                           </div>
                         </button>
@@ -311,27 +399,50 @@ export default function HospitalsPage() {
                   </div>
 
                   {totalPages > 1 && (
-                    <div className="mt-8 flex items-center justify-center gap-4">
+                    <nav
+                      aria-label="Pagination"
+                      className="mt-8 flex items-center justify-center gap-2 flex-wrap"
+                    >
                       <button
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage <= 1}
-                        className={`h-14 px-8 rounded-2xl border-2 text-lg font-bold transition-all ${
+                        className={`h-12 px-4 rounded-2xl border-2 text-lg font-bold transition-all ${
                           currentPage <= 1
                             ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
                             : "bg-white text-gray-700 border-gray-200 hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm"
                         }`}
                       >
-                        Previous
+                        Prev
                       </button>
 
-                      <div className="h-14 px-6 flex items-center bg-gray-50 rounded-2xl text-lg font-bold text-gray-600 border border-gray-100">
-                        Page {currentPage} of {totalPages}
-                      </div>
+                      {getPageNumbers(currentPage, totalPages).map((p, idx) =>
+                        typeof p === "string" ? (
+                          <span
+                            key={`sep-${idx}`}
+                            className="px-3 text-gray-500 select-none"
+                          >
+                            {p}
+                          </span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => setPage(p as number)}
+                            aria-current={p === currentPage ? "page" : undefined}
+                            className={`h-12 px-4 rounded-2xl border-2 text-lg font-bold transition-all ${
+                              p === currentPage
+                                ? "bg-teal-500 text-white border-teal-600"
+                                : "bg-white text-gray-700 border-gray-200 hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      )}
 
                       <button
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage >= totalPages}
-                        className={`h-14 px-8 rounded-2xl border-2 text-lg font-bold transition-all ${
+                        className={`h-12 px-4 rounded-2xl border-2 text-lg font-bold transition-all ${
                           currentPage >= totalPages
                             ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
                             : "bg-white text-gray-700 border-gray-200 hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm"
@@ -339,7 +450,7 @@ export default function HospitalsPage() {
                       >
                         Next
                       </button>
-                    </div>
+                    </nav>
                   )}
                 </>
               )}

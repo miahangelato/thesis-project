@@ -288,3 +288,27 @@ def get_record(request, record_id: str):
         return api.create_response(request, {"error": "Record not found"}, status=404)
 
     return record
+
+
+@api.get("/facilities/hospitals", tags=["Facilities"], auth=None)
+def get_hospitals(request):
+    """Return authoritative list of hospitals from server constants."""
+    try:
+        from .constants import HOSPITALS_DB  # noqa: PLC0415
+
+        return {"hospitals": HOSPITALS_DB}
+    except Exception as e:
+        logger.error(f"Failed to load hospitals constants: {e}")
+        return api.create_response(request, {"hospitals": []}, status=500)
+
+
+@api.get("/facilities/blood", tags=["Facilities"], auth=None)
+def get_blood_centers(request):
+    """Return authoritative list of blood centers from server constants."""
+    try:
+        from .constants import BLOOD_CENTERS_DB  # noqa: PLC0415
+
+        return {"blood_centers": BLOOD_CENTERS_DB}
+    except Exception as e:
+        logger.error(f"Failed to load blood centers constants: {e}")
+        return api.create_response(request, {"blood_centers": []}, status=500)

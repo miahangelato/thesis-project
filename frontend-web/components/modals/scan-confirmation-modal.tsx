@@ -33,7 +33,7 @@ export function ScanConfirmationModal({
       <div className="p-10">
         {/* Header */}
         <div className="flex flex-col items-center text-center gap-6 mb-10">
-          <div className="w-24 h-24 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-3xl flex items-center justify-center shadow-sm border border-teal-100">
+          <div className="w-24 h-24 bg-linear-to-br from-teal-50 to-cyan-50 rounded-3xl flex items-center justify-center shadow-sm border border-teal-100">
             <Fingerprint className="w-12 h-12 text-teal-600" />
           </div>
           <div>
@@ -52,7 +52,7 @@ export function ScanConfirmationModal({
         {/* Content Blocks */}
         <div className="space-y-6 mb-10">
           {/* Automatic Process - Hero Block */}
-          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-2xl p-6 shadow-sm">
+          <div className="bg-linear-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-2xl p-6 shadow-sm">
             <div className="flex items-start gap-5">
               <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-teal-100">
                 <Sparkles className="w-6 h-6 text-teal-600" />
@@ -116,7 +116,7 @@ export function ScanConfirmationModal({
           </Button>
           <Button
             onClick={onConfirm}
-            className="flex-[2] h-16 bg-[#00c2cb] hover:bg-[#00adb5] text-white text-xl font-bold rounded-xl shadow-lg shadow-teal-200/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex-2 h-16 bg-[#00c2cb] hover:bg-[#00adb5] text-white text-xl font-bold rounded-xl shadow-lg shadow-teal-200/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Fingerprint className="w-6 h-6 mr-3" />
             Start Scanning
