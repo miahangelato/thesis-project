@@ -10,11 +10,9 @@ export type ScanAssistantState =
   | "captured"
   | "paused"
   | "error"
-  | "preparing"
   | "completed"
   | "retrying"
-  | "countdown"
-  | "initializing";
+  | "countdown";
 
 type StoredDemographics = {
   age?: number | string;
@@ -140,36 +138,30 @@ export function useScanSession() {
     if (!scanningStarted) return "idle";
     if (paused) return "paused";
     if (countdown !== null && countdown > 0) return "countdown";
-    if (scannerReady) return "waiting";
-    if (isFirstScan && scannedCount === 0) return "initializing";
-    return "preparing";
+    // When countdown finishes (null), show waiting - scanner activates
+    return "waiting";
   }, [
     countdown,
-    isFirstScan,
     paused,
     scannedCount,
-    scannerReady,
     scanningStarted,
     totalFingers,
   ]);
 
-  // Log state changes
-  useEffect(() => {
-    if (process.env.NODE_ENV !== "production") {
-      console.log(
-        `📊 Scan State: ${scanningStarted ? "ACTIVE" : "STOPPED"} | Count: ${scannedCount}/${totalFingers}`
-      );
-    }
-  }, [scanningStarted, scannedCount, totalFingers]);
-
   // Countdown timer effect - manages countdown and respects paused state
   useEffect(() => {
-    if (countdown === null || countdown <= 0 || paused) return;
+    if (countdown === null || paused) return;
+    
+    // When countdown reaches 0, set to null (trigger scan)
+    if (countdown === 0) {
+      setCountdown(null);
+      return;
+    }
 
+    // Countdown tick
     const timer = setInterval(() => {
       setCountdown((prev) => {
-        if (prev === null) return null;
-        if (prev <= 1) return null;
+        if (prev === null || prev <= 0) return null;
         return prev - 1;
       });
     }, 1000);
@@ -186,20 +178,11 @@ export function useScanSession() {
     setIsFirstScan(true);
     setCountdown(null);
     sessionStorage.removeItem("scanned_fingerprints");
-    if (process.env.NODE_ENV !== "production") {
-      console.log("🔄 Session Reset Confirmed");
-    }
   };
 
   const handleCapture = (fingerName: FingerName, file: File) => {
     // Treat upload like a real scan
     if (!scanningStarted) setScanningStarted(true);
-
-    if (process.env.NODE_ENV !== "production") {
-      console.log("\n🎉 === FINGER CAPTURE COMPLETE ===");
-      console.log(`📸 Captured: ${fingerName}`);
-      console.log(`📁 File size: ${file.size} bytes`);
-    }
 
     const updatedFiles = { ...fingerFiles, [fingerName]: file };
     setFingerFiles(updatedFiles);
@@ -289,6 +272,7 @@ export function useScanSession() {
     setScannerReady,
     setScanningStarted,
     setCurrentFingerIndex,
+    setCountdown,
 
     // actions
     handleResetSession,
@@ -297,9 +281,6 @@ export function useScanSession() {
     handlePreviousFinger,
     togglePaused,
     handleRescan: () => {
-      if (process.env.NODE_ENV !== "production") {
-        console.log(`🔄 Rescanning ${currentFinger}...`);
-      }
       // Store the original image before removing it
       const originalFile = fingerFiles[currentFinger];
       if (originalFile) {

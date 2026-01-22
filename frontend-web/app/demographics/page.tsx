@@ -10,6 +10,7 @@ import { StepNavigation } from "@/components/layout/step-navigation";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
 import { SessionEndModal } from "@/components/modals/session-end-modal";
+import { ConfirmModal } from "@/components/modals/confirm-modal";
 import { StaticInfoPanel } from "@/components/demographics/static-info-panel";
 import { PreparingScanOverlay } from "@/components/demographics/preparing-scan-overlay";
 import { InlineNumericKeypad } from "@/components/ui/inline-numeric-keypad";
@@ -33,9 +34,23 @@ export default function DemographicsPage() {
   const router = useRouter();
   const { sessionId, setCurrentStep } = useSession();
   const [loading, setLoading] = useState(false);
+  const [showClearConfirmModal, setShowClearConfirmModal] = useState(false);
 
   const { showModal, handleConfirm, handleCancel, promptBackNavigation } =
     useBackNavigation(false);
+
+  // Helper to get errors for a specific field
+  const getFieldError = (fieldName: string) => {
+    return validationWarnings.find(
+      (w) => w.field === fieldName && w.severity === "error"
+    );
+  };
+
+  const getFieldWarning = (fieldName: string) => {
+    return validationWarnings.find(
+      (w) => w.field === fieldName && w.severity === "warning"
+    );
+  };
 
   const {
     weightUnit,
@@ -61,6 +76,9 @@ export default function DemographicsPage() {
     bmiValue,
     bmiCategory,
     isBasicInfoComplete,
+    validationWarnings,
+    hasErrors,
+    hasWarnings,
   } = useDemographicsForm();
 
   // -------------------------
@@ -74,6 +92,32 @@ export default function DemographicsPage() {
     if (!formData.age || !formData.weight || !formData.gender || !heightCm) {
       alert("Please fill out age, weight, height, and gender.");
       return;
+    }
+
+    // Block submission if there are validation errors
+    if (hasErrors) {
+      const errorMessages = validationWarnings
+        .filter((w) => w.severity === "error")
+        .map((w) => w.message)
+        .join("\n");
+      alert(
+        "Please fix the following errors before continuing:\n\n" + errorMessages
+      );
+      return;
+    }
+
+    // Show warning confirmation if there are warnings
+    if (hasWarnings) {
+      const warningMessages = validationWarnings
+        .filter((w) => w.severity === "warning")
+        .map((w) => w.message)
+        .join("\n");
+      const confirmed = confirm(
+        "Note: The following concerns were detected:\n\n" +
+          warningMessages +
+          "\n\nDo you want to continue anyway?"
+      );
+      if (!confirmed) return;
     }
 
     setLoading(true);
@@ -91,7 +135,7 @@ export default function DemographicsPage() {
               : formData.gender,
           willing_to_donate: formData.showDonationCentersLater,
           blood_type:
-            formData.blood_type === "unknown" ? undefined : formData.blood_type,
+            formData.blood_type === "unknown" ? null : formData.blood_type,
         };
 
         await sessionAPI.submitDemographics(sessionId, payload);
@@ -134,7 +178,7 @@ export default function DemographicsPage() {
               currentStep={STEPS.DEMOGRAPHICS}
               totalSteps={4}
               title="Tell Us a Bit About You"
-              subtitle="These details help personalize your fingerprint-based health insights. Nothing here identifies you personally."
+              subtitle="These details help personalize your results. No personal identification is stored."
               accentColor="#00c2cb"
               onEndSession={promptBackNavigation}
             />
@@ -167,7 +211,7 @@ export default function DemographicsPage() {
                         </p>
                       </div>
 
-                      {isBasicInfoComplete && (
+                      {isBasicInfoComplete && !hasErrors && (
                         <div className="shrink-0 ml-3">
                           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                             <CheckCircle className="h-6 w-6 text-green-600" />
@@ -211,17 +255,31 @@ export default function DemographicsPage() {
                           }}
                           required
                           className={`h-14 text-lg font-bold rounded-lg border-2 transition-all duration-200 cursor-pointer ${
-                            activeField === "age"
-                              ? `border-teal-500 ring-2 ring-teal-100 ${
-                                  formData.age
-                                    ? "bg-green-50! text-green-700"
-                                    : "bg-teal-50!"
-                                }`
-                              : formData.age
-                                ? "border-green-400 bg-green-50! text-green-700"
-                                : ""
+                            getFieldError("age")
+                              ? "border-red-400 bg-red-50 text-red-700"
+                              : activeField === "age"
+                                ? `border-teal-500 ring-2 ring-teal-100 ${
+                                    formData.age
+                                      ? "bg-green-50! text-green-700"
+                                      : "bg-teal-50!"
+                                  }`
+                                : formData.age
+                                  ? "border-green-400 bg-green-50! text-green-700"
+                                  : ""
                           }`}
                         />
+                        {getFieldError("age") && (
+                          <p className="text-sm text-red-600 mt-1 flex items-start gap-1">
+                            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                            <span>{getFieldError("age")!.message}</span>
+                          </p>
+                        )}
+                        {!getFieldError("age") && getFieldWarning("age") && (
+                          <p className="text-sm text-amber-600 mt-1 flex items-start gap-1">
+                            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                            <span>{getFieldWarning("age")!.message}</span>
+                          </p>
+                        )}
                       </div>
 
                       {/* Weight */}
@@ -257,17 +315,31 @@ export default function DemographicsPage() {
                           }}
                           required
                           className={`h-14 text-lg font-bold rounded-lg border-2 transition-all duration-200 cursor-pointer ${
-                            activeField === "weight"
-                              ? `border-teal-500 ring-2 ring-teal-100 ${
-                                  formData.weight
-                                    ? "bg-green-50! text-green-700"
-                                    : "bg-teal-50!"
-                                }`
-                              : formData.weight
-                                ? "border-green-400 bg-green-50! text-green-700"
-                                : ""
+                            getFieldError("weight")
+                              ? "border-red-400 bg-red-50 text-red-700"
+                              : activeField === "weight"
+                                ? `border-teal-500 ring-2 ring-teal-100 ${
+                                    formData.weight
+                                      ? "bg-green-50! text-green-700"
+                                      : "bg-teal-50!"
+                                  }`
+                                : formData.weight
+                                  ? "border-green-400 bg-green-50! text-green-700"
+                                  : ""
                           }`}
                         />
+                        {getFieldError("weight") && (
+                          <p className="text-sm text-red-600 mt-1 flex items-start gap-1">
+                            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                            <span>{getFieldError("weight")!.message}</span>
+                          </p>
+                        )}
+                        {!getFieldError("weight") && getFieldWarning("weight") && (
+                          <p className="text-sm text-amber-600 mt-1 flex items-start gap-1">
+                            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                            <span>{getFieldWarning("weight")!.message}</span>
+                          </p>
+                        )}
 
                         {/* Weight unit toggle */}
                         <div className="flex gap-0 mt-2 bg-slate-100 rounded-lg p-1 w-fit">
@@ -315,93 +387,127 @@ export default function DemographicsPage() {
                         </div>
 
                         {heightUnit === "cm" ? (
-                          <Input
-                            id="height"
-                            name="height"
-                            type="text"
-                            inputMode="numeric"
-                            placeholder="e.g., 170"
-                            autoComplete="off"
-                            readOnly
-                            value={formData.heightCm}
-                            onFocus={() => handleFieldFocus("heightCm")}
-                            onClick={() => handleFieldFocus("heightCm")}
-                            onBlur={handleFieldBlur}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (/^\d*$/.test(val))
-                                setFormData((p) => ({ ...p, heightCm: val }));
-                            }}
-                            required
-                            className={`h-14 text-lg font-bold rounded-lg border-2 transition-all duration-200 cursor-pointer ${
-                              activeField === "heightCm"
-                                ? `border-teal-500 ring-2 ring-teal-100 ${
-                                    formData.heightCm
-                                      ? "bg-green-50! text-green-700"
-                                      : "bg-teal-50!"
-                                  }`
-                                : formData.heightCm
-                                  ? "border-green-400 bg-green-50! text-green-700"
-                                  : ""
-                            }`}
-                          />
+                          <>
+                            <Input
+                              id="height"
+                              name="height"
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="e.g., 170"
+                              autoComplete="off"
+                              readOnly
+                              value={formData.heightCm}
+                              onFocus={() => handleFieldFocus("heightCm")}
+                              onClick={() => handleFieldFocus("heightCm")}
+                              onBlur={handleFieldBlur}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (/^\d*$/.test(val))
+                                  setFormData((p) => ({ ...p, heightCm: val }));
+                              }}
+                              required
+                              className={`h-14 text-lg font-bold rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+                                getFieldError("height")
+                                  ? "border-red-400 bg-red-50 text-red-700"
+                                  : activeField === "heightCm"
+                                    ? `border-teal-500 ring-2 ring-teal-100 ${
+                                        formData.heightCm
+                                          ? "bg-green-50! text-green-700"
+                                          : "bg-teal-50!"
+                                      }`
+                                    : formData.heightCm
+                                      ? "border-green-400 bg-green-50! text-green-700"
+                                      : ""
+                              }`}
+                            />
+                            {getFieldError("height") && (
+                              <p className="text-sm text-red-600 mt-1 flex items-start gap-1">
+                                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                                <span>{getFieldError("height")!.message}</span>
+                              </p>
+                            )}
+                            {!getFieldError("height") && getFieldWarning("height") && (
+                              <p className="text-sm text-amber-600 mt-1 flex items-start gap-1">
+                                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                                <span>{getFieldWarning("height")!.message}</span>
+                              </p>
+                            )}
+                          </>
                         ) : (
-                          <div className="flex gap-3 items-center">
-                            <div className="flex items-center gap-2 flex-1">
-                              <Input
-                                id="height-ft"
-                                type="text"
-                                inputMode="numeric"
-                                placeholder="5"
-                                autoComplete="off"
-                                readOnly
-                                value={heightFt}
-                                onFocus={() => handleFieldFocus("heightFt")}
-                                onClick={() => handleFieldFocus("heightFt")}
-                                onBlur={handleFieldBlur}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  if (/^\d*$/.test(val)) setHeightFt(val);
-                                }}
-                                className={`h-14 text-lg font-bold rounded-lg border-2 transition-all duration-200 cursor-pointer ${
-                                  heightFt
-                                    ? "border-green-400 bg-green-50 text-green-700"
-                                    : "border-slate-300 bg-white hover:border-teal-400"
-                                }`}
-                              />
-                              <span className="text-base text-slate-600 font-medium">
-                                ft
-                              </span>
-                            </div>
+                          <>
+                            <div className="flex gap-3 items-center">
+                              <div className="flex items-center gap-2 flex-1">
+                                <Input
+                                  id="height-ft"
+                                  type="text"
+                                  inputMode="numeric"
+                                  placeholder="5"
+                                  autoComplete="off"
+                                  readOnly
+                                  value={heightFt}
+                                  onFocus={() => handleFieldFocus("heightFt")}
+                                  onClick={() => handleFieldFocus("heightFt")}
+                                  onBlur={handleFieldBlur}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (/^\d*$/.test(val)) setHeightFt(val);
+                                  }}
+                                  className={`h-14 text-lg font-bold rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+                                    getFieldError("height")
+                                      ? "border-red-400 bg-red-50 text-red-700"
+                                      : heightFt
+                                        ? "border-green-400 bg-green-50 text-green-700"
+                                        : "border-slate-300 bg-white hover:border-teal-400"
+                                  }`}
+                                />
+                                <span className="text-base text-slate-600 font-medium">
+                                  ft
+                                </span>
+                              </div>
 
-                            <div className="flex items-center gap-2 flex-1">
-                              <Input
-                                id="height-in"
-                                type="text"
-                                inputMode="numeric"
-                                placeholder="0"
-                                autoComplete="off"
-                                readOnly
-                                value={heightIn}
-                                onFocus={() => handleFieldFocus("heightIn")}
-                                onClick={() => handleFieldFocus("heightIn")}
-                                onBlur={handleFieldBlur}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  if (/^\d*$/.test(val) && parseInt(val || "0", 10) < 12)
-                                    setHeightIn(val);
-                                }}
-                                className={`h-14 text-lg font-bold rounded-lg border-2 transition-all duration-200 cursor-pointer ${
-                                  heightIn
-                                    ? "border-green-400 bg-green-50 text-green-700"
-                                    : "border-slate-300 bg-white hover:border-teal-400"
-                                }`}
-                              />
-                              <span className="text-base text-slate-600 font-medium">
-                                in
-                              </span>
+                              <div className="flex items-center gap-2 flex-1">
+                                <Input
+                                  id="height-in"
+                                  type="text"
+                                  inputMode="numeric"
+                                  placeholder="0"
+                                  autoComplete="off"
+                                  readOnly
+                                  value={heightIn}
+                                  onFocus={() => handleFieldFocus("heightIn")}
+                                  onClick={() => handleFieldFocus("heightIn")}
+                                  onBlur={handleFieldBlur}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (/^\d*$/.test(val) && parseInt(val || "0", 10) < 12)
+                                      setHeightIn(val);
+                                  }}
+                                  className={`h-14 text-lg font-bold rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+                                    getFieldError("height")
+                                      ? "border-red-400 bg-red-50 text-red-700"
+                                      : heightIn
+                                        ? "border-green-400 bg-green-50 text-green-700"
+                                        : "border-slate-300 bg-white hover:border-teal-400"
+                                  }`}
+                                />
+                                <span className="text-base text-slate-600 font-medium">
+                                  in
+                                </span>
+                              </div>
                             </div>
-                          </div>
+                            {getFieldError("height") && (
+                              <p className="text-sm text-red-600 mt-1 flex items-start gap-1">
+                                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                                <span>{getFieldError("height")!.message}</span>
+                              </p>
+                            )}
+                            {!getFieldError("height") && getFieldWarning("height") && (
+                              <p className="text-sm text-amber-600 mt-1 flex items-start gap-1">
+                                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                                <span>{getFieldWarning("height")!.message}</span>
+                              </p>
+                            )}
+                          </>
                         )}
 
                         {/* Height unit toggle */}
@@ -536,34 +642,52 @@ export default function DemographicsPage() {
                     </div>
 
                     {/* BMI Compact Preview Row */}
-                    <div className="flex items-center justify-between h-14 w-full px-4 mt-4 bg-white rounded-lg border-2 border-slate-300">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg">📊</span>
-                        <span className="text-lg font-bold text-slate-700">
-                          BMI estimate
-                        </span>
-                        <InfoTooltip text="BMI is a general indicator based on height and weight. It does not account for muscle mass or body composition." />
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg font-black text-slate-900">
-                          {bmiValue || "--.-"}
-                        </span>
-                        {bmiCategory && (
-                          <span
-                            className={`px-3 py-1 rounded-full text-lg font-bold ${
-                              bmiCategory.color === "green"
-                                ? "bg-green-100 text-green-700"
-                                : bmiCategory.color === "blue"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : bmiCategory.color === "amber"
-                                    ? "bg-amber-100 text-amber-700"
-                                    : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {bmiCategory.label}
+                    <div className="mt-4">
+                      <div className={`flex items-center justify-between h-14 w-full px-4 bg-white rounded-lg border-2 ${
+                        getFieldError("bmi")
+                          ? "border-red-400"
+                          : "border-slate-300"
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">📊</span>
+                          <span className="text-lg font-bold text-slate-700">
+                            BMI estimate
                           </span>
-                        )}
+                          <InfoTooltip text="BMI is a general indicator based on height and weight. It does not account for muscle mass or body composition." />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg font-black text-slate-900">
+                            {bmiValue || "--.-"}
+                          </span>
+                          {bmiCategory && (
+                            <span
+                              className={`px-3 py-1 rounded-full text-lg font-bold ${
+                                bmiCategory.color === "green"
+                                  ? "bg-green-100 text-green-700"
+                                  : bmiCategory.color === "blue"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : bmiCategory.color === "amber"
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              {bmiCategory.label}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      {getFieldError("bmi") && (
+                        <p className="text-sm text-red-600 mt-1 flex items-start gap-1 px-4">
+                          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                          <span>{getFieldError("bmi")!.message}</span>
+                        </p>
+                      )}
+                      {!getFieldError("bmi") && getFieldWarning("bmi") && (
+                        <p className="text-sm text-amber-600 mt-1 flex items-start gap-1 px-4">
+                          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                          <span>{getFieldWarning("bmi")!.message}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -635,13 +759,13 @@ export default function DemographicsPage() {
               onBack={() => router.back()}
               isSubmit={true}
               loading={loading}
-              isNextDisabled={!isBasicInfoComplete || loading}
+              isNextDisabled={!isBasicInfoComplete || hasErrors || loading}
               nextLabel="Continue to Fingerprint Scan"
               leftAdornment={
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={clearFields}
+                  onClick={() => setShowClearConfirmModal(true)}
                   className="flex items-center gap-2 h-14 px-6 text-lg font-bold text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer rounded-xl transition-all"
                 >
                   <X size={20} className="stroke-[2.5]" />
@@ -665,6 +789,25 @@ export default function DemographicsPage() {
           onBackspace={handleBackspace}
           onConfirm={handleKeypadConfirm}
           onDismiss={dismissKeypad}
+        />
+
+        {/* Clear Fields Confirmation Modal */}
+        <ConfirmModal
+          isOpen={showClearConfirmModal}
+          onPrimary={() => setShowClearConfirmModal(false)}
+          onSecondary={() => {
+            clearFields();
+            setShowClearConfirmModal(false);
+          }}
+          title="Clear All Fields?"
+          description="Everything you have typed will be deleted. Do you want to continue?"
+          icon={<AlertTriangle size={56} className="text-red-500" strokeWidth={2.5} />}
+          iconWrapperClassName="from-red-50 to-orange-50 border-red-100"
+          iconRingClassName="border-red-300"
+          primaryLabel="No, Keep My Data"
+          secondaryLabel="Yes, Clear Everything"
+          primaryButtonClassName="bg-[#00c2cb] hover:bg-[#00adb5] shadow-teal-100/50 h-20 text-2xl active:scale-[0.98]"
+          secondaryButtonClassName="h-20 text-2xl active:scale-[0.98] text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100"
         />
       </>
     </ProtectedRoute>

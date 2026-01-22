@@ -212,24 +212,33 @@ export default function HospitalsPage() {
 
   // Helper to compute page numbers with ellipses
   const getPageNumbers = (current: number, total: number): (number | string)[] => {
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    const pages = new Set<number>();
-    pages.add(1);
-    pages.add(2);
-    pages.add(total - 1);
-    pages.add(total);
-    for (let i = current - 2; i <= current + 2; i++) {
-      if (i > 2 && i < total - 1) pages.add(i);
+    const maxVisible = 5;
+    if (total <= maxVisible) return Array.from({ length: total }, (_, i) => i + 1);
+    
+    const result: (number | string)[] = [];
+    
+    if (current <= 3) {
+      // Near start: [1, 2, 3, 4, ..., last]
+      for (let i = 1; i <= 4; i++) result.push(i);
+      result.push("...");
+      result.push(total);
+    } else if (current >= total - 2) {
+      // Near end: [1, ..., last-3, last-2, last-1, last]
+      result.push(1);
+      result.push("...");
+      for (let i = total - 3; i <= total; i++) result.push(i);
+    } else {
+      // Middle: [1, ..., current-1, current, current+1, ..., last]
+      result.push(1);
+      result.push("...");
+      result.push(current - 1);
+      result.push(current);
+      result.push(current + 1);
+      result.push("...");
+      result.push(total);
     }
-    const sorted = Array.from(pages)
-      .filter((n) => n >= 1 && n <= total)
-      .sort((a, b) => a - b);
-    const out: (number | string)[] = [];
-    for (let i = 0; i < sorted.length; i++) {
-      if (i > 0 && sorted[i] - sorted[i - 1] > 1) out.push("...");
-      out.push(sorted[i]);
-    }
-    return out;
+    
+    return result;
   };
 
   const handleOpenModal = (facility: Facility) => {
@@ -406,10 +415,10 @@ export default function HospitalsPage() {
                       <button
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage <= 1}
-                        className={`h-12 px-4 rounded-2xl border-2 text-lg font-bold transition-all ${
+                        className={`h-12 w-20 rounded-2xl border-2 text-lg font-bold transition-all ${
                           currentPage <= 1
                             ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
-                            : "bg-white text-gray-700 border-gray-200 hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm"
+                            : "bg-white text-gray-700 border-gray-200 hover:border-[#00c2cb] hover:text-[#00c2cb] cursor-pointer shadow-sm"
                         }`}
                       >
                         Prev
@@ -428,10 +437,10 @@ export default function HospitalsPage() {
                             key={p}
                             onClick={() => setPage(p as number)}
                             aria-current={p === currentPage ? "page" : undefined}
-                            className={`h-12 px-4 rounded-2xl border-2 text-lg font-bold transition-all ${
+                            className={`h-12 w-12 rounded-2xl border-2 text-lg font-bold transition-all ${
                               p === currentPage
-                                ? "bg-teal-500 text-white border-teal-600"
-                                : "bg-white text-gray-700 border-gray-200 hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm"
+                                ? "bg-[#00c2cb] text-white border-[#00adb5]"
+                                : "bg-white text-gray-700 border-gray-200 hover:border-[#00c2cb] hover:text-[#00c2cb] cursor-pointer shadow-sm"
                             }`}
                           >
                             {p}
@@ -442,10 +451,10 @@ export default function HospitalsPage() {
                       <button
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage >= totalPages}
-                        className={`h-12 px-4 rounded-2xl border-2 text-lg font-bold transition-all ${
+                        className={`h-12 w-20 rounded-2xl border-2 text-lg font-bold transition-all ${
                           currentPage >= totalPages
                             ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
-                            : "bg-white text-gray-700 border-gray-200 hover:border-teal-500 hover:text-teal-600 cursor-pointer shadow-sm"
+                            : "bg-white text-gray-700 border-gray-200 hover:border-[#00c2cb] hover:text-[#00c2cb] cursor-pointer shadow-sm"
                         }`}
                       >
                         Next

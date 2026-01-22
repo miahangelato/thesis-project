@@ -26,7 +26,7 @@ export const landingCarouselSlides: CarouselSlide[] = [
     subtitle: "Unlocking the health secrets hidden in your unique biometric code.",
     content: [
       "Fingerprints form between weeks 5-21 of pregnancy—and never change.",
-      "Printalyzer uses dermatoglyphic science to translate patterns into accessible health insights.",
+      "This tool uses dermatoglyphic science to translate patterns into accessible health insights.",
       "• Learn what your ridge patterns may suggest",
       "• Turn curiosity into preventive action",
     ],
@@ -39,7 +39,7 @@ export const landingCarouselSlides: CarouselSlide[] = [
     subtitle: "Non-invasive prediction tool based on dermatoglyphic science.",
     content: [
       "Research suggests correlations between fingerprint patterns and ABO blood types.",
-      "Printalyzer provides a fast, non-invasive prediction to support everyday decisions.",
+      "This tool provides a fast, non-invasive prediction to support everyday decisions.",
       "• Improve emergency readiness",
       "• Check potential blood donation compatibility",
       "• Reduce uncertainty when it matters",
@@ -53,7 +53,7 @@ export const landingCarouselSlides: CarouselSlide[] = [
     subtitle: "Breaking the barrier of fear to fight the silent epidemic.",
     content: [
       "Many people avoid early screening because needles and clinics create friction.",
-      "Printalyzer offers a zero-needle, painless signal check based on ridge patterns.",
+      "This tool offers a zero-needle, painless signal check based on ridge patterns.",
       "• Earlier awareness, less anxiety",
       "• A practical nudge toward prevention",
       "• Motivation to follow up with professionals",
@@ -94,7 +94,7 @@ export const landingCarouselSlides: CarouselSlide[] = [
     title: "Empowering You, Not Diagnosing You.",
     subtitle: "A tool for awareness, education, and proactive living.",
     content: [
-      "Printalyzer is a predictive educational tool—not a medical diagnosis.",
+      "This tool is a predictive educational tool—not a medical diagnosis.",
       "It's designed to help you take the next right step.",
       "• Make lifestyle changes earlier",
       "• Seek professional consultation when needed",

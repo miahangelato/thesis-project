@@ -7,11 +7,9 @@ type ScannerState =
   | "captured"
   | "paused"
   | "error"
-  | "preparing"
   | "completed"
   | "retrying"
-  | "countdown"
-  | "initializing";
+  | "countdown";
 
 interface ScanAssistantSubtitleProps {
   scannerState: ScannerState;
@@ -37,14 +35,6 @@ export function ScanAssistantSubtitle({
     idle: {
       text: "Click 'Start Scanning' below to begin",
       textClass: "text-blue-800",
-    },
-    initializing: {
-      text: "Preparing the scanner...",
-      textClass: "text-blue-600",
-    },
-    preparing: {
-      text: "Preparing scanner...",
-      textClass: "text-blue-700",
     },
     waiting: {
       text: `Place your ${currentFinger}`,

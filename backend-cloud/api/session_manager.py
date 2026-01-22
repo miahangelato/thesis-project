@@ -99,14 +99,14 @@ class SessionManager:
     def create_session(self, consent: bool) -> str:
         """Create new session with consent flag."""
         session_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc)
 
         with self._lock:
             self.sessions[session_id] = {
                 "consent": consent,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "expires_at": (
-                    datetime.now(timezone.utc) + timedelta(hours=1)
-                ).isoformat(),
+                "created_at": now.isoformat(),
+                "last_activity": now.isoformat(),
+                "status": "active",  # active, expired, completed
                 "demographics": None,
                 "fingerprints": {},
                 "predictions": None,
@@ -118,23 +118,61 @@ class SessionManager:
         return session_id
 
     def get_session(self, session_id: str) -> Optional[Dict]:
-        """Retrieve session data."""
+        """Retrieve session data.
+
+        Handles expiration logic:
+        - Checks absolute duration (30 mins max)
+        - Checks inactivity (10 mins max)
+        - Updates last_activity if active
+        """
         session = self.sessions.get(session_id)
 
         if not session:
             return None
 
-        expires_at = datetime.fromisoformat(session["expires_at"])
-        if datetime.now(timezone.utc) > expires_at:
-            self.delete_session(session_id)
-            return None
+        # Determine if expired
+        now = datetime.now(timezone.utc)
+        created_at = datetime.fromisoformat(session["created_at"])
+        last_activity = datetime.fromisoformat(session.get("last_activity", session["created_at"]))
+
+        # Limits
+        MAX_DURATION = timedelta(minutes=30)
+        INACTIVITY_TIMEOUT = timedelta(minutes=10)
+
+        is_expired = False
+        if now - created_at > MAX_DURATION:
+            is_expired = True
+        elif now - last_activity > INACTIVITY_TIMEOUT:
+            is_expired = True
+
+        if is_expired and session.get("status") == "active":
+            self.expire_session(session_id)
+            session = self.sessions.get(session_id)  # Reload
+
+        # Update activity for active sessions
+        if session and session.get("status") == "active":
+            with self._lock:
+                session["last_activity"] = now.isoformat()
+                self._save_sessions()
 
         return session
+
+    def expire_session(self, session_id: str):
+        """Mark session as expired and clean up sensitive data."""
+        with self._lock:
+            session = self.sessions.get(session_id)
+            if session and session.get("status") == "active":
+                session["status"] = "expired"
+                # Clear sensitive raw inputs as requested
+                session["fingerprints"] = {}  # Remove raw images
+                # Keep demographics and predictions for read-only View Results
+                self._save_sessions()
+                logger.info(f"Session expired: {session_id}")
 
     def update_demographics(self, session_id: str, data: dict):
         """Store demographics in session."""
         session = self.get_session(session_id)
-        if session:
+        if session and session.get("status") == "active":
             with self._lock:
                 session["demographics"] = data
                 self.sessions[session_id] = session
@@ -143,7 +181,7 @@ class SessionManager:
     def add_fingerprint(self, session_id: str, finger_name: str, image_data: str):
         """Store fingerprint image in session (encrypted)."""
         session = self.get_session(session_id)
-        if session:
+        if session and session.get("status") == "active":
             encrypted_data = self.cipher.encrypt(image_data.encode())
             with self._lock:
                 session["fingerprints"][finger_name] = encrypted_data.decode()
@@ -166,7 +204,7 @@ class SessionManager:
     def store_predictions(self, session_id: str, predictions: dict):
         """Store analysis results."""
         session = self.get_session(session_id)
-        if session:
+        if session and session.get("status") == "active":
             with self._lock:
                 session["predictions"] = predictions
                 session["completed"] = True
@@ -182,16 +220,30 @@ class SessionManager:
                 logger.info(f"Session deleted: {session_id}")
 
     def cleanup_expired(self):
-        """Remove expired sessions."""
+        """Remove sessions that are too old (hard cleanup)."""
         now = datetime.now(timezone.utc)
-        expired = [
-            sid
-            for sid, session in self.sessions.items()
-            if datetime.fromisoformat(session["expires_at"]) < now
-        ]
-
-        for sid in expired:
-            self.delete_session(sid)
+        start_keys = list(self.sessions.keys())
+        
+        for sid in start_keys:
+            session = self.sessions.get(sid)
+            if not session:
+                continue
+                
+            try:
+                # Handle both old 'expires_at' and new 'created_at' logic for backward compatibility
+                if "created_at" in session:
+                    created_at = datetime.fromisoformat(session["created_at"])
+                    # Hard delete after 2 hours (even read-only results)
+                    if now - created_at > timedelta(hours=2):
+                        self.delete_session(sid)
+                elif "expires_at" in session:
+                    # Legacy support
+                    expires_at = datetime.fromisoformat(session["expires_at"])
+                    if now > expires_at:
+                        self.delete_session(sid)
+            except Exception as e:
+                logger.error(f"Error cleaning up session {sid}: {e}")
+                self.delete_session(sid)
 
 
 _session_manager = None

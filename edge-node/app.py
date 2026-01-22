@@ -19,8 +19,7 @@ import uuid
 
 # Import the working scanner implementation
 from scanner_real import (
-    FingerprintScanner, dpfpdd, DPFPDD_SUCCESS, capture_fingerprint_image,
-    scan_finger_loop_with_guidance, scan_finger_session
+    dpfpdd, DPFPDD_SUCCESS, capture_fingerprint_image, initialize_sdk
 )
 from config import HOST, PORT, DEBUG, CORS_ORIGINS, CORS_ALLOW_ALL
 import os
@@ -724,13 +723,8 @@ def handle_cancel_scan_session(data):
 def scan_finger(finger_name: str = "index"):
     """Core fingerprint scanning function - using the working capture_fingerprint_image"""
     try:
-        # Reset status to scanning
-        update_scanner_status("scanning", "Initializing scanner")
-        
-        # Use the working capture function from scanner_real.py with status callback
-        image_bytes, img_info, quality_flags = capture_fingerprint_image(
-            status_callback=update_scanner_status
-        )
+        # Use the working capture function from scanner_real.py
+        image_bytes, img_info, quality_flags = capture_fingerprint_image()
         
         if image_bytes and img_info:
             # Convert raw pixel data to PNG format
@@ -765,9 +759,6 @@ def scan_finger(finger_name: str = "index"):
                 base64_image = base64.b64encode(png_bytes).decode('utf-8')
                 print(f"✅ Base64 encoding complete: {len(base64_image)} characters")
                 
-                # Reset status to idle after successful scan
-                update_scanner_status("idle", "Scan complete")
-                
                 return {
                     "success": True,
                     "image": base64_image,
@@ -794,7 +785,6 @@ def scan_finger(finger_name: str = "index"):
                 "debug_info": "No image data returned from capture_fingerprint_image"
             }
     except Exception as e:
-        update_scanner_status("idle", "Error occurred")
         return {
             "success": False,
             "error": "An error occurred while scanning. Please try again.",
@@ -1136,10 +1126,15 @@ if __name__ == '__main__':
     try:
         if dpfpdd:
             print("✅ Scanner DLLs loaded successfully")
+            # Initialize the SDK once at startup
+            if initialize_sdk():
+                print("✅ Scanner SDK initialized successfully")
+            else:
+                print("⚠️ Scanner SDK initialization failed - device may not be available")
         else:
             print("⚠️ Scanner DLLs not available")
     except Exception as e:
-        print(f"⚠️ Scanner check: {e}")
+        print(f"⚠️ Scanner initialization error: {e}")
     
     print("🔍 Scanner support: Windows")
     print("🔌 WebSocket: Enabled (real-time guided scan)")

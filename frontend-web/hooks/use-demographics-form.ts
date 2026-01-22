@@ -3,6 +3,53 @@
 import React, { useMemo, useState } from "react";
 import { cmToFtIn, ftInToCm, kgToLb, lbToKg } from "@/lib/units";
 
+// Medical validation constants (evidence-based ranges)
+const VALIDATION = {
+  AGE: {
+    MIN: 18,
+    MAX: 120,
+    SENIOR_THRESHOLD: 65,
+  },
+  WEIGHT_KG: {
+    MIN: 30,  // Severe underweight adult
+    MAX: 300, // Extreme obesity (bariatric range)
+    WARN_LOW: 40,
+    WARN_HIGH: 200,
+  },
+  WEIGHT_LB: {
+    MIN: 66,
+    MAX: 661,
+    WARN_LOW: 88,
+    WARN_HIGH: 440,
+  },
+  HEIGHT_CM: {
+    MIN: 120,  // Severe dwarfism adult
+    MAX: 250,  // Tallest recorded humans
+    WARN_LOW: 140,
+    WARN_HIGH: 220,
+  },
+  HEIGHT_FT: {
+    MIN: 4,
+    MAX: 8,
+  },
+  HEIGHT_IN: {
+    MIN: 0,
+    MAX: 11,
+  },
+  BMI: {
+    MIN: 12,   // Severe starvation
+    MAX: 80,   // Extreme obesity
+    WARN_LOW: 15,
+    WARN_HIGH: 50,
+  },
+};
+
+export type ValidationWarning = {
+  field: string;
+  message: string;
+  severity: "error" | "warning";
+};
+
 export type WeightUnit = "kg" | "lb";
 export type HeightUnit = "cm" | "ftin";
 export type ActiveField = "age" | "weight" | "heightCm" | "heightFt" | "heightIn" | null;
@@ -33,6 +80,9 @@ export function useDemographicsForm() {
 
   // Keypad routing
   const [activeField, setActiveField] = useState<ActiveField>(null);
+
+  // Validation warnings
+  const [validationWarnings, setValidationWarnings] = useState<ValidationWarning[]>([]);
 
   // Form state (clean: NO blood donation eligibility criteria)
   // Load from sessionStorage if available
@@ -143,6 +193,126 @@ export function useDemographicsForm() {
     const bmi = weightKg / (meters * meters);
     return Number.isFinite(bmi) ? bmi.toFixed(1) : null;
   }, [weightKg, heightCm]);
+
+  // -------------------------
+  // Validation Logic
+  // -------------------------
+  const validateInputs = useMemo(() => {
+    const warnings: ValidationWarning[] = [];
+    
+    // Age validation
+    const age = parseInt(formData.age || "0", 10);
+    if (age > 0) {
+      if (age < VALIDATION.AGE.MIN) {
+        warnings.push({
+          field: "age",
+          message: `Age must be at least ${VALIDATION.AGE.MIN} years for adult health screening.`,
+          severity: "error",
+        });
+      } else if (age > VALIDATION.AGE.MAX) {
+        warnings.push({
+          field: "age",
+          message: `Please verify age. Value exceeds ${VALIDATION.AGE.MAX} years.`,
+          severity: "error",
+        });
+      }
+    }
+
+    // Weight validation
+    if (weightKg) {
+      if (weightKg < VALIDATION.WEIGHT_KG.MIN) {
+        warnings.push({
+          field: "weight",
+          message: `Weight seems unusually low (${weightKg.toFixed(1)} kg). Please verify your input.`,
+          severity: "error",
+        });
+      } else if (weightKg > VALIDATION.WEIGHT_KG.MAX) {
+        warnings.push({
+          field: "weight",
+          message: `Weight seems unusually high (${weightKg.toFixed(1)} kg). Please verify your input.`,
+          severity: "error",
+        });
+      } else if (weightKg < VALIDATION.WEIGHT_KG.WARN_LOW) {
+        warnings.push({
+          field: "weight",
+          message: "Low weight detected. Results may be less accurate.",
+          severity: "warning",
+        });
+      } else if (weightKg > VALIDATION.WEIGHT_KG.WARN_HIGH) {
+        warnings.push({
+          field: "weight",
+          message: "High weight detected. Consider verifying measurement.",
+          severity: "warning",
+        });
+      }
+    }
+
+    // Height validation
+    if (heightCm) {
+      if (heightCm < VALIDATION.HEIGHT_CM.MIN) {
+        warnings.push({
+          field: "height",
+          message: `Height seems unusually low (${heightCm.toFixed(0)} cm). Please verify your input.`,
+          severity: "error",
+        });
+      } else if (heightCm > VALIDATION.HEIGHT_CM.MAX) {
+        warnings.push({
+          field: "height",
+          message: `Height seems unusually high (${heightCm.toFixed(0)} cm). Please verify your input.`,
+          severity: "error",
+        });
+      } else if (heightCm < VALIDATION.HEIGHT_CM.WARN_LOW) {
+        warnings.push({
+          field: "height",
+          message: "Height below typical adult range. Results may need adjustment.",
+          severity: "warning",
+        });
+      } else if (heightCm > VALIDATION.HEIGHT_CM.WARN_HIGH) {
+        warnings.push({
+          field: "height",
+          message: "Height above typical range. Please confirm measurement.",
+          severity: "warning",
+        });
+      }
+    }
+
+    // BMI validation (cross-field)
+    const bmi = bmiValue ? parseFloat(bmiValue) : null;
+    if (bmi && weightKg && heightCm) {
+      if (bmi < VALIDATION.BMI.MIN) {
+        warnings.push({
+          field: "bmi",
+          message: `BMI (${bmi}) is critically low. Please verify weight and height measurements.`,
+          severity: "error",
+        });
+      } else if (bmi > VALIDATION.BMI.MAX) {
+        warnings.push({
+          field: "bmi",
+          message: `BMI (${bmi}) is extremely high. Please verify weight and height measurements.`,
+          severity: "error",
+        });
+      } else if (bmi < VALIDATION.BMI.WARN_LOW) {
+        warnings.push({
+          field: "bmi",
+          message: "BMI indicates severe underweight. Screening may be less accurate.",
+          severity: "warning",
+        });
+      } else if (bmi > VALIDATION.BMI.WARN_HIGH) {
+        warnings.push({
+          field: "bmi",
+          message: "BMI indicates severe obesity. Clinical follow-up recommended.",
+          severity: "warning",
+        });
+      }
+    }
+
+    return warnings;
+  }, [formData.age, weightKg, heightCm, bmiValue]);
+
+  // Update validation warnings when inputs change
+  React.useEffect(() => {
+    setValidationWarnings(validateInputs);
+  }, [validateInputs]);
 
   const bmiCategory: BmiCategory | null = useMemo(() => {
     const bmi = bmiValue ? parseFloat(bmiValue) : null;
@@ -338,5 +508,8 @@ export function useDemographicsForm() {
     bmiValue,
     bmiCategory,
     isBasicInfoComplete,
+    validationWarnings,
+    hasErrors: validationWarnings.some((w) => w.severity === "error"),
+    hasWarnings: validationWarnings.some((w) => w.severity === "warning"),
   };
 }

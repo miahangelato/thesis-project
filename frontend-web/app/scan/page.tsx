@@ -71,6 +71,7 @@ export default function ScanPage() {
     firstUnscannedIndex,
     setScannerReady,
     setScanningStarted,
+    setCountdown,
     handleResetSession,
     handleCapture,
     handleNextFinger,
@@ -108,10 +109,6 @@ export default function ScanPage() {
         return;
       }
 
-      if (process.env.NODE_ENV !== "production") {
-        console.log(`Uploading ${Object.keys(fingerFiles).length} fingerprints...`);
-      }
-
       // Upload all files
       const uploadPromises = Object.entries(fingerFiles).map(async ([finger, file]) => {
         return new Promise<void>((resolve, reject) => {
@@ -119,16 +116,10 @@ export default function ScanPage() {
           reader.onloadend = async () => {
             const base64 = reader.result as string;
             try {
-              if (process.env.NODE_ENV !== "production") {
-                console.log(`Uploading ${finger}...`);
-              }
               await sessionAPI.submitFingerprint(activeSessionId, {
                 finger_name: finger,
                 image: base64,
               });
-              if (process.env.NODE_ENV !== "production") {
-                console.log(`${finger} uploaded successfully`);
-              }
               resolve();
             } catch (e) {
               console.error(`Failed to upload ${finger}:`, e);
@@ -141,33 +132,14 @@ export default function ScanPage() {
       });
 
       await Promise.all(uploadPromises);
-      if (process.env.NODE_ENV !== "production") {
-        console.log("All fingerprints uploaded successfully");
-      }
 
       // Trigger analysis
-      if (process.env.NODE_ENV !== "production") {
-        console.log("Triggering analysis...");
-      }
       const analyzeResponse = await sessionAPI.analyze(activeSessionId);
-      if (process.env.NODE_ENV !== "production") {
-        console.log("Analysis API response:", analyzeResponse);
-        console.log("Analysis completed successfully");
-      }
 
       // Call /results endpoint to save to database AND get QR code URLs
-      if (process.env.NODE_ENV !== "production") {
-        console.log("💾 Calling /results to save to database...");
-      }
       let finalData = analyzeResponse.data; // Fallback
       try {
         const resultsResponse = await sessionAPI.getResults(activeSessionId);
-        if (process.env.NODE_ENV !== "production") {
-          console.log(
-            "✅ Database save result:",
-            resultsResponse.data?.saved_to_database
-          );
-        }
         finalData = resultsResponse.data; // Use results response (includes QR URLs!)
       } catch (resultsError) {
         console.error("⚠️ Failed to save to database:", resultsError);
@@ -189,21 +161,11 @@ export default function ScanPage() {
       const encodedData = btoa(binary);
       sessionStorage.setItem(activeSessionId, encodedData);
       sessionStorage.setItem("current_session_id", activeSessionId);
-      if (process.env.NODE_ENV !== "production") {
-        console.log("💾 Stored results in sessionStorage");
-        console.log("🔄 Setting current step to RESULTS:", STEPS.RESULTS);
-      }
       flushSync(() => {
         setCurrentStep(STEPS.RESULTS); // Moving to results page (step 4)
       });
-      if (process.env.NODE_ENV !== "production") {
-        console.log("🚀 About to navigate to:", ROUTES.RESULTS);
-      }
       setAnalysisOverlayOpen(false);
       router.push(ROUTES.RESULTS);
-      if (process.env.NODE_ENV !== "production") {
-        console.log("✅ router.push called");
-      }
     } catch (err) {
       console.error("Submission failed:", err);
       const message = getErrorMessage(err);
@@ -265,6 +227,7 @@ export default function ScanPage() {
           onConfirm={() => {
             setShowScanConfirmModal(false);
             setScanningStarted(true);
+            setCountdown(5); // Start with 5 second countdown
           }}
           onCancel={() => setShowScanConfirmModal(false)}
         />
@@ -342,7 +305,7 @@ export default function ScanPage() {
               </div>
             </div>
 
-            <div className="flex justify-between items-center mt-6 mb-4 select-none">
+            <div className="flex justify-between items-center mt-2 mb-2 select-none">
               <StepNavigation
                 onBack={() => router.back()}
                 isSubmit={false}

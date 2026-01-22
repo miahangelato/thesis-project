@@ -65,40 +65,44 @@ export function ConfirmModal({
       isOpen={isOpen}
       onClose={disableActions ? undefined : onPrimary}
       labelledById={titleId}
+      containerClassName="select-none"
       closeOnBackdrop={!disableActions && closeOnBackdrop}
       closeOnEscape={!disableActions && closeOnEscape}
       zIndexClassName={zIndexClassName}
-      backdropClassName={cn("bg-slate-900/60 backdrop-blur-md", backdropClassName)}
-      panelClassName={cn("max-w-lg border-2 border-teal-100", panelClassName)}
+      backdropClassName={cn("bg-linear-to-br from-slate-900/30 via-slate-800/30 to-slate-900/30 backdrop-blur-md", backdropClassName)}
+      panelClassName={cn("max-w-xl border-2 border-teal-100 rounded-3xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300", panelClassName)}
       showTopBar
       topBarClassName={topBarClassName}
     >
       <div className="p-10 flex flex-col items-center text-center">
-        <div className="relative mb-8">
-          <div
-            className={cn(
-              "w-24 h-24 rounded-full flex items-center justify-center shadow-inner",
-              iconWrapperClassName
-            )}
-          >
-            {icon}
+        {/* Icon wrapper - Squircle design to match other modals */}
+        <div className="flex justify-center mb-10">
+          <div className="relative">
+            <div
+              className={cn(
+                "w-24 h-24 rounded-3xl flex items-center justify-center shadow-sm border border-teal-100 bg-linear-to-br from-slate-50 to-slate-100/50",
+                iconWrapperClassName
+              )}
+            >
+              {icon}
+            </div>
+            <div
+              className={cn(
+                "absolute inset-0 w-24 h-24 rounded-3xl border-4 opacity-20 animate-ping",
+                iconRingClassName
+              )}
+            />
           </div>
-          <div
-            className={cn(
-              "absolute inset-0 rounded-full border-4 opacity-50 animate-pulse",
-              iconRingClassName
-            )}
-          />
         </div>
 
         <h3
           id={titleId}
-          className="text-4xl font-bold text-slate-900 mb-4 tracking-tight"
+          className="text-4xl font-bold text-slate-900 mb-4 tracking-tight leading-tight"
         >
           {title}
         </h3>
 
-        <div className="text-xl text-slate-600 mb-10 leading-relaxed max-w-sm mx-auto">
+        <div className="text-xl font-medium text-slate-600 mb-10 leading-relaxed max-w-sm mx-auto">
           {description}
         </div>
 

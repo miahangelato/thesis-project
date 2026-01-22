@@ -41,9 +41,9 @@ export function StepNavigation({
             type="button"
             variant="outline"
             onClick={onBack}
-            className="flex items-center gap-2 border-2 border-slate-300 hover:bg-slate-50 hover:border-slate-400 h-14 px-6 text-lg font-bold text-slate-700 cursor-pointer rounded-xl transition-all"
+            className="flex items-center gap-2 border-2 border-slate-300 hover:bg-slate-50 hover:border-slate-400 h-16 px-8 text-xl font-bold text-slate-700 cursor-pointer rounded-xl transition-all"
           >
-            <ArrowLeft size={20} className="stroke-[2.5]" />
+            <ArrowLeft size={24} className="stroke-[2.5]" />
             {backLabel}
           </Button>
         )}
@@ -56,7 +56,7 @@ export function StepNavigation({
         onClick={isSubmit ? undefined : onNext}
         disabled={isNextDisabled || loading}
         className={cn(
-          "h-14 px-12 text-xl font-extrabold rounded-2xl flex items-center gap-3 transition-all shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] cursor-pointer",
+          "h-16 px-16 text-2xl font-extrabold rounded-2xl flex items-center gap-3 transition-all shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] cursor-pointer",
           !isNextDisabled && !loading
             ? "bg-[#00c2cb] hover:bg-[#00b2ba] text-white"
             : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"

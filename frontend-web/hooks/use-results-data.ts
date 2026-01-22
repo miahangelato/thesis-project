@@ -43,9 +43,6 @@ const readDemographicsFromSessionStorage = (): StoredDemographics | null => {
 
   try {
     const parsed = JSON.parse(storedDemo) as StoredDemographics;
-    if (process.env.NODE_ENV !== "production") {
-      console.log("✅ Loaded demographics from sessionStorage:", storedDemo);
-    }
     return parsed;
   } catch (e) {
     console.error("Failed to parse demographics:", e);
@@ -71,17 +68,10 @@ export function useResultsData(sessionId: string | null) {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (process.env.NODE_ENV !== "production") {
-        console.log("🔍 [Results Page - New] Loading results...");
-      }
-
       // Try to get sessionId from context or fallback to sessionStorage
       let activeSessionId = sessionId;
       if (!activeSessionId) {
         activeSessionId = sessionStorage.getItem("current_session_id");
-        if (process.env.NODE_ENV !== "production") {
-          console.log("⚠️ No sessionId from context, using fallback:", activeSessionId);
-        }
       }
 
       if (!activeSessionId) {
@@ -95,9 +85,6 @@ export function useResultsData(sessionId: string | null) {
         const encodedData = sessionStorage.getItem(activeSessionId);
 
         if (encodedData) {
-          if (process.env.NODE_ENV !== "production") {
-            console.log("📦 Found data in sessionStorage");
-          }
           const dataWithExpiry = decodeBase64Json(encodedData);
 
           if (!dataWithExpiry) {
@@ -115,10 +102,6 @@ export function useResultsData(sessionId: string | null) {
           }
 
           const data = (dataWithExpiry as { data?: unknown })?.data;
-          if (process.env.NODE_ENV !== "production") {
-            console.log("✅ Loaded data:", data);
-          }
-
           const dataObj = readRecord(data) ?? {};
           const demographicsObj = readRecord(dataObj.demographics);
 
@@ -224,9 +207,6 @@ export function useResultsData(sessionId: string | null) {
               typeof dataObj.download_url === "string" ? dataObj.download_url : undefined,
           });
 
-          if (process.env.NODE_ENV !== "production") {
-            console.log("✅ State updated successfully");
-          }
           setLoading(false);
         } else {
           console.error("❌ No data in sessionStorage for session:", sessionId);

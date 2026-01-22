@@ -269,7 +269,7 @@ def health_check(request):
         db_connected = storage.health_check()
     except Exception as e:
         # Storage not configured, but API is still healthy
-        print(f"Storage health check failed: {e}")
+        logger.error("Storage health check failed: %s", e)
 
     return {
         "status": "healthy",  # API is always healthy if this endpoint responds

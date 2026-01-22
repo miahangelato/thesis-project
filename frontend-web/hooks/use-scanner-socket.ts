@@ -56,56 +56,35 @@ export function useScannerSocket() {
 
         // Connection handlers
         newSocket.on('connect', () => {
-            console.log('✅ [useScannerSocket] WebSocket connected to', SCANNER_URL);
-            console.log('🔌 [useScannerSocket] Socket ID:', newSocket.id);
             setIsConnected(true);
             reconnectAttemptedRef.current = false;
         });
 
         newSocket.on('disconnect', () => {
-            console.log('❌ [useScannerSocket] WebSocket disconnected');
             setIsConnected(false);
         });
 
         // Scanner status updates
         newSocket.on('scanner_status', (data: ScannerStatus) => {
-            console.log('📊 [useScannerSocket] Scanner status received:', {
-                scan_id: data.scan_id,
-                finger_name: data.finger_name,
-                status: data.status,
-                hint: data.hint,
-                metrics: data.metrics
-            });
             setScannerStatus(data);
         });
 
         // Preview frames
         newSocket.on('preview_frame', (data: PreviewFrame) => {
-            console.log('🖼️ [useScannerSocket] Preview frame received for', data.finger_name, '- length:', data.frame_b64?.length);
             setPreviewFrame(data.frame_b64);
         });
 
         // Scan complete
         newSocket.on('scan_complete', (data: ScanComplete) => {
-            console.log('✅ [useScannerSocket] Scan complete event received:', {
-                scan_id: data.scan_id,
-                finger_name: data.finger_name,
-                image_b64_length: data.image_b64_full?.length,
-                metrics: data.metrics
-            });
             setScanComplete(data);
         });
 
-        // Scan started acknowledgment
-        newSocket.on('scan_started', (data: { scan_id: string; finger_name: string }) => {
-            console.log('🚀 [useScannerSocket] Scan started acknowledgment:', data);
-        });
+        // Scan started acknowledgment (no-op)
+        newSocket.on('scan_started', () => undefined);
 
-        console.log('🔧 [useScannerSocket] WebSocket initialized, connecting to', SCANNER_URL);
         setSocket(newSocket);
 
         return () => {
-            console.log('🧹 [useScannerSocket] Cleaning up WebSocket connection');
             newSocket.close();
         };
     }, []);
@@ -116,12 +95,10 @@ export function useScannerSocket() {
             reconnectAttemptedRef.current = true;
 
             // Fetch current state from fallback API
-            console.log('♻️ [useScannerSocket] Fetching state from fallback API after reconnect...');
             fetch(`${SCANNER_URL}/api/scanner/progress`)
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.success) {
-                        console.log('♻️ Synced state from fallback API after reconnect');
                         setScannerStatus({
                             scan_id: data.scan_id,
                             finger_name: data.finger_name,
@@ -146,18 +123,12 @@ export function useScannerSocket() {
             return;
         }
 
-        console.log(`🔍 [useScannerSocket] Starting scan for ${fingerName}`);
-        console.log('   Socket ID:', socket.id, 'Connected:', isConnected);
-
         // Reset state
-        console.log('🧹 [useScannerSocket] Resetting scan state...');
         setScanComplete(null);
         setPreviewFrame(null);
 
         // Emit start_scan event
-        console.log('📤 [useScannerSocket] Emitting start_scan event:', { finger_name: fingerName });
         socket.emit('start_scan', { finger_name: fingerName });
-        console.log('✅ [useScannerSocket] start_scan event emitted');
     }, [socket, isConnected]);
 
     // Stop scan function
@@ -167,19 +138,8 @@ export function useScannerSocket() {
             return;
         }
 
-        console.log(`🛑 [useScannerSocket] Stopping scan ${scanId}`);
         socket.emit('stop_scan', { scan_id: scanId });
     }, [socket, isConnected]);
-
-    // DEBUG: Log state changes (only when values actually change)
-    useEffect(() => {
-        console.log('🔄 [useScannerSocket] State changed:', {
-            isConnected,
-            status: scannerStatus.status,
-            hasPreviewFrame: !!previewFrame,
-            hasScanComplete: !!scanComplete
-        });
-    }, [isConnected, scannerStatus.status, previewFrame, scanComplete]);
 
     return {
         isConnected,

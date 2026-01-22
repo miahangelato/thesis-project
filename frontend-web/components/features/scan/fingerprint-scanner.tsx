@@ -30,15 +30,13 @@ export default function FingerprintScanner({
 
   // Define callback functions FIRST before useEffects
   const startScanFlow = React.useCallback(() => {
-    console.log("▶️ Starting scan flow for:", currentFinger);
-    setPhase("waiting");
-    setWaitCountdown(0); // 0 seconds - Start immediately
+    setPhase("scanning"); // Skip countdown, go directly to scanning
+    setWaitCountdown(null);
     setError(null);
     setRetryAttempt(0); // Reset retry counter for new scan
   }, [currentFinger]);
 
   const performScan = React.useCallback(async () => {
-    console.log("🔍 Starting scan for:", currentFinger);
     setPhase("scanning");
 
     try {
@@ -56,8 +54,6 @@ export default function FingerprintScanner({
           timeout: 30000,
         }
       );
-
-      console.log("✅ Scan response:", response.data.success);
 
       if (response.data.success) {
         let base64Data = response.data.data.image_data;
@@ -79,7 +75,6 @@ export default function FingerprintScanner({
             type: "image/png",
           });
 
-          console.log("📸 Image created, calling onScanComplete");
           setPhase("idle");
           onScanComplete(currentFinger, file);
         } catch (conversionError) {
@@ -87,8 +82,6 @@ export default function FingerprintScanner({
           setTimeout(() => startScanFlow(), 1000);
         }
       } else {
-        console.log("⚠️ Scan unsuccessful:", response.data);
-
         // Check if this was a "no finger detected" error
         const isNoFingerError =
           response.data.message &&
@@ -99,23 +92,16 @@ export default function FingerprintScanner({
         if (isNoFingerError && retryAttempt < MAX_RETRIES) {
           // Auto-retry
           const nextAttempt = retryAttempt + 1;
-          console.log(
-            `🔄 No finger detected. Auto-retry ${nextAttempt}/${MAX_RETRIES}...`
-          );
           setRetryAttempt(nextAttempt);
 
           // Wait 1.5 seconds before retry
           setTimeout(() => {
-            console.log(`🔄 Retrying scan attempt ${nextAttempt}...`);
             // eslint-disable-next-line react-hooks/immutability
             performScan();
           }, 1500);
         } else {
           // Max retries reached or other error
           if (retryAttempt >= MAX_RETRIES) {
-            console.log(
-              `❌ Max retries (${MAX_RETRIES}) reached. Please try again manually.`
-            );
             setError({
               type: "NO_FINGER",
               message:
@@ -151,7 +137,6 @@ export default function FingerprintScanner({
       } else if (retryAttempt < MAX_RETRIES) {
         // Auto-retry for other errors
         const nextAttempt = retryAttempt + 1;
-        console.log(`🔄 Error occurred. Auto-retry ${nextAttempt}/${MAX_RETRIES}...`);
         setRetryAttempt(nextAttempt);
         setTimeout(() => performScan(), 1500);
       } else {
@@ -173,7 +158,6 @@ export default function FingerprintScanner({
 
   // Reset to idle when finger changes (so auto-start can re-trigger)
   useEffect(() => {
-    console.log("[FingerprintScanner] Current finger changed to:", currentFinger);
     setPhase("idle");
     setWaitCountdown(null);
     setError(null);
@@ -181,37 +165,15 @@ export default function FingerprintScanner({
 
   // Auto-start when autoStart becomes true AND when finger changes
   useEffect(() => {
-    console.log("[FingerprintScanner] Auto-start effect triggered", {
-      autoStart,
-      phase,
-      currentFinger,
-      paused,
-    });
-
     if (autoStart && phase === "idle" && !paused) {
-      console.log("[FingerprintScanner] Auto-starting scan flow for", currentFinger);
-      startScanFlow();
-    }
-  }, [autoStart, currentFinger, phase, paused, startScanFlow]);
-
-  // Countdown effect and scan trigger
-  React.useEffect(() => {
-    if (phase === "waiting" && waitCountdown !== null && waitCountdown > 0 && !paused) {
-      console.log("⏱️ Countdown tick:", waitCountdown);
-      const timer = setTimeout(() => {
-        setWaitCountdown((prev) => (prev !== null ? prev - 1 : null));
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else if (phase === "waiting" && waitCountdown === 0 && !paused) {
-      console.log("⏰ Countdown reached 0, triggering scan");
-      // Scanner is now ready! Notify parent
-      if (onScannerReady) {
-        onScannerReady();
-      }
-      setWaitCountdown(null); // Clear countdown after it reaches 0
+      // Directly trigger scan without waiting
       performScan();
     }
-  }, [phase, waitCountdown, paused, performScan, onScannerReady]);
+  }, [autoStart, currentFinger, phase, paused, performScan]);
+
+  // Countdown effect and scan trigger - REMOVED (countdown handled by parent hook)
+  // The countdown is now managed by the parent hook and displayed in the UI
+  // When countdown reaches 0, the parent sets autoStart=true which triggers performScan
 
   return (
     <div className="flex flex-col items-center gap-3">

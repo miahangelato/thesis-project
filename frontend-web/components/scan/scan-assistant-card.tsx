@@ -137,13 +137,13 @@ export function ScanAssistantCard({
 
       <CardContent className="p-5">
         {/* Header Section - Moved outside grid for alignment */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-2">
           <p className="text-2xl text-gray-600">
             Follow the instructions to scan your fingerprints
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-5 mb-2">
+        <div className="grid grid-cols-2 gap-5 mb-1">
           {/* Left Col: Hand Guide */}
           <div className="flex flex-col items-center">
             {/* Header Container with fixed height - Top Aligned for perfect title alignment */}
@@ -261,10 +261,10 @@ export function ScanAssistantCard({
         </div>
 
         {/* Control Bar Separator */}
-        <hr className="border-t-2 border-dashed border-gray-100 my-4" />
+        <hr className="border-t-2 border-dashed border-gray-100 my-2" />
 
         {/* Dedicated Control Bar - Dynamic Buttons */}
-        <div className="flex items-center justify-center gap-4 mb-4">
+        <div className="flex items-center justify-center gap-4 mb-2">
           {/* State 1: Not Started - Show Start Button */}
           {!scanningStarted ? (
             <Button
@@ -282,7 +282,7 @@ export function ScanAssistantCard({
               <Button
                 onClick={onTogglePaused}
                 variant={paused ? "default" : "outline"}
-                className={`min-w-40 font-bold h-14 text-lg cursor-pointer ${
+                className={`min-w-44 font-bold h-16 text-xl cursor-pointer ${
                   paused
                     ? "bg-green-600 hover:bg-green-700 text-white"
                     : "border-amber-500 text-amber-700 hover:bg-amber-50"
@@ -290,12 +290,12 @@ export function ScanAssistantCard({
               >
                 {paused ? (
                   <>
-                    <Play className="w-4 h-4 mr-2" />
+                    <Play className="w-5 h-5 mr-3" />
                     Resume Scan
                   </>
                 ) : (
                   <>
-                    <Pause className="w-4 h-4 mr-2" />
+                    <Pause className="w-5 h-5 mr-3" />
                     Pause Scan
                   </>
                 )}
@@ -305,7 +305,7 @@ export function ScanAssistantCard({
               <Button
                 onClick={onOpenCancelModal}
                 variant="ghost"
-                className="text-red-500 hover:bg-red-50 hover:text-red-700 font-bold text-lg h-14 px-6 cursor-pointer"
+                className="text-red-500 hover:bg-red-50 hover:text-red-700 font-bold text-xl h-16 px-8 cursor-pointer"
               >
                 Cancel
               </Button>
@@ -324,7 +324,7 @@ export function ScanAssistantCard({
         </div>
 
         {/* Bottom Navigation Bar - Full Width */}
-        <div className="flex gap-4 items-center pt-2 border-t border-gray-100 mt-2">
+        <div className="flex gap-4 items-center pt-2 border-t border-gray-100 mt-1">
           <Button
             onClick={onPreviousFinger}
             disabled={
@@ -333,9 +333,9 @@ export function ScanAssistantCard({
             }
             variant="ghost"
             size="lg"
-            className="flex-1 text-gray-500 hover:text-gray-900 hover:bg-gray-100 text-xl font-bold"
+            className="flex-1 text-gray-500 hover:text-gray-900 hover:bg-gray-100 text-2xl h-16 font-bold"
           >
-            <ChevronLeft className="w-6 h-6 mr-2" />
+            <ChevronLeft className="w-8 h-8 mr-2" />
             Previous
           </Button>
           <Button
@@ -348,10 +348,10 @@ export function ScanAssistantCard({
             }
             variant="ghost"
             size="lg"
-            className="flex-1 text-gray-500 hover:text-gray-900 hover:bg-gray-100 text-xl font-bold"
+            className="flex-1 text-gray-500 hover:text-gray-900 hover:bg-gray-100 text-2xl h-16 font-bold"
           >
             Next Finger
-            <ChevronRight className="w-6 h-6 ml-2" />
+            <ChevronRight className="w-8 h-8 ml-2" />
           </Button>
         </div>
       </CardContent>

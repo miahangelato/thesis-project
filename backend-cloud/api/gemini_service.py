@@ -178,10 +178,12 @@ TONE GUIDELINES:
                 except Exception as e:
                     error_str = str(e)
                     if "429" in error_str and attempt < max_retries - 1:
-                        print(
-                            f"⚠️ Gemini Quota Exceeded (Attempt {attempt + 1}/{max_retries}). Retrying..."
+                        logger.warning(
+                            "Gemini quota exceeded (attempt %s/%s). Retrying...",
+                            attempt + 1,
+                            max_retries,
                         )
-                        logger.warning(f"Gemini 429 error: {e}")
+                        logger.warning("Gemini 429 error: %s", e)
 
                         # Try to extract retry delay or default to 30s
                         sleep_for = 30
@@ -195,14 +197,13 @@ TONE GUIDELINES:
                             except Exception:
                                 pass
 
-                        print(f"⏳ Sleeping for {sleep_for:.1f}s before retry...")
+                        logger.info("Sleeping %.1fs before retry", sleep_for)
                         time.sleep(sleep_for)
                         continue
                     else:
                         raise e  # Re-raise if not 429 or out of retries
 
         except Exception as e:
-            print(f"❌ GEMINI ERROR: {e!s}")  # Visible in console
             logger.error(f"Gemini generation failed: {e}")
             return self._fallback_comprehensive_explanation(
                 analysis_results, demographics

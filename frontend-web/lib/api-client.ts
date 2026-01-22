@@ -38,11 +38,6 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    // Add timestamp to requests for debugging
-    if (env.NODE_ENV === "development") {
-      console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
-    }
-
     // Add auth token if exists
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("auth_token");
@@ -71,12 +66,6 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Log successful responses in development
-    if (env.NODE_ENV === "development") {
-      console.log(
-        `[API Response] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`
-      );
-    }
     return response;
   },
   async (error: AxiosError) => {
@@ -167,9 +156,6 @@ async function retryRequest<T>(
       const delay = API_CONFIG.RETRY_DELAY * Math.pow(2, attempt);
       await new Promise((resolve) => setTimeout(resolve, delay));
 
-      if (env.NODE_ENV === "development") {
-        console.log(`Retrying request... (${attempt + 1}/${maxRetries})`);
-      }
     }
   }
 

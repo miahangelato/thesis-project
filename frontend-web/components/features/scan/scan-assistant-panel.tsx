@@ -54,19 +54,6 @@ export function ScanAssistantPanel({
     return `data:image/jpeg;base64,${trimmed}`;
   }, [previewFrame]);
 
-  // DEBUG: Log to verify component is rendering and receiving props
-  if (process.env.NODE_ENV !== "production") {
-    console.log("[ScanAssistantPanel] Rendering with:", {
-      status,
-      hint,
-      fingerName,
-      hasPreviewFrame: !!previewFrame,
-      previewFrameLength: previewFrame?.length,
-      hasAnimationData: !!animationData,
-      metrics,
-    });
-  }
-
   // Map status to primary message
   const primaryMessage = {
     idle: "Ready to Scan",

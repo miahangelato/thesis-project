@@ -54,10 +54,6 @@ export function DownloadPageContent() {
         setLoading(true);
         const response = await sessionAPI.generatePDF(activeSessionId);
 
-        if (process.env.NODE_ENV !== "production") {
-          console.log("PDF Response:", response.data);
-        }
-
         setPdfUrl(response.data.pdf_url);
         setDownloadUrl(response.data.download_url || response.data.pdf_url);
 
@@ -65,9 +61,6 @@ export function DownloadPageContent() {
         const pdfUrlForQr = response.data.pdf_url;
 
         if (pdfUrlForQr) {
-          if (process.env.NODE_ENV !== "production") {
-            console.log("Setting QR value to:", pdfUrlForQr);
-          }
           setQrValue(pdfUrlForQr);
         } else {
           console.error("No PDF URL received from server");
