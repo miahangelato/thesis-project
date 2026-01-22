@@ -43,7 +43,9 @@ const readDemographicsFromSessionStorage = (): StoredDemographics | null => {
 
   try {
     const parsed = JSON.parse(storedDemo) as StoredDemographics;
-    console.log("✅ Loaded demographics from sessionStorage:", storedDemo);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("✅ Loaded demographics from sessionStorage:", storedDemo);
+    }
     return parsed;
   } catch (e) {
     console.error("Failed to parse demographics:", e);
@@ -69,13 +71,17 @@ export function useResultsData(sessionId: string | null) {
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log("🔍 [Results Page - New] Loading results...");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("🔍 [Results Page - New] Loading results...");
+      }
 
       // Try to get sessionId from context or fallback to sessionStorage
       let activeSessionId = sessionId;
       if (!activeSessionId) {
         activeSessionId = sessionStorage.getItem("current_session_id");
-        console.log("⚠️ No sessionId from context, using fallback:", activeSessionId);
+        if (process.env.NODE_ENV !== "production") {
+          console.log("⚠️ No sessionId from context, using fallback:", activeSessionId);
+        }
       }
 
       if (!activeSessionId) {
@@ -89,7 +95,9 @@ export function useResultsData(sessionId: string | null) {
         const encodedData = sessionStorage.getItem(activeSessionId);
 
         if (encodedData) {
-          console.log("📦 Found data in sessionStorage");
+          if (process.env.NODE_ENV !== "production") {
+            console.log("📦 Found data in sessionStorage");
+          }
           const dataWithExpiry = decodeBase64Json(encodedData);
 
           if (!dataWithExpiry) {
@@ -107,7 +115,9 @@ export function useResultsData(sessionId: string | null) {
           }
 
           const data = (dataWithExpiry as { data?: unknown })?.data;
-          console.log("✅ Loaded data:", data);
+          if (process.env.NODE_ENV !== "production") {
+            console.log("✅ Loaded data:", data);
+          }
 
           const dataObj = readRecord(data) ?? {};
           const demographicsObj = readRecord(dataObj.demographics);
@@ -208,11 +218,15 @@ export function useResultsData(sessionId: string | null) {
             pattern_counts: patternCounts,
             bmi: typeof dataObj.bmi === "number" ? dataObj.bmi : 0,
             // QR Code & PDF Download
-            qr_code_url: typeof dataObj.qr_code_url === "string" ? dataObj.qr_code_url : undefined,
-            download_url: typeof dataObj.download_url === "string" ? dataObj.download_url : undefined,
+            qr_code_url:
+              typeof dataObj.qr_code_url === "string" ? dataObj.qr_code_url : undefined,
+            download_url:
+              typeof dataObj.download_url === "string" ? dataObj.download_url : undefined,
           });
 
-          console.log("✅ State updated successfully");
+          if (process.env.NODE_ENV !== "production") {
+            console.log("✅ State updated successfully");
+          }
           setLoading(false);
         } else {
           console.error("❌ No data in sessionStorage for session:", sessionId);

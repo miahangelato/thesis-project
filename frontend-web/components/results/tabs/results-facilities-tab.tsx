@@ -31,7 +31,7 @@ export function ResultsFacilitiesTab({
                   .map((facility: MapPlace, idx: number) => (
                     <div
                       key={idx}
-                      className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col min-h-[400px]"
+                      className="bg-white border-2 border-gray-100 rounded-4xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col min-h-[400px]"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-4">

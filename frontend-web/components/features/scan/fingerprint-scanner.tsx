@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FingerName } from "@/types/fingerprint";
-import { Loader2, WifiOff, Fingerprint } from "lucide-react";
+import { WifiOff, Fingerprint, X } from "lucide-react";
 
 interface FingerprintScannerProps {
   onScanComplete: (fingerName: FingerName, file: File) => void;
@@ -13,8 +13,7 @@ interface FingerprintScannerProps {
   onScannerReady?: () => void; // NEW: Callback when scanner is ready
 }
 
-const SCANNER_BASE_URL =
-  process.env.NEXT_PUBLIC_SCANNER_URL || "http://localhost:5000";
+const SCANNER_BASE_URL = process.env.NEXT_PUBLIC_SCANNER_URL || "http://localhost:5000";
 
 export default function FingerprintScanner({
   onScanComplete,
@@ -239,17 +238,15 @@ export default function FingerprintScanner({
         </div>
       )}
 
-
-
       {/* Network Error Only */}
       {error && error.type === "network" && (
-        <div className="w-full max-w-md bg-red-50 border-2 border-red-200 rounded-lg p-4">
+        <div className="fixed w-full max-w-md bg-red-50 border-2 border-red-200 rounded-lg p-4 top-9 right-34 z-1">
           <div className="flex items-start gap-3">
             <WifiOff className="w-6 h-6 text-red-600" />
             <div className="flex-1">
               <div className="font-semibold text-red-900 mb-2">Scanner Not Connected</div>
-              <p className="text-sm text-red-800 mb-3">{error.message}</p>
-              <div className="text-xs text-red-700 bg-white/50 rounded p-2">
+              <p className="text-lg text-red-800 mb-3">{error.message}</p>
+              <div className="text-md text-red-700 bg-white/50 rounded p-2">
                 <strong>To fix this:</strong>
                 <br />• Check scanner USB connection
                 <br />• Ensure scanner app is running
@@ -257,6 +254,10 @@ export default function FingerprintScanner({
               </div>
             </div>
           </div>
+          <X
+            className="w-6 h-6 text-red-400 absolute top-3 right-3 cursor-pointer"
+            onClick={() => setError(null)}
+          />
         </div>
       )}
     </div>

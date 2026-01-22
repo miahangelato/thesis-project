@@ -6,11 +6,11 @@ import {
   Fingerprint,
   CheckCircle,
   AlertCircle,
-  Loader2,
   Activity,
   RefreshCcw,
 } from "lucide-react";
 import Lottie from "lottie-react";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ScanAssistantPanelProps {
   status:
@@ -55,15 +55,17 @@ export function ScanAssistantPanel({
   }, [previewFrame]);
 
   // DEBUG: Log to verify component is rendering and receiving props
-  console.log("[ScanAssistantPanel] Rendering with:", {
-    status,
-    hint,
-    fingerName,
-    hasPreviewFrame: !!previewFrame,
-    previewFrameLength: previewFrame?.length,
-    hasAnimationData: !!animationData,
-    metrics,
-  });
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[ScanAssistantPanel] Rendering with:", {
+      status,
+      hint,
+      fingerName,
+      hasPreviewFrame: !!previewFrame,
+      previewFrameLength: previewFrame?.length,
+      hasAnimationData: !!animationData,
+      metrics,
+    });
+  }
 
   // Map status to primary message
   const primaryMessage = {
@@ -112,7 +114,7 @@ export function ScanAssistantPanel({
     idle: Fingerprint,
     waiting: Activity,
     detecting: AlertCircle,
-    capturing: Loader2,
+    capturing: Fingerprint,
     success: CheckCircle,
     error: RefreshCcw,
     cancelled: Fingerprint,
@@ -174,7 +176,16 @@ export function ScanAssistantPanel({
         {/* Primary Status */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
-            <StatusIcon className={`w-6 h-6 ${statusColors[status]} ${iconClass}`} />
+            {status === "capturing" ? (
+              <Spinner
+                size="sm"
+                label="Capturing"
+                trackClassName="border-teal-100"
+                indicatorClassName="border-teal-600 border-t-transparent"
+              />
+            ) : (
+              <StatusIcon className={`w-6 h-6 ${statusColors[status]} ${iconClass}`} />
+            )}
             <p className={`text-2xl font-bold ${statusColors[status]}`}>
               {primaryMessage}
             </p>

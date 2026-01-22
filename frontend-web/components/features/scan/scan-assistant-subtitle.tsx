@@ -68,7 +68,7 @@ export function ScanAssistantSubtitle({
     },
     completed: {
       text: "All done! You're amazing!",
-      textClass: "text-purple-600",
+      textClass: "text-green-600",
     },
     retrying: {
       text: "Let's try that again - place your finger!",

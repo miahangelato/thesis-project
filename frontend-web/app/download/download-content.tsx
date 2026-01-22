@@ -53,21 +53,25 @@ export function DownloadPageContent() {
       try {
         setLoading(true);
         const response = await sessionAPI.generatePDF(activeSessionId);
-        
-        console.log('PDF Response:', response.data);
-        
+
+        if (process.env.NODE_ENV !== "production") {
+          console.log("PDF Response:", response.data);
+        }
+
         setPdfUrl(response.data.pdf_url);
         setDownloadUrl(response.data.download_url || response.data.pdf_url);
-        
+
         // Option 1: QR code points directly to Supabase PDF URL for instant download
         const pdfUrlForQr = response.data.pdf_url;
-        
+
         if (pdfUrlForQr) {
-          console.log('Setting QR value to:', pdfUrlForQr);
+          if (process.env.NODE_ENV !== "production") {
+            console.log("Setting QR value to:", pdfUrlForQr);
+          }
           setQrValue(pdfUrlForQr);
         } else {
-          console.error('No PDF URL received from server');
-          setError('PDF URL not received from server');
+          console.error("No PDF URL received from server");
+          setError("PDF URL not received from server");
         }
       } catch (err: unknown) {
         console.error("Failed to generate PDF:", err);
@@ -161,15 +165,13 @@ export function DownloadPageContent() {
 
               {(pdfUrl || downloadUrl) && qrValue ? (
                 <div className="bg-white p-6 rounded-lg shadow-inner">
-                  <QRCodeSVG
-                    value={qrValue}
-                    size={256}
-                    level="M"
-                    includeMargin={true}
-                  />
+                  <QRCodeSVG value={qrValue} size={256} level="M" includeMargin={true} />
                 </div>
               ) : (
-                <div className="bg-white p-6 rounded-lg shadow-inner flex items-center justify-center" style={{ width: '280px', height: '280px' }}>
+                <div
+                  className="bg-white p-6 rounded-lg shadow-inner flex items-center justify-center"
+                  style={{ width: "280px", height: "280px" }}
+                >
                   <p className="text-sm text-muted-foreground">Generating QR code...</p>
                 </div>
               )}

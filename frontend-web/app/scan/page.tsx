@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/contexts/session-context";
@@ -23,11 +23,36 @@ import { useScanSession } from "@/hooks/use-scan-session";
 import { ScanAssistantCard } from "@/components/scan/scan-assistant-card";
 import { ScanInfoPanel } from "@/components/scan/scan-info-panel";
 import { ScanSessionModals } from "@/components/scan/scan-session-modals";
+import { Toast } from "@/components/ui/toast";
 
 export default function ScanPage() {
   const router = useRouter();
   const { sessionId, setCurrentStep } = useSession();
   const [loading, setLoading] = useState(false);
+
+  const [analysisOverlayOpen, setAnalysisOverlayOpen] = useState(false);
+  const [analysisOverlayState, setAnalysisOverlayState] = useState<"loading" | "error">(
+    "loading"
+  );
+  const [analysisOverlayError, setAnalysisOverlayError] = useState<string | undefined>(
+    undefined
+  );
+
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const overlayTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      const overlayTimeoutId = overlayTimeoutRef.current;
+      if (overlayTimeoutId) window.clearTimeout(overlayTimeoutId);
+    };
+  }, []);
+
+  const showErrorToast = (message: string) => {
+    setToastMessage(message);
+    setToastOpen(true);
+  };
 
   const {
     currentFingerIndex,
@@ -65,17 +90,27 @@ export default function ScanPage() {
   const handleSubmit = async () => {
     if (loading) return;
     setLoading(true);
+    setAnalysisOverlayOpen(true);
+    setAnalysisOverlayState("loading");
+    setAnalysisOverlayError(undefined);
     try {
       const activeSessionId = sessionId || sessionStorage.getItem("current_session_id");
 
       if (!activeSessionId) {
         console.error("No session ID available");
-        alert("No session ID. Please restart the workflow.");
+        setAnalysisOverlayState("error");
+        setAnalysisOverlayError("No session ID. Please restart the workflow.");
+        overlayTimeoutRef.current = window.setTimeout(() => {
+          setAnalysisOverlayOpen(false);
+          showErrorToast("No session ID. Please restart the workflow.");
+        }, 1400);
         setLoading(false);
         return;
       }
 
-      console.log(`Uploading ${Object.keys(fingerFiles).length} fingerprints...`);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`Uploading ${Object.keys(fingerFiles).length} fingerprints...`);
+      }
 
       // Upload all files
       const uploadPromises = Object.entries(fingerFiles).map(async ([finger, file]) => {
@@ -84,12 +119,16 @@ export default function ScanPage() {
           reader.onloadend = async () => {
             const base64 = reader.result as string;
             try {
-              console.log(`Uploading ${finger}...`);
+              if (process.env.NODE_ENV !== "production") {
+                console.log(`Uploading ${finger}...`);
+              }
               await sessionAPI.submitFingerprint(activeSessionId, {
                 finger_name: finger,
                 image: base64,
               });
-              console.log(`${finger} uploaded successfully`);
+              if (process.env.NODE_ENV !== "production") {
+                console.log(`${finger} uploaded successfully`);
+              }
               resolve();
             } catch (e) {
               console.error(`Failed to upload ${finger}:`, e);
@@ -102,20 +141,33 @@ export default function ScanPage() {
       });
 
       await Promise.all(uploadPromises);
-      console.log("All fingerprints uploaded successfully");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("All fingerprints uploaded successfully");
+      }
 
       // Trigger analysis
-      console.log("Triggering analysis...");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Triggering analysis...");
+      }
       const analyzeResponse = await sessionAPI.analyze(activeSessionId);
-      console.log("Analysis API response:", analyzeResponse);
-      console.log("Analysis completed successfully");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Analysis API response:", analyzeResponse);
+        console.log("Analysis completed successfully");
+      }
 
       // Call /results endpoint to save to database AND get QR code URLs
-      console.log("💾 Calling /results to save to database...");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("💾 Calling /results to save to database...");
+      }
       let finalData = analyzeResponse.data; // Fallback
       try {
         const resultsResponse = await sessionAPI.getResults(activeSessionId);
-        console.log("✅ Database save result:", resultsResponse.data?.saved_to_database);
+        if (process.env.NODE_ENV !== "production") {
+          console.log(
+            "✅ Database save result:",
+            resultsResponse.data?.saved_to_database
+          );
+        }
         finalData = resultsResponse.data; // Use results response (includes QR URLs!)
       } catch (resultsError) {
         console.error("⚠️ Failed to save to database:", resultsError);
@@ -137,20 +189,33 @@ export default function ScanPage() {
       const encodedData = btoa(binary);
       sessionStorage.setItem(activeSessionId, encodedData);
       sessionStorage.setItem("current_session_id", activeSessionId);
-      console.log("💾 Stored results in sessionStorage");
-
-      console.log("🔄 Setting current step to RESULTS:", STEPS.RESULTS);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("💾 Stored results in sessionStorage");
+        console.log("🔄 Setting current step to RESULTS:", STEPS.RESULTS);
+      }
       flushSync(() => {
         setCurrentStep(STEPS.RESULTS); // Moving to results page (step 4)
       });
-
-      console.log("🚀 About to navigate to:", ROUTES.RESULTS);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("🚀 About to navigate to:", ROUTES.RESULTS);
+      }
+      setAnalysisOverlayOpen(false);
       router.push(ROUTES.RESULTS);
-      console.log("✅ router.push called");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("✅ router.push called");
+      }
     } catch (err) {
       console.error("Submission failed:", err);
       const message = getErrorMessage(err);
-      alert(`Failed to submit: ${message}`);
+
+      setAnalysisOverlayState("error");
+      setAnalysisOverlayError(message);
+
+      // Show the failure state briefly, then dismiss and toast.
+      overlayTimeoutRef.current = window.setTimeout(() => {
+        setAnalysisOverlayOpen(false);
+        showErrorToast("Analyzing fingerprints failed. Please try submitting again.");
+      }, 1400);
     } finally {
       setLoading(false);
     }
@@ -175,6 +240,13 @@ export default function ScanPage() {
   return (
     <ProtectedRoute requireSession={true} requiredStep={STEPS.SCAN}>
       <>
+        <Toast
+          open={toastOpen}
+          message={toastMessage}
+          variant="error"
+          onClose={() => setToastOpen(false)}
+        />
+
         <FinishConfirmationModal
           isOpen={showFinishModal}
           loading={loading}
@@ -212,7 +284,11 @@ export default function ScanPage() {
           }}
         />
 
-        <AnalysisLoadingOverlay isOpen={loading} />
+        <AnalysisLoadingOverlay
+          isOpen={analysisOverlayOpen}
+          state={analysisOverlayState}
+          errorMessage={analysisOverlayError}
+        />
 
         <div className="h-screen px-28 py-4 bg-white flex flex-col overflow-hidden">
           <main className="flex-1 w-full flex flex-col">

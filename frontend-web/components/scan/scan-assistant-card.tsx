@@ -7,6 +7,7 @@ import { HandGuide } from "@/components/features/scan/hand-guide";
 import FingerprintScanner from "@/components/features/scan/fingerprint-scanner";
 import { ScanAssistantSubtitle } from "@/components/features/scan/scan-assistant-subtitle";
 import { ScanPreview } from "@/components/scan/scan-preview";
+import { FingerprintUpload } from "@/components/scan/fingerprint-upload";
 
 import { FINGER_NAMES } from "@/lib/finger-names";
 import { FingerName } from "@/types/fingerprint";
@@ -58,6 +59,7 @@ type Props = {
 };
 
 export function ScanAssistantCard({
+  loading,
   currentFingerIndex,
   fingerFiles,
   countdown,
@@ -90,18 +92,20 @@ export function ScanAssistantCard({
         ? (capturedKeys[capturedKeys.length - 1] as FingerName)
         : null;
     const fallbackFile = lastKey ? fingerFiles[lastKey] : null;
-    
+
     // Check if we're rescanning this finger
-    const isRescanning = rescanningFinger && rescanningFinger.finger === currentFinger && !currentFile;
-    const fileToShow = currentFile || (isRescanning ? rescanningFinger.file : fallbackFile);
+    const isRescanning =
+      rescanningFinger && rescanningFinger.finger === currentFinger && !currentFile;
+    const fileToShow =
+      currentFile || (isRescanning ? rescanningFinger.file : fallbackFile);
     const isCurrent = !!currentFile;
     const fingerNameToShow = isCurrent
       ? FINGER_NAMES[currentFinger]
       : isRescanning
         ? FINGER_NAMES[currentFinger]
         : lastKey
-        ? FINGER_NAMES[lastKey]
-        : "";
+          ? FINGER_NAMES[lastKey]
+          : "";
 
     return { fileToShow, isCurrent, fingerNameToShow, lastKey, isRescanning };
   }, [currentFinger, fingerFiles, rescanningFinger]);
@@ -170,7 +174,7 @@ export function ScanAssistantCard({
 
             {/* Hidden Scanner Component */}
             {scanningStarted && scannedCount < totalFingers && (
-              <div className="w-full mt-4">
+              <div className="w-full mt-2">
                 <FingerprintScanner
                   onScanComplete={onCapture}
                   currentFinger={currentFinger}
@@ -185,11 +189,19 @@ export function ScanAssistantCard({
           {/* Right Col: Scan Result */}
           <div className="flex flex-col items-center">
             {/* Result Label - Top of Column (Aligned with Hand Label) */}
-            <span className="text-2xl font-bold mb-3 px-6 py-1.5 rounded-full bg-gray-100 text-gray-700 shadow-sm">
-              Scan Result{preview.fileToShow && preview.fingerNameToShow ? ` (${preview.fingerNameToShow})` : ""}
+            <span className="text-2xl font-bold mb-1 px-6 py-1.5 rounded-full bg-gray-100 text-gray-700 shadow-sm">
+              Scanned Result
             </span>
 
-            <div className="w-[12.5rem] h-[12.5rem] bg-gray-100 rounded-2xl border-3 border-gray-300 flex items-center justify-center mb-3 overflow-hidden relative shadow-lg">
+            {preview.fileToShow && preview.fingerNameToShow ? (
+              <div className="text-sm font-semibold text-gray-500 mb-2">
+                {preview.fingerNameToShow}
+              </div>
+            ) : (
+              <div className="h-5 mb-2" />
+            )}
+
+            <div className="w-50 h-50 bg-gray-100 rounded-2xl border-3 border-gray-300 flex items-center justify-center overflow-hidden relative shadow-lg">
               {preview.fileToShow ? (
                 <>
                   <div className="relative w-full h-full">
@@ -205,16 +217,16 @@ export function ScanAssistantCard({
                       preview.isCurrent
                         ? "bg-green-600 text-white"
                         : preview.isRescanning
-                        ? "bg-amber-600 text-white animate-pulse"
-                        : "bg-gray-800 text-white backdrop-blur-sm"
+                          ? "bg-amber-600 text-white animate-pulse"
+                          : "bg-gray-800 text-white backdrop-blur-sm"
                     }`}
                   >
                     <CheckCircle className="w-3 h-3" />
-                    {preview.isCurrent 
-                      ? "Done" 
+                    {preview.isCurrent
+                      ? "Done"
                       : preview.isRescanning
-                      ? "Rescanning"
-                      : "Latest"}
+                        ? "Rescanning"
+                        : "Latest"}
                   </div>
                 </>
               ) : (
@@ -224,7 +236,14 @@ export function ScanAssistantCard({
                 </div>
               )}
             </div>
-
+{/* 
+            <div className="w-50 mt-2">
+              <FingerprintUpload
+                disabled={loading}
+                label={FINGER_NAMES[currentFinger]}
+                onFileSelected={(file) => onCapture(currentFinger, file)}
+              />
+            </div> */}
 
             {/* Retake Button - Only visible when session is complete */}
             {preview.isCurrent && scannedCount === totalFingers && (
@@ -232,7 +251,7 @@ export function ScanAssistantCard({
                 onClick={onRescan}
                 variant="outline"
                 size="lg"
-                className="w-[12.5rem] h-12 mt-3 text-red-600 border-2 border-red-500 hover:bg-red-50 hover:text-red-700 hover:border-red-600 font-bold text-lg cursor-pointer transition-all shadow-sm"
+                className="w-50 h-12 mt-3 text-red-600 border-2 border-red-500 hover:bg-red-50 hover:text-red-700 hover:border-red-600 font-bold text-lg cursor-pointer transition-all shadow-sm"
               >
                 Retake this Finger
               </Button>
@@ -262,7 +281,7 @@ export function ScanAssistantCard({
               <Button
                 onClick={onTogglePaused}
                 variant={paused ? "default" : "outline"}
-                className={`min-w-[160px] font-bold h-14 text-lg cursor-pointer ${
+                className={`min-w-40 font-bold h-14 text-lg cursor-pointer ${
                   paused
                     ? "bg-green-600 hover:bg-green-700 text-white"
                     : "border-amber-500 text-amber-700 hover:bg-amber-50"
@@ -280,8 +299,6 @@ export function ScanAssistantCard({
                   </>
                 )}
               </Button>
-
-
 
               {/* Cancel Session Button - Red */}
               <Button

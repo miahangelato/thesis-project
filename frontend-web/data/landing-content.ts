@@ -30,8 +30,7 @@ export const landingCarouselSlides: CarouselSlide[] = [
       "• Learn what your ridge patterns may suggest",
       "• Turn curiosity into preventive action",
     ],
-    icon: Fingerprint,
-    imagePath: "/SLIDE1 IMAGE.jpg",
+    imagePath: "/landing-page/hero.png",
     bgGradient: "from-teal-50 to-cyan-50",
   },
   {
@@ -45,8 +44,7 @@ export const landingCarouselSlides: CarouselSlide[] = [
       "• Check potential blood donation compatibility",
       "• Reduce uncertainty when it matters",
     ],
-    icon: Droplet,
-    imagePath: "/SLIDE 2 IMAGE.png",
+    imagePath: "/landing-page/blood-group.png",
     bgGradient: "from-red-50 to-rose-50",
   },
   {
@@ -60,8 +58,7 @@ export const landingCarouselSlides: CarouselSlide[] = [
       "• A practical nudge toward prevention",
       "• Motivation to follow up with professionals",
     ],
-    icon: Heart,
-    imagePath: "/heart.png",
+    imagePath: "/landing-page/diab.png",
     bgGradient: "from-blue-50 to-indigo-50",
   },
   {
@@ -75,8 +72,7 @@ export const landingCarouselSlides: CarouselSlide[] = [
       "• Malls and public facilities",
       "• Mobile outreach and donation drives",
     ],
-    icon: Building2,
-    imagePath: "/building.png",
+    imagePath: "/landing-page/communities.png",
     bgGradient: "from-green-50 to-emerald-50",
   },
   {
@@ -90,8 +86,7 @@ export const landingCarouselSlides: CarouselSlide[] = [
       "• Encryption + anonymization by default",
       "• Ensemble predictions to reduce error",
     ],
-    icon: Settings,
-    imagePath: "/settings.png",
+    imagePath: "/landing-page/technology.png",
     bgGradient: "from-purple-50 to-violet-50",
   },
   {
@@ -105,8 +100,7 @@ export const landingCarouselSlides: CarouselSlide[] = [
       "• Seek professional consultation when needed",
       "• Donate blood safely and confidently",
     ],
-    icon: ShieldCheck,
-    imagePath: "/shield.png",
+    imagePath: "/landing-page/ethics.png",
     bgGradient: "from-yellow-50 to-amber-50",
   },
 ];

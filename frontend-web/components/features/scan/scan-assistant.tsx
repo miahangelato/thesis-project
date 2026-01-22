@@ -2,7 +2,6 @@
 
 import {
   Fingerprint,
-  Loader2,
   CheckCircle,
   AlertCircle,
   Pause,
@@ -10,6 +9,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 type ScannerState =
   | "idle"
@@ -71,8 +71,8 @@ export function ScanAssistant({
       subtitle: "Let's capture your fingerprints together. Click below to begin!",
     },
     preparing: {
-      icon: Loader2,
-      iconClass: "text-purple-600 w-16 h-16 animate-spin",
+      icon: Fingerprint,
+      iconClass: "text-purple-600 w-16 h-16",
       bgClass: "bg-gradient-to-br from-purple-50 to-pink-50",
       borderClass: "border-purple-200",
       textClass: "text-purple-900",
@@ -91,8 +91,8 @@ export function ScanAssistant({
       subtitle: `Ready for your ${currentFinger}. Take your time and press gently!`,
     },
     detecting: {
-      icon: Loader2,
-      iconClass: "text-teal-600 w-16 h-16 animate-spin",
+      icon: Fingerprint,
+      iconClass: "text-teal-600 w-16 h-16",
       bgClass: "bg-gradient-to-br from-teal-50 to-cyan-50",
       borderClass: "border-teal-200",
       textClass: "text-teal-900",
@@ -136,8 +136,8 @@ export function ScanAssistant({
       subtitle: "Successfully captured all your fingerprints!",
     },
     retrying: {
-      icon: Loader2,
-      iconClass: "text-orange-600 w-16 h-16 animate-spin",
+      icon: Fingerprint,
+      iconClass: "text-orange-600 w-16 h-16",
       bgClass: "bg-gradient-to-br from-orange-50 to-amber-50",
       borderClass: "border-orange-200",
       textClass: "text-orange-900",
@@ -163,6 +163,26 @@ export function ScanAssistant({
   const Icon = config.icon;
   const showActions = scannerState !== "idle";
   const isClickable = scannerState === "idle" && onStartScanning;
+  const showSpinner =
+    scannerState === "preparing" ||
+    scannerState === "detecting" ||
+    scannerState === "retrying";
+
+  const spinnerClasses =
+    scannerState === "preparing"
+      ? {
+          trackClassName: "border-purple-200",
+          indicatorClassName: "border-purple-600 border-t-transparent",
+        }
+      : scannerState === "retrying"
+        ? {
+            trackClassName: "border-orange-200",
+            indicatorClassName: "border-orange-600 border-t-transparent",
+          }
+        : {
+            trackClassName: "border-teal-200",
+            indicatorClassName: "border-teal-600 border-t-transparent",
+          };
 
   return (
     <div
@@ -176,7 +196,17 @@ export function ScanAssistant({
       {/* Icon */}
       <div className="flex justify-center mb-6">
         <div className="relative">
-          <Icon className={config.iconClass} strokeWidth={2.5} />
+          {showSpinner ? (
+            <Spinner
+              size="lg"
+              className="w-16 h-16"
+              label={config.title}
+              trackClassName={spinnerClasses.trackClassName}
+              indicatorClassName={spinnerClasses.indicatorClassName}
+            />
+          ) : (
+            <Icon className={config.iconClass} strokeWidth={2.5} />
+          )}
           {scannerState === "captured" && (
             <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-green-200 opacity-20 animate-ping" />
           )}

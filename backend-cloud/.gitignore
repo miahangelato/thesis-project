@@ -42,10 +42,14 @@ __pycache__/
 /media/
 staticfiles/
 
-# Environment Variables
+# Environment Variables (secrets)
 .env
-.env.local
-.env.*.local
+.env.*
+
+# Keep templates/examples tracked
+!.env.example
+!.env.*.example
+!env.production.example
 
 # IDEs
 .vscode/
