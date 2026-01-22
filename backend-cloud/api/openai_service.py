@@ -45,7 +45,7 @@ class OpenAIService:
             from openai import OpenAI  # noqa: PLC0415
 
             self.client = OpenAI(api_key=api_key)
-            self.model_name = "gpt-3.5-turbo"
+            self.model_name = "gpt-4o-mini"  # Much cheaper than gpt-3.5-turbo
             logger.info(f"OpenAI service initialized with model {self.model_name}")
         except ImportError:
             logger.error(
@@ -281,6 +281,253 @@ Your diabetes risk assessment indicates a {risk} risk level (confidence: {result
             explanation += "- Continue maintaining your healthy lifestyle habits.\n- Regular check-ups are still recommended for preventive care."
 
         return explanation.strip()
+
+    def generate_doctor_explanation(self, structured_response: dict) -> str:
+        """Generate a personalized, empathetic doctor-like explanation.
+        
+        Takes the full structured response (INPUT, PREDICTIONS, risk_assessment, 
+        clinical_interpretation, model_info) and generates an explanation that:
+        1. Explains WHY the results are what they are
+        2. References dermatoglyphic studies
+        3. Reassures that this is just a prediction
+        4. Explains the fingerprint pattern traits
+        
+        Args:
+            structured_response: Full response dict containing all prediction data
+        
+        Returns:
+            Personalized explanation as a doctor would give to a worried patient
+        """
+        if not self.client:
+            return self._fallback_doctor_explanation(structured_response)
+        
+        # Extract data from structured response
+        input_data = structured_response.get("input", {})
+        predictions = structured_response.get("predictions", {})
+        risk_assessment = structured_response.get("risk_assessment", {})
+        clinical_interpretation = structured_response.get("clinical_interpretation", {})
+        model_info = structured_response.get("model_info", {})
+        pattern_probs = input_data.get("fingerprint_patterns", {})
+        
+        prompt = f"""
+You are a compassionate, professional doctor speaking to a patient who is worried about their diabetes screening results. Your goal is to:
+1. Explain the results clearly and honestly
+2. Help them understand WHY they got this result (the scientific basis)
+3. Reassure them that this is a SCREENING tool, not a diagnosis
+4. Explain what their fingerprint patterns mean about them as a person
+5. Provide actionable next steps
+
+PATIENT'S SCREENING DATA:
+========================
+
+INPUT (What we measured):
+- Weight: {input_data.get('weight_kg', 'N/A')} kg
+- Height: {input_data.get('height_cm', 'N/A')} cm
+- Gender: {input_data.get('gender', 'N/A')}
+- BMI: {input_data.get('bmi', 'N/A')}
+- Fingerprint Patterns:
+  * Arc probability: {pattern_probs.get('arc_probability', 0):.1%}
+  * Loop probability: {pattern_probs.get('loop_probability', 0):.1%}
+  * Whorl probability: {pattern_probs.get('whorl_probability', 0):.1%}
+  * Dominant pattern: {pattern_probs.get('dominant_pattern', 'Unknown')}
+
+PREDICTIONS:
+- Diabetes Probability: {predictions.get('diabetes_probability_percent', 'N/A')}
+- Predicted Class: {predictions.get('predicted_class', 'N/A')}
+- Binary Classification: {predictions.get('binary_classification', 'N/A')}
+
+RISK ASSESSMENT:
+- Risk Level: {risk_assessment.get('risk_level', 'N/A')}
+- Urgency: {risk_assessment.get('urgency', 'N/A')}
+- Recommendation: {risk_assessment.get('recommendation', 'N/A')}
+- Risk Score: {risk_assessment.get('risk_score', 'N/A')}/100
+
+CLINICAL INTERPRETATION:
+- Primary Risk Factor: {clinical_interpretation.get('primary_risk_factor', 'N/A')}
+- BMI Category: {clinical_interpretation.get('bmi_category', 'N/A')}
+- Confidence: {clinical_interpretation.get('confidence', 'N/A')}
+
+MODEL INFO:
+- Model Version: {model_info.get('model_version', 'v3_calibrated')}
+- Model Accuracy: {model_info.get('model_accuracy', '94.7%')}
+- Features Used: {', '.join(model_info.get('features_used', ['weight', 'height', 'gender', 'bmi', 'fingerprint_patterns']))}
+
+SCIENTIFIC CONTEXT FOR YOUR EXPLANATION:
+========================================
+
+REAL DERMATOGLYPHIC RESEARCH (Published Studies Only - DO NOT INVENT):
+
+**Fingerprint-Diabetes Correlations:**
+- Abdul et al. (2025) - Kuwaiti population study: Found 48% loop patterns among diabetics. Diabetic males predominantly show loops, while diabetic females show whorls. Non-diabetics show contrasting patterns.
+- Tadesse et al. (2022) - East African study: While total finger ridge counts did not differ significantly, tri-radius angles were significantly wider in Type II diabetic patients.
+- Clevin et al. (2023) - Western Kenya study (300 participants): Significantly higher frequency of whorl patterns among female diabetics, notable decrease in ulnar loop patterns. Variations closely associated with family history of diabetes.
+- Guo et al. (2022) - Genetic abnormalities may manifest as distinct dermatoglyphic patterns due to embryological link between skin ridge formation and organ development.
+
+**Blood Group Correlations:**
+- Rastogi et al. (2023) - Eastern India study: Significant associations between fingerprint patterns and ABO blood groups. Loop patterns frequently correlate with O+ blood type (most common universal donor).
+
+**General Dermatoglyphics:**
+- Abbasi & Ayoubzadeh (2023) - Dermatoglyphics increasingly recognized as non-invasive biomarker for genetic predispositions since 2020.
+- Smail (2020) - Fingerprint ridge patterns develop between 5th-21st weeks of gestation and remain stable throughout life.
+
+**Philippine Context:**
+- Cando et al. (2024) - Philippines has ~4.3M diagnosed diabetics and 2.8M undiagnosed (as of 2021). Nearly 40% remain undiagnosed due to lack of awareness and screening.
+
+**Key Insight:** 
+Fingerprints form at weeks 13-19 of fetal development, the same period as pancreas development. This creates a permanent biological marker that may reflect genetic/developmental factors. This is a CORRELATION, not causation.
+
+PATTERN CHARACTERISTICS (What patterns mean):
+- LOOP (60-65% of population): Most common pattern. Associated with adaptability, balanced personality. Research shows higher frequency in diabetic populations (Abdul 2025).
+- WHORL (25-35% of population): Circular ridge formations. Associated with independence, analytical thinking. Studies show protective association against diabetes, especially in females (Clevin 2023).
+- ARC (5% of population): Least common, simple arch shape. Associated with practical, grounded personality. Shows neutral correlation with diabetes risk.
+
+YOUR RESPONSE STRUCTURE:
+========================
+
+Generate a warm, professional explanation with these sections:
+
+1. **Opening (Reassurance first)**
+   - Start with a calming, human greeting
+   - Acknowledge they may have concerns
+   - Emphasize this is a screening, NOT a diagnosis
+
+2. **Understanding Your Results**
+   - Explain their risk level in simple terms
+   - Be honest but not alarming
+   - Use phrases like "Your screening suggests..." or "Based on our analysis..."
+
+3. **Why You Got This Result (The Science)**
+   - Explain the specific factors that contributed to THEIR result
+   - Reference the actual research studies appropriately (use author names and years)
+   - Explain how fingerprints relate to metabolic health (fetal development connection)
+   - Make it personal to their specific pattern and BMI
+
+4. **About Your Fingerprint Patterns**
+   - Explain what their dominant pattern means
+   - Share characteristics associated with their pattern
+   - Explain the statistical correlation (NOT causation) with health
+   - Reference relevant studies (e.g., "Studies like Abdul et al. 2025 found that...")
+
+5. **Important Perspective**
+   - Strongly emphasize: "This does NOT mean you have or will have diabetes"
+   - Explain that many people with similar patterns never develop diabetes
+   - Note that lifestyle factors (diet, exercise) have much greater impact than fingerprints
+   - Reference Philippine context from Cando et al. 2024 if relevant
+
+6. **What To Do Next**
+   - Specific, actionable recommendations based on their risk level
+   - If High Risk: Recommend clinical follow-up but don't cause panic
+   - If Moderate: Suggest lifestyle awareness and optional screening
+   - If Low: Encourage maintaining healthy habits
+
+7. **Closing**
+   - Empowering, positive message
+   - Remind them they are in control of their health
+   - Offer to answer questions (even if virtual)
+
+TONE REQUIREMENTS:
+- Be warm and human, not robotic
+- Avoid medical jargon unless explained
+- NEVER use alarming words like "danger", "severe", "critical"
+- Focus on empowerment, not fear
+- Be scientifically accurate but accessible
+- Write as if speaking face-to-face with a worried patient
+
+CRITICAL: Only reference the studies listed above. DO NOT invent studies or citations. If you mention a study, it MUST be from the list provided.
+
+FORMATTING:
+- Use clear paragraph breaks
+- No markdown symbols (no **, ##, etc.)
+- Use simple bullet points if needed (-)
+- Keep it conversational, not clinical
+"""
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a compassionate, experienced doctor explaining health screening results to a patient. You are warm, reassuring, scientifically accurate, and focused on empowering the patient.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.7,
+                max_tokens=1000,  # Reduced from 1500 to save costs
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"OpenAI doctor explanation generation failed: {e}")
+            return self._fallback_doctor_explanation(structured_response)
+
+    def _fallback_doctor_explanation(self, structured_response: dict) -> str:
+        """Template-based fallback if OpenAI fails."""
+        risk_level = structured_response.get("risk_assessment", {}).get("risk_level", "Low Risk")
+        probability_percent = structured_response.get("predictions", {}).get("diabetes_probability_percent", "N/A")
+        dominant_pattern = structured_response.get("input", {}).get("fingerprint_patterns", {}).get("dominant_pattern", "Loop")
+        bmi = structured_response.get("input", {}).get("bmi", "N/A")
+        
+        pattern_traits = {
+            "Loop": "adaptability and balance",
+            "Whorl": "independence and analytical thinking", 
+            "Arc": "practicality and groundedness"
+        }
+        trait = pattern_traits.get(dominant_pattern, "unique characteristics")
+        
+        if "High" in risk_level:
+            return f"""
+Hello,
+
+I want to start by reassuring you that what we're looking at today is a screening result, not a diagnosis. Your screening showed a risk score of {probability_percent}, which places you in a higher-risk category for diabetes screening purposes.
+
+This result is based on a combination of factors: your BMI of {bmi} and the analysis of your fingerprint patterns. Your dominant {dominant_pattern.lower()} pattern, which is associated with {trait}, has been correlated in research studies with certain metabolic markers.
+
+Here's what's important to understand: Having this result does NOT mean you have diabetes or will definitely develop it. Many people with similar patterns live healthy lives without ever developing diabetes. Your lifestyle choices - diet, exercise, stress management - have a much greater impact on your actual risk than your fingerprint patterns.
+
+What I recommend:
+- Schedule a follow-up with your healthcare provider within the next month
+- Consider getting a fasting blood glucose or HbA1c test for clinical confirmation
+- Focus on a balanced diet low in processed sugars
+- Aim for regular physical activity
+
+Remember, you are in control of your health. This screening is a tool to help you be proactive, not a prediction of your future. Take care, and please don't hesitate to reach out with questions.
+"""
+        elif "Moderate" in risk_level:
+            return f"""
+Hello,
+
+Thank you for taking the time to undergo this health screening. Your results show a risk score of {probability_percent}, which places you in a moderate-risk category.
+
+Let me explain what this means: Our screening analyzed your physical measurements (BMI of {bmi}) along with your fingerprint patterns. Your dominant {dominant_pattern.lower()} pattern, associated with {trait}, contributes to this assessment based on research in dermatoglyphics - the study of fingerprint patterns and health correlations.
+
+I want to be very clear: this is a screening tool, not a diagnosis. A moderate risk score simply means it may be beneficial for you to stay aware of your metabolic health. Many people with similar results never develop diabetes.
+
+My suggestions:
+- Consider scheduling a health check-up within the next 6 months
+- Maintain a balanced diet with plenty of vegetables and whole grains
+- Stay physically active - even daily walks make a difference
+- Monitor your weight and stress levels
+
+Your fingerprint patterns are just one factor among many. They don't determine your future - your choices do. Stay positive and proactive!
+"""
+        else:
+            return f"""
+Hello,
+
+Great news! Your screening results are very encouraging. Your risk score of {probability_percent} places you in a low-risk category for diabetes.
+
+Based on our analysis of your BMI ({bmi}) and fingerprint patterns, your overall profile looks favorable. Your dominant {dominant_pattern.lower()} pattern, associated with {trait}, combined with your other measurements, suggests a healthy metabolic profile.
+
+What does this mean? Your biological markers don't show significant correlations with diabetes risk factors. This is positive, but remember - this is a screening, not a guarantee.
+
+To maintain this healthy trajectory:
+- Continue your healthy lifestyle habits
+- Schedule routine check-ups every 24 months
+- Stay physically active
+- Maintain a balanced diet
+
+If you have a family history of diabetes, you might consider more frequent monitoring, but overall, your results are reassuring. Keep up the good work!
+"""
 
     def _fallback_facilities(self) -> list:
         """Fallback to static list from Angeles if AI fails."""

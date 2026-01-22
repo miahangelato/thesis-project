@@ -28,22 +28,24 @@ export function ScanConfirmationModal({
       backdropClassName="bg-teal-950/40 backdrop-blur-md"
       panelClassName="max-w-2xl rounded-[2rem] border border-teal-100"
       showTopBar
-      topBarClassName="bg-gradient-to-r from-teal-400 to-cyan-400"
     >
       <div className="p-10">
         {/* Header */}
         <div className="flex flex-col items-center text-center gap-6 mb-10">
-          <div className="w-24 h-24 bg-linear-to-br from-teal-50 to-cyan-50 rounded-3xl flex items-center justify-center shadow-sm border border-teal-100">
-            <Fingerprint className="w-12 h-12 text-teal-600" />
+          <div className="relative">
+            <div className="w-24 h-24 bg-linear-to-br from-teal-50 to-cyan-50 rounded-3xl flex items-center justify-center shadow-sm border border-teal-100">
+              <Fingerprint className="w-12 h-12 text-[#00c2cb]" strokeWidth={2.5} />
+            </div>
+            <div className="absolute inset-0 rounded-3xl border-4 border-teal-100 opacity-50 animate-pulse" />
           </div>
           <div>
             <h2
               id={titleId}
-              className="text-4xl font-bold text-gray-900 mb-3 tracking-tight"
+              className="text-4xl font-bold text-slate-900 mb-3 tracking-tight"
             >
               Start Automatic Scanning
             </h2>
-            <p className="text-xl text-gray-500 font-medium">
+            <p className="text-xl text-slate-600 font-medium">
               10 fingers will be scanned sequentially
             </p>
           </div>
@@ -109,14 +111,13 @@ export function ScanConfirmationModal({
         <div className="flex gap-4">
           <Button
             onClick={onCancel}
-            variant="outline"
-            className="flex-1 h-16 text-lg font-bold border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-600 rounded-xl transition-all"
+            className="flex-1 h-16 text-xl font-bold rounded-2xl bg-white border-2 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer"
           >
             Cancel
           </Button>
           <Button
             onClick={onConfirm}
-            className="flex-2 h-16 bg-[#00c2cb] hover:bg-[#00adb5] text-white text-xl font-bold rounded-xl shadow-lg shadow-teal-200/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex-2 h-16 bg-[#00c2cb] hover:bg-[#00adb5] text-white text-xl font-bold rounded-2xl shadow-lg shadow-teal-100/50 transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
             <Fingerprint className="w-6 h-6 mr-3" />
             Start Scanning

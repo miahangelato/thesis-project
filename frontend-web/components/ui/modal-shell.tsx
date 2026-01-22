@@ -99,7 +99,7 @@ export function ModalShell({
           {showTopBar && (
             <div
               className={cn(
-                "h-2 w-full bg-linear-to-r from-teal-400 to-cyan-400",
+                "h-3 w-full bg-[#00c2cb] shrink-0",
                 topBarClassName
               )}
             />

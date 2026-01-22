@@ -28,31 +28,30 @@ export const FinishConfirmationModal = ({
       backdropClassName="bg-slate-900/60 backdrop-blur-md"
       panelClassName="max-w-lg border-2 border-teal-100"
       showTopBar
-      topBarClassName="bg-gradient-to-r from-teal-400 to-cyan-400"
     >
       <div className="p-10 flex flex-col items-center text-center">
-        <div className="relative mb-8">
-          <div className="w-24 h-24 bg-linear-to-br from-teal-50 to-cyan-50 rounded-full flex items-center justify-center shadow-inner border border-teal-100">
-            <Fingerprint className="w-12 h-12 text-teal-600" strokeWidth={2.5} />
+        <div className="relative mb-10">
+          <div className="w-24 h-24 bg-linear-to-br from-teal-50 to-cyan-50 rounded-3xl flex items-center justify-center shadow-sm border border-teal-100">
+            <Fingerprint className="w-12 h-12 text-[#00c2cb]" strokeWidth={2.5} />
           </div>
-          <div className="absolute inset-0 rounded-full border-4 border-teal-100 opacity-50 animate-pulse" />
+          <div className="absolute inset-0 rounded-3xl border-4 border-teal-100 opacity-50 animate-pulse" />
         </div>
 
         <h3 className="text-4xl font-bold text-slate-900 mb-4 tracking-tight">
           Ready to Finish?
         </h3>
-        <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-sm mx-auto">
+        <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-sm mx-auto font-medium">
           Please confirm you have scanned and reviewed all 10 fingerprints. You can still
           review them if needed.
         </p>
 
-        <ul className="mb-10 space-y-3 text-lg text-slate-700 text-left bg-linear-to-br from-teal-50 to-cyan-50 p-6 rounded-2xl w-full border border-teal-100">
+        <ul className="mb-10 space-y-3 text-lg text-slate-700 text-left bg-linear-to-br from-teal-50 to-cyan-50 p-6 rounded-2xl w-full border border-teal-100 font-medium">
           <li className="flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-teal-600 shrink-0" strokeWidth={2.5} />
+            <CheckCircle className="w-6 h-6 text-[#00c2cb] shrink-0" strokeWidth={2.5} />
             All 10 fingers captured
           </li>
           <li className="flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-teal-600 shrink-0" strokeWidth={2.5} />
+            <CheckCircle className="w-6 h-6 text-[#00c2cb] shrink-0" strokeWidth={2.5} />
             Images appear clear
           </li>
         </ul>
@@ -62,7 +61,7 @@ export const FinishConfirmationModal = ({
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="flex-1 h-16 text-lg font-bold rounded-2xl bg-white border-2 border-slate-100 text-slate-600 hover:bg-slate-50 hover:border-slate-200 hover:text-slate-700 transition-all cursor-pointer"
+            className="flex-1 h-16 text-xl font-bold rounded-2xl bg-white border-2 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer"
           >
             Review Again
           </Button>
@@ -70,7 +69,7 @@ export const FinishConfirmationModal = ({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="flex-1 h-16 text-lg font-bold rounded-2xl bg-[#00c2cb] hover:bg-[#0099a0] text-white shadow-lg shadow-cyan-100/50 transition-all transform hover:scale-[1.02] cursor-pointer"
+            className="flex-1 h-16 text-xl font-bold rounded-2xl bg-[#00c2cb] hover:bg-[#00adb5] text-white shadow-lg shadow-teal-100/50 transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
             Yes, Finish!
           </Button>

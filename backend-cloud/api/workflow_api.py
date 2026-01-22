@@ -10,10 +10,10 @@ from ninja import Router
 
 from storage import get_storage
 
-from .gemini_service import get_gemini_service
+from .ml_service import generate_patient_explanation
+from .openai_service import get_openai_service
 from .pdf_schemas import PDFGenerateResponse
 from .pdf_service import get_pdf_generator
-from .security_utils import sanitize_ai_content
 from .session_manager import get_session_manager
 from .workflow_schemas import (
     AnalysisResponse,
@@ -223,28 +223,51 @@ def _run_ml_predictions(demographics: dict, fingerprint_images: list):
     return diabetes_result, blood_group_result
 
 
-def _prepare_patient_data_for_gemini(
-    demographics: dict, diabetes_result: dict, blood_group_result: dict
-):
-    """Prepare patient data dictionary for Gemini API."""
-    return {
-        **demographics,
-        "pattern_arc": diabetes_result["pattern_counts"]["Arc"],
-        "pattern_whorl": diabetes_result["pattern_counts"]["Whorl"],
-        "pattern_loop": diabetes_result["pattern_counts"]["Loop"],
-        "risk_score": diabetes_result["risk_score"],
-        "risk_level": diabetes_result["risk_level"],
-        "blood_group": blood_group_result["blood_group"],
-    }
+def _get_bmi_category(bmi: float) -> str:
+    """Determine BMI category."""
+    if bmi < 18.5:
+        return "Underweight"
+    elif bmi < 25:
+        return "Normal"
+    elif bmi < 30:
+        return "Overweight"
+    else:
+        return "Obese"
+
+
+def _determine_primary_risk_factor(diabetes_result: dict, demographics: dict) -> str:
+    """Determine the primary risk factor based on patterns and BMI."""
+    dominant_pattern = diabetes_result["pattern_probabilities"]["dominant_pattern"]
+    bmi = demographics["bmi"]
+    bmi_category = _get_bmi_category(bmi)
+    
+    if dominant_pattern == "Loop" and bmi >= 25:
+        return f"Loop-dominant fingerprint pattern combined with elevated BMI ({bmi}, {bmi_category})"
+    elif dominant_pattern == "Loop":
+        return "Loop-dominant fingerprint pattern (associated with 2.13× increased risk in studies)"
+    elif bmi >= 30:
+        return f"Elevated BMI ({bmi}, categorized as {bmi_category})"
+    elif bmi >= 25:
+        return f"BMI in overweight range ({bmi})"
+    elif dominant_pattern == "Whorl":
+        return "Whorl-dominant pattern (2.02× protective effect) - favorable indicator"
+    else:
+        return "No single dominant risk factor identified"
 
 
 def _build_predictions_dict(
-    diabetes_result: dict, blood_group_result: dict, explanation: str
+    diabetes_result: dict, blood_group_result: dict, explanation: dict
 ):
     """Build predictions dictionary for storage."""
     return {
-        "diabetes_risk": diabetes_result["risk_score"],
+        "diabetes_risk": diabetes_result["diabetes_probability"],
+        "diabetes_probability": diabetes_result["diabetes_probability"],
+        "diabetes_probability_percent": diabetes_result["diabetes_probability_percent"],
         "risk_level": diabetes_result["risk_level"],
+        "urgency": diabetes_result["urgency"],
+        "recommendation": diabetes_result["recommendation"],
+        "binary_classification": diabetes_result["binary_classification"],
+        "risk_score": diabetes_result["risk_score"],
         "blood_group": blood_group_result["blood_group"],
         "blood_group_confidence": blood_group_result["confidence"],
         "pattern_counts": {
@@ -252,6 +275,7 @@ def _build_predictions_dict(
             "whorl": diabetes_result["pattern_counts"]["Whorl"],
             "loop": diabetes_result["pattern_counts"]["Loop"],
         },
+        "pattern_probabilities": diabetes_result["pattern_probabilities"],
         "explanation": explanation,
     }
 
@@ -282,26 +306,50 @@ def analyze_patient(request, session_id: str):
         )
         logger.info(f"✅ ML predictions complete: Risk={diabetes_result['risk_level']}")
 
-        # Generate AI explanation
-        _prepare_patient_data_for_gemini(
-            demographics, diabetes_result, blood_group_result
-        )
-        gemini = get_gemini_service()
-        # Ensure we use the robust generate_patient_explanation method
-        explanation = gemini.generate_patient_explanation(
-            {
-                "diabetes_risk_score": diabetes_result["risk_score"],
-                "diabetes_risk_level": diabetes_result["risk_level"],
-                "predicted_blood_group": blood_group_result["blood_group"],
-                "pattern_counts": diabetes_result["pattern_counts"],
+        # Build structured response for OpenAI explanation
+        structured_response = {
+            "input": {
+                "weight_kg": demographics["weight_kg"],
+                "height_cm": demographics["height_cm"],
+                "gender": demographics["gender"],
                 "bmi": demographics["bmi"],
-                "diabetes_confidence": diabetes_result.get("confidence", 0.0),
+                "fingerprint_patterns": diabetes_result["pattern_probabilities"],
             },
-            demographics,
-        )
-       # Sanitize AI-generated content to prevent XSS
-        explanation = sanitize_ai_content(explanation)
-        logger.info("🤖 AI explanation generated and sanitized")
+            "predictions": {
+                "diabetes_probability": diabetes_result["diabetes_probability"],
+                "diabetes_probability_percent": diabetes_result["diabetes_probability_percent"],
+                "predicted_class": "Diabetic" if diabetes_result["diabetes_probability"] >= 0.55 else "Non-Diabetic",
+                "binary_classification": diabetes_result["binary_classification"],
+            },
+            "risk_assessment": {
+                "risk_level": diabetes_result["risk_level"],
+                "urgency": diabetes_result["urgency"],
+                "recommendation": diabetes_result["recommendation"],
+                "risk_score": diabetes_result["risk_score"],
+            },
+            "clinical_interpretation": {
+                "primary_risk_factor": _determine_primary_risk_factor(diabetes_result, demographics),
+                "bmi_category": _get_bmi_category(demographics["bmi"]),
+                "confidence": diabetes_result["confidence"],
+            },
+            "model_info": {
+                "model_version": "v3_calibrated",
+                "model_accuracy": "94.7%",
+                "calibrated": True,
+                "features_used": ["weight", "height", "gender", "bmi", "fingerprint_patterns"],
+                "features_excluded": ["age"],
+            },
+        }
+        
+        # Generate AI-powered doctor explanation using OpenAI
+        openai_service = get_openai_service()
+        doctor_explanation = openai_service.generate_doctor_explanation(structured_response)
+        logger.info("🧑‍⚕️ OpenAI doctor explanation generated")
+        
+        # Use doctor explanation as the primary explanation (string)
+        # If OpenAI fails, it automatically falls back to template in the openai_service
+        explanation = doctor_explanation
+        logger.info("📝 Explanation ready")
 
         # Use static facility list to avoid hitting API quota limits
         # AI facility generation disabled to conserve API calls

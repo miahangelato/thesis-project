@@ -146,16 +146,18 @@ export function ScanAssistantCard({
         <div className="grid grid-cols-2 gap-5 mb-2">
           {/* Left Col: Hand Guide */}
           <div className="flex flex-col items-center">
-            {/* Hand Label - Top of Column */}
-            <span
-              className={`text-2xl font-bold mb-3 px-6 py-1.5 rounded-full shadow-sm ${
-                hand === "left"
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-purple-100 text-purple-700"
-              }`}
-            >
-              {FINGER_NAMES[currentFinger]}
-            </span>
+            {/* Header Container with fixed height - Top Aligned for perfect title alignment */}
+            <div className="h-16 flex flex-col items-center justify-start mb-3 pt-1">
+              <span
+                className={`text-2xl font-bold px-6 py-1.5 rounded-full shadow-sm ${
+                  hand === "left"
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-purple-100 text-purple-700"
+                }`}
+              >
+                {FINGER_NAMES[currentFinger]}
+              </span>
+            </div>
 
             <div className="w-50 h-50 bg-linear-to-br from-blue-50 to-indigo-50 rounded-2xl border-3 border-dashed border-blue-300 flex items-center justify-center mb-3 shadow-inner relative">
               <HandGuide hand={hand} highlightFinger={highlight} className="w-42 h-42" />
@@ -188,18 +190,17 @@ export function ScanAssistantCard({
 
           {/* Right Col: Scan Result */}
           <div className="flex flex-col items-center">
-            {/* Result Label - Top of Column (Aligned with Hand Label) */}
-            <span className="text-2xl font-bold mb-1 px-6 py-1.5 rounded-full bg-gray-100 text-gray-700 shadow-sm">
-              Scanned Result
-            </span>
-
-            {preview.fileToShow && preview.fingerNameToShow ? (
-              <div className="text-sm font-semibold text-gray-500 mb-2">
-                {preview.fingerNameToShow}
-              </div>
-            ) : (
-              <div className="h-5 mb-2" />
-            )}
+            {/* Header Container - Same fixed height and top alignment */}
+            <div className="h-16 flex flex-col items-center justify-start mb-3 pt-1">
+              <span className="text-2xl font-bold px-6 py-1.5 rounded-full bg-gray-100 text-gray-700 shadow-sm">
+                Scanned Result
+              </span>
+              {preview.fileToShow && preview.fingerNameToShow && (
+                <span className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wider">
+                  {preview.fingerNameToShow}
+                </span>
+              )}
+            </div>
 
             <div className="w-50 h-50 bg-gray-100 rounded-2xl border-3 border-gray-300 flex items-center justify-center overflow-hidden relative shadow-lg">
               {preview.fileToShow ? (

@@ -28,7 +28,6 @@ class DemographicsRequest(BaseModel):
     blood_type: Optional[str] = Field(
         None, 
         max_length=10,
-        pattern=r'^(A|B|AB|O)[+-]?$',
         description="Blood type (A+, B-, etc.) - optional"
     )
 

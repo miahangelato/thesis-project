@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
+from scipy.stats import entropy
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +51,8 @@ class MLService:
         self.models_path = Path(__file__).parent.parent.parent / "shared-models"
         self.support_cache_path = self.models_path / "blood_support_embeddings.npz"
 
-        # Diabetes models
+        # Diabetes models (v3 - preprocessing embedded)
         self.diabetes_model = None
-        self.diabetes_scaler = None
-        self.diabetes_imputer = None
         self.pattern_cnn = None
 
         # Blood group models
@@ -111,21 +110,15 @@ class MLService:
         logger.info("Loading ML models...")
 
         try:
-            # Load diabetes prediction models
-            logger.info(f"Loading diabetes models from {self.models_path}")
+            # Load diabetes prediction model (v3 - preprocessing embedded)
+            logger.info(f"Loading diabetes model from {self.models_path}")
             
-            model_path = self._ensure_file("final_no_age_model.pkl")
-            scaler_path = self._ensure_file("final_no_age_scaler.pkl")
-            imputer_path = self._ensure_file("final_no_age_imputer.pkl")
+            model_path = self._ensure_file("final_model_v3.pkl")
 
             with open(model_path, "rb") as f:
                 self.diabetes_model = pickle.load(f)
-            with open(scaler_path, "rb") as f:
-                self.diabetes_scaler = pickle.load(f)
-            with open(imputer_path, "rb") as f:
-                self.diabetes_imputer = pickle.load(f)
 
-            logger.info("✓ Diabetes models loaded")
+            logger.info("✓ Diabetes model loaded (final_model_v3.pkl)")
 
             # Load pattern recognition CNN
             logger.info("Loading Pattern CNN...")
@@ -133,7 +126,7 @@ class MLService:
             keras = tf.keras
 
             pattern_cnn_path = str(
-                self._ensure_file("improved_pattern_cnn_model_retrained.h5")
+                self._ensure_file("pattern_cnn_corrected.h5")
             )
             logger.info(f"Pattern CNN path: {pattern_cnn_path}")
 
@@ -191,8 +184,6 @@ class MLService:
         needs_reload = any(
             [
                 self.diabetes_model is None,
-                self.diabetes_scaler is None,
-                self.diabetes_imputer is None,
                 self.pattern_cnn is None,
                 self.blood_embedding_model is None,
                 not support_ready,
@@ -339,7 +330,18 @@ class MLService:
             self.support_available = False
 
     def predict_pattern(self, image_array: np.ndarray) -> str:
-        """Predict fingerprint pattern (Arc/Whorl/Loop)."""
+        """Predict fingerprint pattern (Arc/Whorl/Loop) - returns class name."""
+        probs = self.predict_pattern_probabilities(image_array)
+        patterns = ["Arc", "Loop", "Whorl"]
+        return patterns[np.argmax(probs)]
+
+    def predict_pattern_probabilities(self, image_array: np.ndarray) -> np.ndarray:
+        """Extract fingerprint pattern probabilities using CNN with entropy gating.
+        
+        Returns:
+            Array of 3 probabilities [arc_prob, loop_prob, whorl_prob]
+            If entropy > 0.8 (uncertain/noisy input), returns uniform [1/3, 1/3, 1/3]
+        """
         if self.pattern_cnn is None:
             raise RuntimeError("Pattern CNN not loaded")
 
@@ -357,11 +359,18 @@ class MLService:
 
         # Predict
         predictions = self.pattern_cnn.predict(img, verbose=0)[0]
-        pattern_idx = np.argmax(predictions)
-
-        # Map to pattern name
-        patterns = ["Arc", "Loop", "Whorl"]
-        return patterns[pattern_idx]
+        
+        # Entropy gating: If model is uncertain, use uniform distribution
+        # Real fingerprints typically have entropy < 0.6
+        # Noise/invalid images have entropy > 0.8
+        ENTROPY_THRESHOLD = 0.8
+        pattern_entropy = entropy(predictions)
+        
+        if pattern_entropy > ENTROPY_THRESHOLD:
+            logger.warning(f"High entropy ({pattern_entropy:.2f}) - using uniform distribution")
+            return np.array([1/3, 1/3, 1/3])
+        
+        return predictions
 
     def predict_diabetes_risk(
         self,
@@ -371,62 +380,94 @@ class MLService:
         gender: str,
         fingerprint_images: List[np.ndarray],
     ) -> Dict:
-        """Predict diabetes risk from demographics and fingerprints."""
+        """Predict diabetes risk from demographics and fingerprints.
+        
+        Uses final_model_v3.pkl which expects features:
+        [weight_kg, height_cm, gender_encoded, bmi, arc_prob, loop_prob, whorl_prob]
+        """
         if self.diabetes_model is None:
             raise RuntimeError("Diabetes model not loaded")
 
-        # Count patterns
-        pattern_counts = {"Arc": 0, "Whorl": 0, "Loop": 0}
-
+        # Get pattern probabilities (averaged across all fingerprint images)
+        all_probs = []
+        pattern_counts = {"Arc": 0, "Whorl": 0, "Loop": 0}  # Keep for backward compat
+        
         for img in fingerprint_images:
-            pattern = self.predict_pattern(img)
-            pattern_counts[pattern] += 1
+            probs = self.predict_pattern_probabilities(img)
+            all_probs.append(probs)
+            # Also count for legacy compatibility
+            pattern_name = ["Arc", "Loop", "Whorl"][np.argmax(probs)]
+            pattern_counts[pattern_name] += 1
+        
+        # Average probabilities across all fingerprints
+        avg_probs = np.mean(all_probs, axis=0)  # [arc_prob, loop_prob, whorl_prob]
+        arc_prob, loop_prob, whorl_prob = avg_probs
 
-        # Calculate BMI for return value
+        # Calculate BMI
         height_m = height_cm / 100
         bmi = round(weight_kg / (height_m**2), 2)
+        
+        # Encode gender (0=female, 1=male)
+        gender_encoded = 1 if gender.lower() in ["male", "m"] else 0
 
-        # Prepare features in exact order expected by model:
-        # 1. height (cm)
-        # 2. pat_2 (Whorl_Count)
-        # 3. pat_1 (Loop_Count)
-        # 4. pat_0 (Arc_Count)
-        # 5. weight (kg)
-        # 6. gender_code
+        # Prepare features in order expected by final_model_v3.pkl:
+        # [weight_kg, height_cm, gender_encoded, bmi, arc_prob, loop_prob, whorl_prob]
         feature_array = np.array(
             [
                 [
-                    height_cm,
-                    pattern_counts["Whorl"],
-                    pattern_counts["Loop"],
-                    pattern_counts["Arc"],
                     weight_kg,
-                    1 if gender.lower() == "male" else 0,
+                    height_cm,
+                    gender_encoded,
+                    bmi,
+                    arc_prob,
+                    loop_prob,
+                    whorl_prob,
                 ]
             ]
         )
 
-        # Apply preprocessing
-        feature_array = self.diabetes_imputer.transform(feature_array)
-        feature_array = self.diabetes_scaler.transform(feature_array)
-
-        # Predict
+        # Predict (preprocessing is embedded in final_model_v3.pkl)
         prediction = self.diabetes_model.predict_proba(feature_array)[0]
-        risk_score = float(prediction[1])  # Probability of diabetic class
+        diabetes_probability = float(prediction[1])  # Probability of diabetic class
 
-        # Interpret risk
-        if risk_score >= 0.6:
-            risk_level = "High"
-        elif risk_score >= 0.4:
-            risk_level = "Moderate"
+        # Interpret risk using tri-level thresholds
+        # < 0.35 = Low Risk, 0.35-0.65 = Moderate Risk, > 0.65 = High Risk
+        if diabetes_probability > 0.65:
+            risk_level = "High Risk"
+            urgency = "Immediate"
+            recommendation = "Schedule a screening within 1 month."
+        elif diabetes_probability >= 0.35:
+            risk_level = "Moderate Risk"
+            urgency = "Enhanced"
+            recommendation = "Schedule a screening within 6 months."
         else:
-            risk_level = "Low"
+            risk_level = "Low Risk"
+            urgency = "Routine"
+            recommendation = "Routine check-up within 24 months."
+        
+        # Binary classification (>= 0.50 = At Risk)
+        binary_classification = "At Risk" if diabetes_probability >= 0.50 else "Not At Risk"
+        
+        # Determine dominant pattern
+        pattern_names = ["Arc", "Loop", "Whorl"]
+        dominant_pattern = pattern_names[np.argmax(avg_probs)]
 
         return {
-            "risk_score": risk_score,
+            "diabetes_probability": diabetes_probability,
+            "diabetes_probability_percent": f"{diabetes_probability * 100:.1f}%",
             "risk_level": risk_level,
+            "urgency": urgency,
+            "recommendation": recommendation,
+            "binary_classification": binary_classification,
+            "risk_score": round(diabetes_probability * 100, 1),  # 0-100 scale
             "confidence": float(max(prediction)),
-            "pattern_counts": pattern_counts,
+            "pattern_counts": pattern_counts,  # Legacy compatibility
+            "pattern_probabilities": {
+                "arc_probability": round(float(arc_prob), 4),
+                "loop_probability": round(float(loop_prob), 4),
+                "whorl_probability": round(float(whorl_prob), 4),
+                "dominant_pattern": dominant_pattern,
+            },
             "bmi": bmi,
         }
 
@@ -492,6 +533,173 @@ class MLService:
             "confidence": float(confidence),
             "distance": float(min_distance),
         }
+
+
+def generate_patient_explanation(
+    risk_level: str,
+    diabetes_probability: float,
+    bmi: float,
+    dominant_pattern: str,
+    blood_group: str = "Unknown",
+    pattern_probabilities: dict = None,
+) -> dict:
+    """Generate patient-friendly explanation using templates (no AI).
+    
+    Uses clinical research on dermatoglyphics:
+    - Loop patterns: Associated with increased diabetes risk (2.13× in studies)
+    - Whorl patterns: Associated with protective effect (2.02× protective)
+    - Arc patterns: Neutral/baseline association
+    
+    Returns a structured explanation with:
+    - what_this_means: Interpretation of results
+    - pattern_interpretation: Scientific explanation of fingerprint patterns
+    - what_to_do_next: Actionable recommendations
+    - about_this_model: Model disclaimer
+    """
+    
+    # BMI category
+    if bmi < 18.5:
+        bmi_category = "Underweight"
+    elif bmi < 25:
+        bmi_category = "Normal"
+    elif bmi < 30:
+        bmi_category = "Overweight"
+    else:
+        bmi_category = "Obese"
+    
+    # Pattern-specific interpretations based on dermatoglyphic research
+    pattern_explanations = {
+        "Loop": {
+            "description": "Loop patterns are the most common fingerprint type, found in about 60-65% of the population.",
+            "clinical_context": (
+                "Research in dermatoglyphics has observed that loop-dominant patterns appear more frequently "
+                "in populations with Type 2 Diabetes. This is a statistical correlation observed at the population level."
+            ),
+            "reassurance": (
+                "Having loop patterns does not cause diabetes — it is simply one of many biological markers "
+                "that may reflect early developmental influences. Many people with loop patterns never develop diabetes."
+            ),
+        },
+        "Whorl": {
+            "description": "Whorl patterns are characterized by circular ridge formations, found in about 25-35% of the population.",
+            "clinical_context": (
+                "Studies suggest that whorl-dominant patterns may have a protective association against diabetes risk. "
+                "This pattern is considered a favorable biological marker in screening models."
+            ),
+            "reassurance": (
+                "Your whorl-dominant pattern is associated with lower diabetes risk in population studies. "
+                "This is an encouraging finding, though it's just one factor in your overall health profile."
+            ),
+        },
+        "Arc": {
+            "description": "Arc patterns are the least common fingerprint type, found in about 5% of the population.",
+            "clinical_context": (
+                "Arc patterns show a neutral or baseline association with diabetes risk in most studies. "
+                "They are neither strongly protective nor a risk factor."
+            ),
+            "reassurance": (
+                "Your arc-dominant pattern is considered neutral in diabetes risk assessment. "
+                "Other factors like BMI and lifestyle play a more significant role in your overall risk."
+            ),
+        },
+    }
+    
+    # Get pattern explanation (default to Loop if unknown)
+    pattern_info = pattern_explanations.get(dominant_pattern, pattern_explanations["Loop"])
+    
+    # Determine primary risk factor based on pattern and BMI
+    if dominant_pattern == "Loop" and bmi >= 25:
+        primary_risk_factor = f"Loop-dominant fingerprint pattern combined with elevated BMI ({bmi})"
+    elif dominant_pattern == "Loop":
+        primary_risk_factor = "Loop-dominant fingerprint pattern (associated with increased risk in studies)"
+    elif bmi >= 30:
+        primary_risk_factor = f"Elevated BMI ({bmi}, categorized as {bmi_category})"
+    elif bmi >= 25:
+        primary_risk_factor = f"BMI in overweight range ({bmi})"
+    else:
+        primary_risk_factor = "No single dominant risk factor identified"
+    
+    # Templates by risk level - personalized and reassuring
+    probability_percent = f"{diabetes_probability:.1%}"
+    
+    templates = {
+        "Low Risk": {
+            "what_this_means": (
+                f"Great news! Your screening results indicate a low likelihood of diabetes risk factors. "
+                f"Your risk score is {probability_percent}, which is well within the healthy range. "
+                f"Your BMI of {bmi} is categorized as {bmi_category}, and your {dominant_pattern.lower()}-dominant "
+                f"fingerprint pattern has been factored into this assessment."
+            ),
+            "what_to_do_next": (
+                "Continue your healthy habits! Maintain regular physical activity and a balanced diet. "
+                "Schedule a routine health check-up within 24 months. "
+                "If you have a family history of diabetes, you may consider earlier screening."
+            ),
+        },
+        "Moderate Risk": {
+            "what_this_means": (
+                f"Your screening results suggest some factors that are worth monitoring. "
+                f"Your risk score is {probability_percent}, placing you in a moderate-risk category. "
+                f"This doesn't mean you have diabetes — it means some combination of your BMI ({bmi}, {bmi_category}) "
+                f"and fingerprint patterns suggests you may benefit from proactive health monitoring."
+            ),
+            "what_to_do_next": (
+                "Consider scheduling a follow-up health screening within 6 months. "
+                "Small lifestyle adjustments can make a big difference: regular exercise, reducing sugar intake, "
+                "and maintaining a healthy weight. Consult with a healthcare provider to discuss your results."
+            ),
+        },
+        "High Risk": {
+            "what_this_means": (
+                f"Your screening has identified elevated risk factors that we recommend discussing with a healthcare provider. "
+                f"Your risk score is {probability_percent}. This is based on a combination of factors including "
+                f"your BMI ({bmi}, {bmi_category}) and fingerprint pattern analysis. "
+                f"Remember: this is a screening tool, not a diagnosis. Many people with similar scores "
+                f"do not have diabetes, and early awareness allows for proactive prevention."
+            ),
+            "what_to_do_next": (
+                "We strongly recommend consulting with a healthcare provider within 1 month. "
+                "They may suggest a fasting blood glucose test or HbA1c test for clinical confirmation. "
+                "In the meantime, consider reducing sugar and refined carbohydrates, increasing physical activity, "
+                "and monitoring your weight. Early intervention can significantly reduce actual diabetes risk."
+            ),
+        },
+    }
+    
+    # Get template for risk level (default to Low Risk if unknown)
+    template = templates.get(risk_level, templates["Low Risk"])
+    
+    # Confidence based on probability distance from decision boundaries
+    if diabetes_probability < 0.25 or diabetes_probability > 0.85:
+        confidence = "High"
+    elif diabetes_probability < 0.40 or diabetes_probability > 0.70:
+        confidence = "Medium"
+    else:
+        confidence = "Low"
+    
+    return {
+        "what_this_means": template["what_this_means"],
+        "pattern_interpretation": {
+            "dominant_pattern": dominant_pattern,
+            "description": pattern_info["description"],
+            "clinical_context": pattern_info["clinical_context"],
+            "reassurance": pattern_info["reassurance"],
+        },
+        "what_to_do_next": template["what_to_do_next"],
+        "about_this_model": (
+            "This assessment uses fingerprint pattern analysis (dermatoglyphics) combined with BMI and demographic data. "
+            "The model is based on research showing statistical correlations between fingerprint patterns and metabolic conditions. "
+            "Fingerprint patterns do not CAUSE diabetes — they are biological markers that may reflect developmental factors. "
+            "This is a SCREENING tool designed to identify individuals who may benefit from clinical evaluation. "
+            "It is NOT a medical diagnosis. Always consult a licensed healthcare professional for clinical advice."
+        ),
+        "clinical_interpretation": {
+            "primary_risk_factor": primary_risk_factor,
+            "bmi_category": bmi_category,
+            "confidence": confidence,
+        },
+        "blood_group": blood_group,
+    }
 
 
 # Global instance

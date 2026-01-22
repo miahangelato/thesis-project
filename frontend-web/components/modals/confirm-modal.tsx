@@ -105,7 +105,7 @@ export function ConfirmModal({
         <div className="flex flex-col gap-4 w-full">
           <Button
             className={cn(
-              "w-full h-16 text-xl font-bold rounded-2xl bg-[#00c2cb] hover:bg-[#0099a0] text-white shadow-lg shadow-cyan-100/50 transition-all transform hover:scale-[1.02] cursor-pointer",
+              "w-full h-16 text-xl font-bold rounded-2xl bg-[#00c2cb] hover:bg-[#00adb5] text-white shadow-lg shadow-teal-100/50 transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer",
               primaryButtonClassName
             )}
             onClick={onPrimary}
@@ -117,7 +117,7 @@ export function ConfirmModal({
           <Button
             variant={secondaryVariant}
             className={cn(
-              "w-full h-14 text-lg font-semibold rounded-2xl transition-all cursor-pointer",
+              "w-full h-16 text-xl font-bold rounded-2xl bg-white border-2 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer",
               secondaryButtonClassName
             )}
             onClick={onSecondary}
