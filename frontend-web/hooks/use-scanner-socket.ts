@@ -29,25 +29,6 @@ interface ScanComplete {
     metrics: any;
 }
 
-interface SessionStarted {
-    session_id: string;
-    finger_queue: FingerName[];
-    total_fingers: number;
-}
-
-interface NextFinger {
-    session_id: string;
-    finger_name: FingerName;
-    finger_index: number;
-    total_fingers: number;
-}
-
-interface SessionComplete {
-    session_id: string;
-    fingers_captured: FingerName[];
-    total_expected: number;
-}
-
 const SCANNER_URL = process.env.NEXT_PUBLIC_SCANNER_BASE_URL || 'http://localhost:5000';
 
 export function useScannerSocket() {
@@ -63,13 +44,6 @@ export function useScannerSocket() {
     const [previewFrame, setPreviewFrame] = useState<string | null>(null);
     const [scanComplete, setScanComplete] = useState<ScanComplete | null>(null);
     const reconnectAttemptedRef = useRef(false);
-
-    // Session-based state
-    const [sessionId, setSessionId] = useState<string | null>(null);
-    const [fingerQueue, setFingerQueue] = useState<FingerName[]>([]);
-    const [currentFingerIndex, setCurrentFingerIndex] = useState<number>(0);
-    const [capturedFingers, setCapturedFingers] = useState<Map<FingerName, ScanComplete>>(new Map());
-    const [isSessionActive, setIsSessionActive] = useState(false);
 
     // Initialize socket connection
     useEffect(() => {
@@ -125,41 +99,6 @@ export function useScannerSocket() {
         // Scan started acknowledgment
         newSocket.on('scan_started', (data: { scan_id: string; finger_name: string }) => {
             console.log('🚀 [useScannerSocket] Scan started acknowledgment:', data);
-        });
-
-        // SESSION-BASED EVENTS
-        
-        // Session started
-        newSocket.on('session_started', (data: SessionStarted) => {
-            console.log('🎯 [useScannerSocket] Session started:', data);
-            setSessionId(data.session_id);
-            setFingerQueue(data.finger_queue);
-            setCurrentFingerIndex(0);
-            setCapturedFingers(new Map());
-            setIsSessionActive(true);
-        });
-
-        // Next finger prompt
-        newSocket.on('next_finger', (data: NextFinger) => {
-            console.log('👉 [useScannerSocket] Next finger:', data);
-            setCurrentFingerIndex(data.finger_index);
-            // Reset single-finger state for new finger
-            setScanComplete(null);
-            setPreviewFrame(null);
-        });
-
-        // Session complete
-        newSocket.on('session_complete', (data: SessionComplete) => {
-            console.log('🎉 [useScannerSocket] Session complete!', data);
-            setIsSessionActive(false);
-            setSessionId(null);
-        });
-
-        // Session cancelled
-        newSocket.on('session_cancelled', (data: { session_id: string; reason: string }) => {
-            console.log('🛑 [useScannerSocket] Session cancelled:', data);
-            setIsSessionActive(false);
-            setSessionId(null);
         });
 
         console.log('🔧 [useScannerSocket] WebSocket initialized, connecting to', SCANNER_URL);
@@ -232,59 +171,6 @@ export function useScannerSocket() {
         socket.emit('stop_scan', { scan_id: scanId });
     }, [socket, isConnected]);
 
-    // Start scan SESSION (multi-finger)
-    const startScanSession = useCallback((fingerNames: FingerName[], participantId?: string) => {
-        if (!socket || !isConnected) {
-            console.error('❌ [useScannerSocket] Cannot start session: WebSocket not connected');
-            console.error('   Socket:', !!socket, 'Connected:', isConnected);
-            return;
-        }
-
-        console.log(`🎯 [useScannerSocket] Starting scan SESSION for ${fingerNames.length} fingers`);
-        console.log('   Fingers:', fingerNames);
-        console.log('   Participant ID:', participantId || 'unknown');
-        console.log('   Socket ID:', socket.id, 'Connected:', isConnected);
-
-        // Reset state
-        console.log('🧹 [useScannerSocket] Resetting session state...');
-        setScanComplete(null);
-        setPreviewFrame(null);
-        setCapturedFingers(new Map());
-        setIsSessionActive(false);
-
-        // Emit start_scan_session event with participant_id
-        console.log('📤 [useScannerSocket] Emitting start_scan_session event');
-        socket.emit('start_scan_session', { 
-            finger_names: fingerNames,
-            participant_id: participantId || 'unknown'
-        });
-        console.log('✅ [useScannerSocket] start_scan_session event emitted');
-    }, [socket, isConnected]);
-
-    // Stop/Cancel session
-    const stopSession = useCallback(() => {
-        if (!socket || !isConnected) {
-            console.error('❌ [useScannerSocket] Cannot cancel session: not connected');
-            return;
-        }
-
-        console.log(`🛑 [useScannerSocket] Cancelling session ${sessionId || '(no session ID)'}`);
-        socket.emit('cancel_scan_session', { session_id: sessionId });
-        setIsSessionActive(false);
-    }, [socket, isConnected, sessionId]);
-
-    // Handle completed finger capture (update map)
-    useEffect(() => {
-        if (scanComplete && scanComplete.finger_name) {
-            console.log(`✅ [useScannerSocket] Adding ${scanComplete.finger_name} to captured fingers`);
-            setCapturedFingers(prev => {
-                const updated = new Map(prev);
-                updated.set(scanComplete.finger_name as FingerName, scanComplete);
-                return updated;
-            });
-        }
-    }, [scanComplete]);
-
     // DEBUG: Log state changes (only when values actually change)
     useEffect(() => {
         console.log('🔄 [useScannerSocket] State changed:', {
@@ -302,13 +188,5 @@ export function useScannerSocket() {
         scanComplete,
         startScan,
         stopScan,
-        // Session-based scanning
-        startScanSession,
-        stopSession,
-        isSessionActive,
-        sessionId,
-        fingerQueue,
-        currentFingerIndex,
-        capturedFingers,
     };
 }
