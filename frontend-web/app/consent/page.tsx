@@ -1,8 +1,22 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
+import { useSession } from "@/contexts/session-context";
+import { useBackNavigation } from "@/hooks/use-back-navigation";
+
+import { ROUTES, STEPS } from "@/lib/constants";
 import { sessionAPI } from "@/lib/api";
+
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { StepNavigation } from "@/components/layout/step-navigation";
+import { ProgressHeader } from "@/components/layout/progress-header";
+
+import { Footer } from "@/components/layout/footer";
+
+import { SessionEndModal } from "@/components/modals/session-end-modal";
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+
 import {
   TestTube,
   Shield,
@@ -14,16 +28,6 @@ import {
   XCircle,
   AlertTriangle,
 } from "lucide-react";
-import { useSession } from "@/contexts/session-context";
-import { ProgressHeader } from "@/components/layout/progress-header";
-import { Footer } from "@/components/layout/footer";
-import { StepNavigation } from "@/components/layout/step-navigation";
-import { ProtectedRoute } from "@/components/auth/protected-route";
-import { useBackNavigation } from "@/hooks/use-back-navigation";
-import { SessionEndModal } from "@/components/modals/session-end-modal";
-import { FullScreenLoader } from "@/components/ui/full-screen-loader";
-
-import { ROUTES, STEPS } from "@/lib/constants";
 
 export default function ConsentPage() {
   const router = useRouter();
@@ -42,29 +46,17 @@ export default function ConsentPage() {
 
     try {
       if (sessionId) {
-        // Update consent on backend
         await sessionAPI.updateConsent(sessionId, finalConsent);
-        // Update consent in local state
         setSession(sessionId, finalConsent);
       }
 
       setCurrentStep(STEPS.DEMOGRAPHICS);
 
-      // Ensure loader shows for at least 10 seconds
-      const elapsed = Date.now() - startTime;
-      const minDisplayTime = 10000;
-      const remainingTime = Math.max(0, minDisplayTime - elapsed);
-
-      await new Promise(resolve => setTimeout(resolve, remainingTime));
-
-      // Let React paint the loading UI
       requestAnimationFrame(() => {
         router.push(ROUTES.DEMOGRAPHICS);
       });
     } catch (error) {
-      console.error("Failed to update consent:", error);
       setLoading(false);
-      // Optionally show error to user
     }
   };
 
@@ -97,10 +89,7 @@ export default function ConsentPage() {
                 onEndSession={promptBackNavigation}
               />
 
-              {/* Bigger spacing + larger default text for kiosk */}
               <div className="grid md:grid-cols-2 gap-4 mb-4">
-                {/* Card 1: What We Analyze */}
-                {/* Card 1: What We Analyze */}
                 <div className="bg-white rounded-3xl p-6 border-2 border-[#00c2cb]/20 hover:shadow-xl transition-all duration-200 h-full flex flex-col">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-[#e4f7f8] shrink-0">
@@ -155,8 +144,6 @@ export default function ConsentPage() {
                   </div>
                 </div>
 
-                {/* Card 2: Your Privacy */}
-                {/* Card 2: Your Privacy */}
                 <div className="bg-white rounded-3xl p-6 border-2 border-[#00c2cb]/20 hover:shadow-xl transition-all duration-200 h-full flex flex-col">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-[#e4f7f8] shrink-0">
@@ -196,7 +183,7 @@ export default function ConsentPage() {
 
                     <div>
                       <h3 className="text-base font-extrabold text-red-700 uppercase tracking-wide">
-                        ❌ We Don&apos;t
+                        ❌ We Don't
                       </h3>
 
                       <div className="space-y-1">
@@ -224,7 +211,6 @@ export default function ConsentPage() {
                     </div>
                   </div>
 
-                  {/* Trust chips */}
                   <div className="flex-1 flex flex-col justify-center">
                     <div className="flex flex-wrap items-center justify-center gap-4 py-2 bg-[#e4f7f8] rounded-2xl border-2 border-[#00c2cb]/20">
                       <div className="flex items-center gap-2 text-sm font-bold text-gray-700 px-3 py-2 bg-white rounded-xl border border-[#00c2cb]/20">
@@ -244,7 +230,6 @@ export default function ConsentPage() {
                     </div>
                   </div>
 
-                  {/* Legal Disclaimer */}
                   <div className="mt-4 bg-gray-50 rounded-2xl px-5 py-4 border-2 border-gray-200">
                     <p className="text-lg text-gray-700 leading-relaxed">
                       <strong className="text-gray-900 mr-1">Legal Disclaimer:</strong>
@@ -255,14 +240,13 @@ export default function ConsentPage() {
                 </div>
               </div>
 
-              {/* Your Choice Section (bigger + finger-friendly) */}
               <div className="bg-white rounded-3xl p-8 border-2 border-[#00c2cb]/30 hover:shadow-xl transition-shadow duration-200 mb-4 shrink-0">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
                   <div className="lg:flex-1">
                     <div className="flex items-center mb-3 gap-4">
                       <UserCheck className="text-[#00c2cb] h-8 w-8" />
                       <h2 className="text-3xl font-bold text-gray-900">
-                        You&apos;re in Control
+                        You're in Control
                       </h2>
                     </div>
 
@@ -296,13 +280,14 @@ export default function ConsentPage() {
                           : "bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50"
                       }`}
                     >
-                      <span>Don&apos;t Save Data</span>
+                      <span>Don't Save Data</span>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
           </main>
+
           <div className="mt-2 mb-4">
             <StepNavigation
               onNext={handleNext}

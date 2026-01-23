@@ -1,29 +1,33 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
+
 import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/contexts/session-context";
+
 import { sessionAPI } from "@/lib/api";
-// axios removed
-import { ProgressHeader } from "@/components/layout/progress-header";
-import { Footer } from "@/components/layout/footer";
-import { StepNavigation } from "@/components/layout/step-navigation";
-import { ProtectedRoute } from "@/components/auth/protected-route";
+import { useSession } from "@/contexts/session-context";
+import { useScanSession } from "@/hooks/use-scan-session";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
+
+import { getErrorMessage } from "@/lib/errors";
+import { ROUTES, STEPS } from "@/lib/constants";
+
+import { ProgressHeader } from "@/components/layout/progress-header";
+import { StepNavigation } from "@/components/layout/step-navigation";
+import { Footer } from "@/components/layout/footer";
+
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import { SessionEndModal } from "@/components/modals/session-end-modal";
+
 import {
   AnalysisLoadingOverlay,
   FinishConfirmationModal,
 } from "@/components/modals/finish-modal";
-import { ROUTES, STEPS } from "@/lib/constants";
-import { getErrorMessage } from "@/lib/errors";
-import { ScanConfirmationModal } from "@/components/modals/scan-confirmation-modal";
-import { useScanSession } from "@/hooks/use-scan-session";
-import { ScanAssistantCard } from "@/components/scan/scan-assistant-card";
-import { ScanInfoPanel } from "@/components/scan/scan-info-panel";
-import { ScanSessionModals } from "@/components/scan/scan-session-modals";
 import { Toast } from "@/components/ui/toast";
+import { ScanInfoPanel } from "@/components/scan/scan-info-panel";
+import { ScanAssistantCard } from "@/components/scan/scan-assistant-card";
+import { ScanSessionModals } from "@/components/scan/scan-session-modals";
+import { ScanConfirmationModal } from "@/components/modals/scan-confirmation-modal";
 
 export default function ScanPage() {
   const router = useRouter();
@@ -82,11 +86,11 @@ export default function ScanPage() {
   } = useScanSession();
 
   const [showFinishModal, setShowFinishModal] = useState(false);
-  const [showScanConfirmModal, setShowScanConfirmModal] = useState(false); // Confirmation modal for starting scan
-  const [showCancelModal, setShowCancelModal] = useState(false); // Cancel session modal
+  const [showScanConfirmModal, setShowScanConfirmModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const { showModal, handleConfirm, handleCancel, promptBackNavigation } =
     useBackNavigation(false);
-  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false); // New modal state
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
 
   const handleSubmit = async () => {
     if (loading) return;
@@ -98,7 +102,6 @@ export default function ScanPage() {
       const activeSessionId = sessionId || sessionStorage.getItem("current_session_id");
 
       if (!activeSessionId) {
-        console.error("No session ID available");
         setAnalysisOverlayState("error");
         setAnalysisOverlayError("No session ID. Please restart the workflow.");
         overlayTimeoutRef.current = window.setTimeout(() => {
@@ -109,7 +112,6 @@ export default function ScanPage() {
         return;
       }
 
-      // Upload all files
       const uploadPromises = Object.entries(fingerFiles).map(async ([finger, file]) => {
         return new Promise<void>((resolve, reject) => {
           const reader = new FileReader();
@@ -122,7 +124,6 @@ export default function ScanPage() {
               });
               resolve();
             } catch (e) {
-              console.error(`Failed to upload ${finger}:`, e);
               reject(e);
             }
           };
@@ -133,25 +134,19 @@ export default function ScanPage() {
 
       await Promise.all(uploadPromises);
 
-      // Trigger analysis
       const analyzeResponse = await sessionAPI.analyze(activeSessionId);
 
-      // Call /results endpoint to save to database AND get QR code URLs
-      let finalData = analyzeResponse.data; // Fallback
+      let finalData = analyzeResponse.data;
       try {
         const resultsResponse = await sessionAPI.getResults(activeSessionId);
-        finalData = resultsResponse.data; // Use results response (includes QR URLs!)
-      } catch (resultsError) {
-        console.error("⚠️ Failed to save to database:", resultsError);
-        // Continue anyway - user can still see results
-      }
+        finalData = resultsResponse.data;
+      } catch (resultsError) {}
 
-      // Store results in sessionStorage for the results page
       const resultsData = {
-        data: finalData, // Now includes qr_code_url and download_url!
-        expiry: Date.now() + 3600000, // 1 hour expiry
+        data: finalData,
+        expiry: Date.now() + 3600000,
       };
-      // Encode with UTF-8 safe base64 to handle emoji/unicode in AI text
+
       const json = JSON.stringify(resultsData);
       const utf8Bytes = new TextEncoder().encode(json);
       let binary = "";
@@ -162,18 +157,16 @@ export default function ScanPage() {
       sessionStorage.setItem(activeSessionId, encodedData);
       sessionStorage.setItem("current_session_id", activeSessionId);
       flushSync(() => {
-        setCurrentStep(STEPS.RESULTS); // Moving to results page (step 4)
+        setCurrentStep(STEPS.RESULTS);
       });
       setAnalysisOverlayOpen(false);
       router.push(ROUTES.RESULTS);
     } catch (err) {
-      console.error("Submission failed:", err);
       const message = getErrorMessage(err);
 
       setAnalysisOverlayState("error");
       setAnalysisOverlayError(message);
 
-      // Show the failure state briefly, then dismiss and toast.
       overlayTimeoutRef.current = window.setTimeout(() => {
         setAnalysisOverlayOpen(false);
         showErrorToast("Analyzing fingerprints failed. Please try submitting again.");
@@ -192,7 +185,6 @@ export default function ScanPage() {
     if (loading) return;
     setShowFinishModal(false);
     await handleSubmit();
-    // Modal will close automatically when navigation happens
   };
 
   const handleFinishCancel = () => {
@@ -227,7 +219,7 @@ export default function ScanPage() {
           onConfirm={() => {
             setShowScanConfirmModal(false);
             setScanningStarted(true);
-            setCountdown(5); // Start with 5 second countdown
+            setCountdown(5);
           }}
           onCancel={() => setShowScanConfirmModal(false)}
         />

@@ -1,5 +1,3 @@
-import React from "react";
-
 export function ResultsEmpty({ onStartNew }: { onStartNew: () => void }) {
   return (
     <div className="flex items-center justify-center min-h-screen">

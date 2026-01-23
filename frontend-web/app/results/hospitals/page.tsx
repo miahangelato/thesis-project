@@ -1,26 +1,23 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import { useSession } from "@/contexts/session-context";
+import { useBackNavigation } from "@/hooks/use-back-navigation";
+
+import { STEPS } from "@/lib/constants";
+import { API_CONFIG } from "@/lib/constants";
+import { HOSPITALS_DB } from "@/data/facilities";
+
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { ProgressHeader } from "@/components/layout/progress-header";
 import { Footer } from "@/components/layout/footer";
-import {
-  Hospital,
-  MapPin,
-  ArrowLeft,
-  Phone,
-  Mail,
-  Smartphone,
-} from "lucide-react";
-import { useSession } from "@/contexts/session-context";
-import { STEPS } from "@/lib/constants";
-import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+
 import { FacilityQRModal } from "@/components/modals/facility-qr-modal";
 import { SessionEndModal } from "@/components/modals/session-end-modal";
-import { useBackNavigation } from "@/hooks/use-back-navigation";
-import { HOSPITALS_DB } from "@/data/facilities";
-import { API_CONFIG } from "@/lib/constants";
+
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+import { Hospital, MapPin, ArrowLeft, Phone, Mail, Smartphone } from "lucide-react";
 
 interface Facility {
   name: string;
@@ -42,7 +39,6 @@ const decodeBase64Json = (encoded: string) => {
     const decoded = new TextDecoder().decode(bytes);
     return JSON.parse(decoded);
   } catch (err) {
-    console.error("Failed to decode stored session data", err);
     return null;
   }
 };
@@ -56,7 +52,6 @@ export default function HospitalsPage() {
   const [cityFilter, setCityFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
 
@@ -115,7 +110,6 @@ export default function HospitalsPage() {
         ...nearby,
       ];
 
-      // Append fallback hospitals from bundled constants if not already present
       const mergedWithFallback = [
         ...merged,
         ...HOSPITALS_DB.filter((h) => !merged.some((m) => (m.name || "") === h.name)),
@@ -123,7 +117,6 @@ export default function HospitalsPage() {
 
       setFacilities(mergedWithFallback);
 
-      // Try fetching authoritative hospitals from backend and merge (timeout applied)
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 8000);
       void (async () => {
@@ -149,7 +142,6 @@ export default function HospitalsPage() {
             }
           }
         } catch (e) {
-          // swallow - fallback already present
           if (process.env.NODE_ENV !== "production")
             console.warn("Failed to fetch hospitals:", e);
         } finally {
@@ -209,7 +201,6 @@ export default function HospitalsPage() {
   const pageStart = (currentPage - 1) * pageSize;
   const paginatedFacilities = filteredFacilities.slice(pageStart, pageStart + pageSize);
 
-  // Helper to compute page numbers with ellipses
   const getPageNumbers = (current: number, total: number): (number | string)[] => {
     const maxVisible = 5;
     if (total <= maxVisible) return Array.from({ length: total }, (_, i) => i + 1);
@@ -217,17 +208,14 @@ export default function HospitalsPage() {
     const result: (number | string)[] = [];
 
     if (current <= 3) {
-      // Near start: [1, 2, 3, 4, ..., last]
       for (let i = 1; i <= 4; i++) result.push(i);
       result.push("...");
       result.push(total);
     } else if (current >= total - 2) {
-      // Near end: [1, ..., last-3, last-2, last-1, last]
       result.push(1);
       result.push("...");
       for (let i = total - 3; i <= total; i++) result.push(i);
     } else {
-      // Middle: [1, ..., current-1, current, current+1, ..., last]
       result.push(1);
       result.push("...");
       result.push(current - 1);
@@ -356,7 +344,6 @@ export default function HospitalsPage() {
                             </p>
                           </div>
 
-                          {/* Info Tags */}
                           <div className="flex flex-wrap gap-2 mb-8">
                             {facility.type && (
                               <span className="inline-flex items-center px-4 py-2 bg-teal-50 text-teal-700 rounded-xl text-sm font-bold border border-teal-100">
@@ -365,7 +352,6 @@ export default function HospitalsPage() {
                             )}
                           </div>
 
-                          {/* Static Contact Info */}
                           <div className="flex flex-wrap gap-2 mb-3">
                             {facility.phone && (
                               <div className="flex items-center gap-3 text-gray-600 font-bold text-lg">
@@ -385,7 +371,6 @@ export default function HospitalsPage() {
                           </div>
                         </div>
 
-                        {/* Kiosk Action Button */}
                         <button
                           onClick={() => handleOpenModal(facility)}
                           className="w-full group relative overflow-hidden bg-white border-2 border-teal-500 hover:bg-teal-50 p-6 rounded-2xl transition-all active:scale-[0.98]"
@@ -464,6 +449,7 @@ export default function HospitalsPage() {
               )}
             </div>
           </div>
+          
           <Footer fixed={true} />
         </main>
       </div>

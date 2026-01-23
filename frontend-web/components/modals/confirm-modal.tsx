@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { ModalShell } from "@/components/ui/modal-shell";
-import { cn } from "@/lib/utils";
 
 type ConfirmModalProps = {
   isOpen: boolean;
@@ -25,7 +25,6 @@ type ConfirmModalProps = {
   closeOnBackdrop?: boolean;
   closeOnEscape?: boolean;
 
-  /** Visual styling */
   backdropClassName?: string;
   panelClassName?: string;
   topBarClassName?: string;
@@ -81,7 +80,6 @@ export function ConfirmModal({
       topBarClassName={topBarClassName}
     >
       <div className="p-10 flex flex-col items-center text-center">
-        {/* Icon wrapper - Squircle design to match other modals */}
         <div className="flex justify-center mb-10">
           <div className="relative">
             <div

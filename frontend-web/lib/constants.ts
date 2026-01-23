@@ -1,17 +1,8 @@
-/**
- * Application constants and configuration values.
- * Centralized location for all magic numbers, strings, and configuration.
- */
-
-// ============================================================================
-// API CONFIGURATION
-// ============================================================================
-
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
-  TIMEOUT: 30000, // 30 seconds
+  TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
-  RETRY_DELAY: 1000, // 1 second
+  RETRY_DELAY: 1000,
 } as const;
 
 export const SCANNER_CONFIG = {
@@ -19,10 +10,6 @@ export const SCANNER_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_SCANNER_URL || "http://localhost:5000",
   TIMEOUT: 30000,
 } as const;
-
-// ============================================================================
-// ROUTES
-// ============================================================================
 
 export const ROUTES = {
   HOME: "/",
@@ -44,10 +31,6 @@ export const API_ENDPOINTS = {
   ANALYZE: "/analyze",
 } as const;
 
-// ============================================================================
-// FINGERPRINT CONFIGURATION
-// ============================================================================
-
 export const FINGERPRINT_CONFIG = {
   REQUIRED_COUNT: 10,
   MAX_RETRY: 3,
@@ -66,10 +49,6 @@ export const FINGERPRINT_CONFIG = {
     "pinky_left",
   ] as const,
 } as const;
-
-// ============================================================================
-// VALIDATION RULES
-// ============================================================================
 
 export const VALIDATION = {
   AGE: {
@@ -91,10 +70,6 @@ export const VALIDATION = {
     ERROR_MAX: "Height cannot exceed 250 cm",
   },
 } as const;
-
-// ============================================================================
-// UI CONSTANTS
-// ============================================================================
 
 export const UI = {
   CAROUSEL_INTERVAL: 6000,
@@ -125,10 +100,6 @@ export const STEP_NAMES = {
   [STEPS.DOWNLOAD]: "Download",
 } as const;
 
-// ============================================================================
-// RISK LEVELS
-// ============================================================================
-
 export const RISK_LEVELS = {
   LOW: "Low",
   MODERATE: "Moderate",
@@ -140,10 +111,6 @@ export const RISK_COLORS = {
   [RISK_LEVELS.MODERATE]: "#F59E0B",
   [RISK_LEVELS.HIGH]: "#EF4444",
 } as const;
-
-// ============================================================================
-// BLOOD GROUPS
-// ============================================================================
 
 export const BLOOD_GROUPS = [
   "A+",
@@ -159,10 +126,6 @@ export const BLOOD_GROUPS = [
 
 export type BloodGroup = (typeof BLOOD_GROUPS)[number];
 
-// ============================================================================
-// ERROR MESSAGES
-// ============================================================================
-
 export const ERROR_MESSAGES = {
   NETWORK_ERROR: "Network error. Please check your connection.",
   SESSION_EXPIRED:
@@ -176,10 +139,6 @@ export const ERROR_MESSAGES = {
   UNKNOWN_ERROR: "An unexpected error occurred. Please try again.",
 } as const;
 
-// ============================================================================
-// SUCCESS MESSAGES
-// ============================================================================
-
 export const SUCCESS_MESSAGES = {
   SESSION_STARTED: "Session started successfully",
   CONSENT_SAVED: "Consent preferences saved",
@@ -189,20 +148,12 @@ export const SUCCESS_MESSAGES = {
   PDF_GENERATED: "Report generated successfully",
 } as const;
 
-// ============================================================================
-// STORAGE KEYS
-// ============================================================================
-
 export const STORAGE_KEYS = {
   SESSION_ID: "session_id",
   CURRENT_STEP: "current_step",
   CONSENT: "consent",
   THEME: "theme",
 } as const;
-
-// ============================================================================
-// HTTP STATUS CODES
-// ============================================================================
 
 export const HTTP_STATUS = {
   OK: 200,
@@ -216,10 +167,6 @@ export const HTTP_STATUS = {
   INTERNAL_ERROR: 500,
   SERVICE_UNAVAILABLE: 503,
 } as const;
-
-// ============================================================================
-// ENVIRONMENT
-// ============================================================================
 
 export const IS_PRODUCTION = process.env.NODE_ENV === "production";
 export const IS_DEVELOPMENT = process.env.NODE_ENV === "development";

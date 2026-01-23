@@ -1,20 +1,12 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "@/contexts/session-context";
+
 import { sessionAPI } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+import { useSession } from "@/contexts/session-context";
+
 import { QRCodeSVG } from "qrcode.react";
+
 import {
   Download,
   QrCode,
@@ -23,6 +15,16 @@ import {
   Home,
   Smartphone,
 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 
 export function DownloadPageContent() {
   const router = useRouter();
@@ -45,9 +47,7 @@ export function DownloadPageContent() {
 
     try {
       sessionStorage.setItem("current_session_id", activeSessionId);
-    } catch {
-      // ignore
-    }
+    } catch {}
 
     const generatePDF = async () => {
       try {
@@ -57,24 +57,23 @@ export function DownloadPageContent() {
         setPdfUrl(response.data.pdf_url);
         setDownloadUrl(response.data.download_url || response.data.pdf_url);
 
-        // Option 1: QR code points directly to Supabase PDF URL for instant download
         const pdfUrlForQr = response.data.pdf_url;
 
         if (pdfUrlForQr) {
           setQrValue(pdfUrlForQr);
         } else {
-          console.error("No PDF URL received from server");
           setError("PDF URL not received from server");
         }
       } catch (err: unknown) {
-        console.error("Failed to generate PDF:", err);
-        const error = err as { response?: { data?: { error?: string } } };
-        setError(error.response?.data?.error || "Failed to generate PDF report.");
+        const msg =
+          (err as any)?.response?.data?.error ||
+          (err as Error)?.message ||
+          "Failed to generate PDF report.";
+        setError(msg);
       } finally {
         setLoading(false);
       }
     };
-
     generatePDF();
   }, [sessionId, router, searchParams]);
 
@@ -90,7 +89,6 @@ export function DownloadPageContent() {
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      console.error("Download failed:", err);
       setError("Failed to download PDF. Please try again.");
     }
   };

@@ -25,12 +25,9 @@ export function ScanAssistantSubtitle({
   currentFinger,
   countdown,
   errorMessage,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onStartScanning: _onStartScanning,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isPaused: _isPaused = false,
 }: ScanAssistantSubtitleProps) {
-  // State configuration - simplified for subtitle display
   const stateConfig = {
     idle: {
       text: "Click 'Start Scanning' below to begin",
@@ -72,7 +69,6 @@ export function ScanAssistantSubtitle({
 
   const config = stateConfig[scannerState];
 
-  /* logic to override countdown text dynamically */
   let displayText = config.text;
   if (scannerState === "countdown" && countdown !== undefined && countdown !== null) {
     if (countdown > 3) {
@@ -84,7 +80,6 @@ export function ScanAssistantSubtitle({
 
   return (
     <div className="text-center mt-1">
-      {/* Instruction Text */}
       <p
         className={`text-2xl font-bold ${config.textClass} leading-relaxed whitespace-nowrap`}
       >

@@ -1,8 +1,3 @@
-/**
- * Custom hook for API interactions.
- * Manages loading state, errors, and data.
- */
-
 import { useState, useCallback } from "react";
 import { AxiosRequestConfig } from "axios";
 import { api } from "@/lib/api-client";

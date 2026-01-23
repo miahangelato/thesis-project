@@ -27,17 +27,14 @@ interface ScanAssistantProps {
   currentFinger: string;
   countdown?: number | null;
   errorMessage?: string;
-  // Action handlers
   onRescan?: () => void;
   onPause?: () => void;
   onResume?: () => void;
   onStartScanning?: () => void;
   isPaused?: boolean;
-  // Progress info
   currentFingerIndex?: number;
   totalFingers?: number;
   scannedCount?: number;
-  // Hand guide element
   handGuideElement?: React.ReactNode;
 }
 
@@ -51,14 +48,10 @@ export function ScanAssistant({
   onResume,
   onStartScanning,
   isPaused = false,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   currentFingerIndex: _currentFingerIndex = 0,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   totalFingers: _totalFingers = 10,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   scannedCount: _scannedCount = 0,
 }: ScanAssistantProps) {
-  // State configuration
   const stateConfig = {
     idle: {
       icon: Fingerprint,
@@ -193,7 +186,6 @@ export function ScanAssistant({
       }`}
       onClick={isClickable ? onStartScanning : undefined}
     >
-      {/* Icon */}
       <div className="flex justify-center mb-6">
         <div className="relative">
           {showSpinner ? (
@@ -213,26 +205,21 @@ export function ScanAssistant({
         </div>
       </div>
 
-      {/* Title */}
       <h3
         className={`${config.textClass} text-3xl font-extrabold text-center mb-3 leading-tight`}
       >
         {config.title}
       </h3>
 
-      {/* Subtitle */}
       <p
         className={`${config.subtextClass} text-lg text-center font-medium leading-relaxed`}
       >
         {config.subtitle}
       </p>
 
-      {/* Progress Info */}
       {showActions && (
         <div className="mt-6 pt-6 border-t border-gray-200">
-          {/* Action Buttons */}
           <div className="flex flex-col gap-3">
-            {/* Rescan Button - show when captured or error */}
             {(scannerState === "captured" || scannerState === "error") && onRescan && (
               <Button
                 onClick={onRescan}
@@ -244,7 +231,6 @@ export function ScanAssistant({
               </Button>
             )}
 
-            {/* Pause/Resume Button - show when countdown active OR when paused */}
             {((scannerState === "captured" && countdown !== null) ||
               scannerState === "paused") && (
               <Button
@@ -272,7 +258,6 @@ export function ScanAssistant({
         </div>
       )}
 
-      {/* Additional guidance for waiting state */}
       {scannerState === "waiting" && (
         <div className="mt-6 pt-6 border-t border-blue-200">
           <div className="space-y-3">

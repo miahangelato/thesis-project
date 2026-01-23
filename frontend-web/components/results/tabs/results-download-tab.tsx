@@ -1,9 +1,7 @@
 "use client";
-
-import React from "react";
-import { QrCode, Smartphone, Info } from "lucide-react";
 import Image from "next/image";
 import { Spinner } from "@/components/ui/spinner";
+import { QrCode, Smartphone, Info } from "lucide-react";
 
 export function ResultsDownloadTab({
   qrCodeUrl,
@@ -12,7 +10,6 @@ export function ResultsDownloadTab({
   qrCodeUrl?: string;
   downloadUrl?: string;
 }) {
-  // If no QR code URL yet, show loading
   if (!qrCodeUrl || !downloadUrl) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -31,7 +28,6 @@ export function ResultsDownloadTab({
   return (
     <div className="h-full min-h-0 flex flex-col">
       <div className="flex flex-col flex-1 min-h-0 h-full">
-        {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-4 p-6 pb-0">
           <h2 className="text-2xl font-bold text-teal-900 flex items-center">
             <QrCode className="w-8 h-8 mr-3 text-teal-600" />
@@ -41,7 +37,6 @@ export function ResultsDownloadTab({
 
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="grid grid-cols-2 gap-8 items-center max-w-4xl w-full">
-            {/* Left Panel: QR Code */}
             <div className="flex flex-col items-center">
               <div className="bg-white p-6 rounded-4xl shadow-2xl shadow-teal-100/50 border border-gray-100">
                 <Image
@@ -59,7 +54,6 @@ export function ResultsDownloadTab({
               </p>
             </div>
 
-            {/* Right Panel: Instructions */}
             <div className="space-y-8">
               <div className="space-y-6">
                 <div className="flex items-start gap-5">
@@ -93,7 +87,6 @@ export function ResultsDownloadTab({
                 </div>
               </div>
 
-              {/* Important Notice */}
               <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
                 <p className="text-base text-gray-600 flex items-start">
                   <Info className="w-6 h-6 mr-3 mt-0.5 shrink-0 text-gray-400" />

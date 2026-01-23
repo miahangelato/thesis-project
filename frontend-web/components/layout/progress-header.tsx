@@ -1,4 +1,3 @@
-import React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { X } from "lucide-react";
@@ -22,7 +21,6 @@ export function ProgressHeader({
   accentColor = "#00c2cb",
   onEndSession,
 }: ProgressHeaderProps) {
-  // Calculate progress percentage
   const router = useRouter();
   const progress = (currentStep / totalSteps) * 100;
 
@@ -36,7 +34,6 @@ export function ProgressHeader({
 
   return (
     <div className="w-full mb-6 mt-2 select-none">
-      {/* Step indicator text */}
       <div className="flex justify-between items-center mb-2">
         <div>
           {title && <h1 className="text-5xl font-bold text-gray-800 mt-1">{title}</h1>}
@@ -62,7 +59,6 @@ export function ProgressHeader({
         </div>
       </div>
 
-      {/* Progress bar */}
       <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
         <div
           className="h-full transition-all duration-300 ease-in-out rounded-full"
@@ -73,7 +69,6 @@ export function ProgressHeader({
         />
       </div>
 
-      {/* Step labels */}
       <div className="flex justify-between mt-2">
         {steps.map((step, index) => (
           <div

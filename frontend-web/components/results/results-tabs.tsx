@@ -1,4 +1,3 @@
-import React from "react";
 import { Activity, FileText, Heart, Hospital } from "lucide-react";
 
 type TabType = "analysis" | "facilities" | "blood" | "download";

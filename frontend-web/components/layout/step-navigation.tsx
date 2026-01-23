@@ -1,10 +1,10 @@
 "use client";
-
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 interface StepNavigationProps {
   onBack?: () => void;
@@ -15,7 +15,7 @@ interface StepNavigationProps {
   loading?: boolean;
   isNextDisabled?: boolean;
   leftAdornment?: React.ReactNode;
-  className?: string; // Allow custom classes like 'mt-6'
+  className?: string;
   form?: string;
 }
 

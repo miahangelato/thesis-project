@@ -1,37 +1,19 @@
 "use client";
-
 import * as React from "react";
-
 import { cn } from "@/lib/utils";
 
 type ModalShellProps = {
   isOpen: boolean;
   onClose?: () => void;
   children: React.ReactNode;
-
-  /**
-   * If provided, clicking the backdrop will call `onClose`.
-   * Defaults to true when `onClose` is provided.
-   */
   closeOnBackdrop?: boolean;
-
-  /**
-   * If provided, pressing Escape will call `onClose`.
-   * Defaults to true when `onClose` is provided.
-   */
   closeOnEscape?: boolean;
-
-  /** Used by screen readers to announce the dialog title. */
   labelledById?: string;
-
-  /** Styling hooks */
   backdropClassName?: string;
   backdropZIndexClassName?: string;
   containerClassName?: string;
   zIndexClassName?: string;
   panelClassName?: string;
-
-  /** Optional decorative top bar */
   showTopBar?: boolean;
   topBarClassName?: string;
 };

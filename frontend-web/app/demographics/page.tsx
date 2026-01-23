@@ -1,24 +1,27 @@
 "use client";
-
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+
 import { useSession } from "@/contexts/session-context";
-import { sessionAPI } from "@/lib/api";
-import { ProgressHeader } from "@/components/layout/progress-header";
-import { Footer } from "@/components/layout/footer";
-import { StepNavigation } from "@/components/layout/step-navigation";
-import { ProtectedRoute } from "@/components/auth/protected-route";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
+
+import { sessionAPI } from "@/lib/api";
+import { ROUTES, STEPS } from "@/lib/constants";
+import { useDemographicsForm } from "@/hooks/use-demographics-form";
+
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { StepNavigation } from "@/components/layout/step-navigation";
+import { ProgressHeader } from "@/components/layout/progress-header";
+
+import { Footer } from "@/components/layout/footer";
+
 import { SessionEndModal } from "@/components/modals/session-end-modal";
 import { ConfirmModal } from "@/components/modals/confirm-modal";
+
 import { StaticInfoPanel } from "@/components/demographics/static-info-panel";
 import { PreparingScanOverlay } from "@/components/demographics/preparing-scan-overlay";
 import { InlineNumericKeypad } from "@/components/ui/inline-numeric-keypad";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { InfoTooltip } from "@/components/ui/info-tooltip";
+
 import {
   Select,
   SelectContent,
@@ -26,10 +29,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
+
 import { AlertTriangle, CheckCircle, Shield, User, X } from "lucide-react";
-import { ROUTES, STEPS } from "@/lib/constants";
-import { useDemographicsForm } from "@/hooks/use-demographics-form";
 
 export default function DemographicsPage() {
   const router = useRouter();
@@ -40,7 +46,6 @@ export default function DemographicsPage() {
   const { showModal, handleConfirm, handleCancel, promptBackNavigation } =
     useBackNavigation(false);
 
-  // Helper to get errors for a specific field
   const getFieldError = (fieldName: string) => {
     return validationWarnings.find(
       (w) => w.field === fieldName && w.severity === "error"
@@ -82,9 +87,6 @@ export default function DemographicsPage() {
     hasWarnings,
   } = useDemographicsForm();
 
-  // -------------------------
-  // Submit
-  // -------------------------
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     dismissKeypad();
@@ -95,7 +97,6 @@ export default function DemographicsPage() {
       return;
     }
 
-    // Block submission if there are validation errors
     if (hasErrors) {
       const errorMessages = validationWarnings
         .filter((w) => w.severity === "error")
@@ -105,7 +106,6 @@ export default function DemographicsPage() {
       return;
     }
 
-    // Show warning confirmation if there are warnings
     if (hasWarnings) {
       const warningMessages = validationWarnings
         .filter((w) => w.severity === "warning")
@@ -146,7 +146,6 @@ export default function DemographicsPage() {
 
       router.push(ROUTES.SCAN);
     } catch (err) {
-      console.error("Failed to submit demographics:", err);
       setCurrentStep(STEPS.SCAN);
       router.push(ROUTES.SCAN);
     } finally {
@@ -154,9 +153,6 @@ export default function DemographicsPage() {
     }
   };
 
-  // -------------------------
-  // Render
-  // -------------------------
   return (
     <ProtectedRoute requireSession={true} requiredStep={STEPS.DEMOGRAPHICS}>
       <>
@@ -190,9 +186,7 @@ export default function DemographicsPage() {
               className="flex-1 flex flex-col"
             >
               <div className="flex-1 flex flex-row gap-3 overflow-hidden">
-                {/* Left column */}
                 <div className="flex flex-col flex-3 min-w-0 gap-4">
-                  {/* Basic Information Card */}
                   <div className="bg-white rounded-2xl p-4 shadow-sm border-2 border-slate-100 hover:shadow-md transition-shadow select-none">
                     <div className="flex items-start mb-3">
                       <div className="w-10 h-10 bg-linear-to-br from-teal-100 to-cyan-100 rounded-xl flex items-center justify-center mr-3 shrink-0">
@@ -221,9 +215,7 @@ export default function DemographicsPage() {
                       )}
                     </div>
 
-                    {/* Row 1 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                      {/* Age */}
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <Label
@@ -283,7 +275,6 @@ export default function DemographicsPage() {
                         )}
                       </div>
 
-                      {/* Weight */}
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <Label
@@ -342,7 +333,6 @@ export default function DemographicsPage() {
                           </p>
                         )}
 
-                        {/* Weight unit toggle */}
                         <div className="flex gap-0 mt-2 bg-slate-100 rounded-lg p-1 w-fit">
                           <button
                             type="button"
@@ -373,7 +363,6 @@ export default function DemographicsPage() {
                         </div>
                       </div>
 
-                      {/* Height */}
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <Label
@@ -514,7 +503,6 @@ export default function DemographicsPage() {
                           </>
                         )}
 
-                        {/* Height unit toggle */}
                         <div className="flex gap-0 mt-2 bg-slate-100 rounded-lg p-1 w-fit">
                           <button
                             type="button"
@@ -546,9 +534,7 @@ export default function DemographicsPage() {
                       </div>
                     </div>
 
-                    {/* Row 2 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {/* Gender */}
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
                           <Label
@@ -595,7 +581,6 @@ export default function DemographicsPage() {
                         </Select>
                       </div>
 
-                      {/* Blood type */}
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <Label
@@ -645,7 +630,6 @@ export default function DemographicsPage() {
                       </div>
                     </div>
 
-                    {/* BMI Compact Preview Row */}
                     <div className="mt-4">
                       <div
                         className={`flex items-center justify-between h-14 w-full px-4 bg-white rounded-lg border-2 ${
@@ -695,7 +679,6 @@ export default function DemographicsPage() {
                     </div>
                   </div>
 
-                  {/* Donation opt-in (ONLY checkbox, no criteria) */}
                   <div className="bg-white rounded-2xl p-4 shadow-sm border-2 border-slate-100 hover:shadow-md transition-shadow select-none">
                     <div className="flex items-center gap-4">
                       <Checkbox
@@ -720,7 +703,6 @@ export default function DemographicsPage() {
                   </div>
                 </div>
 
-                {/* Right column */}
                 <div className="flex flex-col flex-2 gap-4 select-none">
                   <StaticInfoPanel />
 
@@ -756,7 +738,6 @@ export default function DemographicsPage() {
             </form>
           </main>
 
-          {/* Navigation */}
           <div className="mt-8 mb-6 shrink-0 px-0">
             <StepNavigation
               form="demographics-form"
@@ -785,7 +766,6 @@ export default function DemographicsPage() {
           />
         </motion.div>
 
-        {/* Docked keypad (touchscreen) */}
         <InlineNumericKeypad
           isVisible={!!activeField}
           allowDecimal={activeField === "weight"}
@@ -795,7 +775,6 @@ export default function DemographicsPage() {
           onDismiss={dismissKeypad}
         />
 
-        {/* Clear Fields Confirmation Modal */}
         <ConfirmModal
           isOpen={showClearConfirmModal}
           onPrimary={() => setShowClearConfirmModal(false)}

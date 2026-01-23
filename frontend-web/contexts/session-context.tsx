@@ -1,14 +1,5 @@
 "use client";
-
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-  useCallback,
-  useRef,
-} from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { storage } from "@/lib/storage";
 import { STEPS } from "@/lib/constants";
 import {
@@ -43,18 +34,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const sessionActive = !!sessionId;
   const [expirationReason, setExpirationReason] = useState<string | null>(null);
 
-  const privacyManagerRef = useRef<ReturnType<typeof getPrivacyCleanupManager>>(null);
-  const router = useRouter();
-
-  // Initialize privacy manager on client side only
   useEffect(() => {
     if (typeof window !== "undefined" && !privacyManagerRef.current) {
       privacyManagerRef.current = getPrivacyCleanupManager();
     }
   }, []);
 
-  // PRIVACY: Do NOT restore session from storage on mount
-  // Each page load/refresh starts fresh
   useEffect(() => {
     console.log(
       "[PRIVACY] SessionProvider mounted - starting fresh (no session restoration)"
@@ -154,21 +139,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     console.log(`[PRIVACY] Session created: ${id}`);
     setSessionId(id);
     setConsent(consentGiven);
-  }, []);
+  };
 
   const setCurrentStep = useCallback((step: number) => {
     setCurrentStepState(step);
   }, []);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    const manager = privacyManagerRef.current;
-    return () => {
-      if (manager) {
-        manager.destroy();
-      }
-    };
-  }, []);
+  const clearSession = () => {
+    const currentSessionId = sessionId;
+    setSessionId(null);
+    setConsent(false);
+    setCurrentStepState(STEPS.LANDING);
+    storage.clear();
+    sessionStorage.removeItem("demographics");
+    sessionStorage.removeItem("current_session_id");
+    sessionStorage.removeItem("scanned_fingerprints");
+    if (currentSessionId) {
+      sessionStorage.removeItem(currentSessionId);
+    }
+  };
 
   return (
     <SessionContext.Provider

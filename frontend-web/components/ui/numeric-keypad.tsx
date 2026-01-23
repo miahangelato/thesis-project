@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
 import { Delete, Check } from "lucide-react";
 
@@ -9,36 +8,13 @@ type HeightUnit = "cm" | "ftin";
 
 interface NumericKeypadProps {
   isOpen?: boolean;
-
-  /**
-   * For normal numeric entry (and height in cm).
-   * For height in ft/in, this value is ignored for display/input (we use ft & inch).
-   */
   value?: string;
-
   error?: string | null;
 
-  /**
-   * Parent can keep using these for normal entry.
-   * If unitMode === "height" and unit === "ftin", keypad handles internal ft/in input itself.
-   */
   onKeyPress: (key: string) => void;
   onBackspace: () => void;
-
-  /**
-   * ✅ Done returns normalized value:
-   * - weight mode => kg string
-   * - height mode => cm string
-   * - none => current value string
-   */
   onDone: (normalizedValue: string) => void;
-
   onClose?: () => void;
-
-  /**
-   * Called when user taps Clear in non-ft/in mode.
-   * (Because this keypad doesn’t own the normal "value" string — parent does.)
-   */
   onClear?: () => void;
 
   allowDecimal?: boolean;
@@ -46,15 +22,8 @@ interface NumericKeypadProps {
   title?: string;
   placeholder?: string;
 
-  /**
-   * Unit UI
-   */
-  unitMode?: UnitMode; // "weight" | "height" | "none"
-  initialUnit?: WeightUnit | HeightUnit; // e.g. "lb" or "ftin"
-
-  /**
-   * OPTIONAL: Controlled ft/in values (recommended to avoid reset on unmount/remount)
-   */
+  unitMode?: UnitMode;
+  initialUnit?: WeightUnit | HeightUnit;
   ftValue?: string;
   inValue?: string;
   onFtInChange?: (ft: string, inch: string) => void;
@@ -79,9 +48,6 @@ export function NumericKeypad({
   inValue,
   onFtInChange,
 }: NumericKeypadProps) {
-  // ----- All hooks MUST be at the top level, before any conditional returns -----
-
-  // Unit state - always initialize
   const defaultUnit = useMemo(() => {
     if (unitMode === "weight") return (initialUnit as WeightUnit) ?? "kg";
     if (unitMode === "height") return (initialUnit as HeightUnit) ?? "cm";
@@ -96,13 +62,11 @@ export function NumericKeypad({
     unitMode === "height" ? (defaultUnit as HeightUnit) : "cm"
   );
 
-  // For ft/in entry (local fallback)
   const [ftLocal, setFtLocal] = useState("");
   const [inLocal, setInLocal] = useState("");
 
   const [activePart, setActivePart] = useState<"ft" | "in">("ft");
 
-  // Controlled vs local ft/in
   const ft = ftValue ?? ftLocal;
   const inch = inValue ?? inLocal;
 
@@ -116,7 +80,6 @@ export function NumericKeypad({
     else setInLocal(v);
   };
 
-  // Helpers
   const isFtIn = unitMode === "height" && heightUnit === "ftin";
 
   const displayValue = useMemo(() => {
@@ -129,12 +92,10 @@ export function NumericKeypad({
   }, [isFtIn, ft, inch, value]);
 
   const canUseDecimal = useMemo(() => {
-    // prevent decimals when using ft/in
     if (isFtIn) return false;
     return allowDecimal;
   }, [allowDecimal, isFtIn]);
 
-  // For modal mode, handle scrolling
   useEffect(() => {
     if (variant === "modal" && isOpen) {
       document.body.style.overflow = "hidden";
@@ -146,23 +107,20 @@ export function NumericKeypad({
     };
   }, [isOpen, variant]);
 
-  // ----- NOW we can have conditional returns -----
   if (!isOpen) return null;
 
   const handleKey = (k: string) => {
     if (isFtIn) {
-      // only digits in ft/in mode
       if (!/^\d$/.test(k)) return;
 
       if (activePart === "ft") {
-        setFt((ft + k).slice(0, 2)); // up to 2 digits ft
+        setFt((ft + k).slice(0, 2));
       } else {
-        setInch((inch + k).slice(0, 2)); // up to 2 digits in
+        setInch((inch + k).slice(0, 2));
       }
       return;
     }
 
-    // normal behavior
     onKeyPress(k);
   };
 
@@ -183,33 +141,28 @@ export function NumericKeypad({
       return;
     }
 
-    // Normal mode clear must be handled by parent
     onClear?.();
   };
 
   const showClear =
     (isFtIn && (ft.length > 0 || inch.length > 0)) || (!isFtIn && !!displayValue);
 
-  // ----- Conversions -----
   const toNumber = (s: string) => {
     const n = Number(s);
     return Number.isFinite(n) ? n : null;
   };
 
   const normalizeAndDone = () => {
-    // Weight mode: entered unit => return kg
     if (unitMode === "weight") {
       const n = toNumber(value || "0");
       if (n === null) return;
 
       const kg = weightUnit === "lb" ? n * 0.45359237 : n;
 
-      // 1 decimal is common for weight
       onDone(kg.toFixed(1));
       return;
     }
 
-    // Height mode: entered unit => return cm
     if (unitMode === "height") {
       if (heightUnit === "cm") {
         const n = toNumber(value || "0");
@@ -219,7 +172,6 @@ export function NumericKeypad({
         return;
       }
 
-      // ft/in => cm
       const f = parseInt(ft || "0", 10);
       const i = parseInt(inch || "0", 10);
       const totalIn = f * 12 + i;
@@ -229,7 +181,6 @@ export function NumericKeypad({
       return;
     }
 
-    // Default: return current value
     onDone(value);
   };
 
@@ -243,7 +194,6 @@ export function NumericKeypad({
         }
       `}
     >
-      {/* Header */}
       <div
         className={`
           flex items-center justify-between px-6 py-4 border-b border-slate-200
@@ -264,7 +214,6 @@ export function NumericKeypad({
         )}
       </div>
 
-      {/* Value Display */}
       <div className="px-6 pt-3">
         <div className="h-12 rounded-xl border-2 border-slate-200 bg-white flex items-center justify-between px-4">
           <span className="text-xl font-bold text-slate-800">
@@ -309,7 +258,6 @@ export function NumericKeypad({
         </div>
       </div>
 
-      {/* Unit Toggle */}
       {unitMode === "weight" && (
         <div className="px-6 pt-2">
           <div className="inline-flex rounded-xl border-2 border-slate-200 bg-white p-1">
@@ -395,7 +343,6 @@ export function NumericKeypad({
         </div>
       )}
 
-      {/* Error Message */}
       {error && (
         <div className="px-6 pt-3 pb-2 animate-in slide-in-from-top-2 fade-in duration-300">
           <div className="text-xs font-semibold text-red-600 flex items-center gap-1.5 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
@@ -405,7 +352,6 @@ export function NumericKeypad({
         </div>
       )}
 
-      {/* Number Pad */}
       <div className="px-6 pb-5 pt-3 flex-1 flex flex-col justify-center gap-3">
         <div className="grid grid-cols-5 gap-3">
           {["1", "2", "3", "4", "5"].map((num) => (

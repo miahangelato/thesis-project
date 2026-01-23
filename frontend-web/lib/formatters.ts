@@ -1,12 +1,3 @@
-/**
- * Data formatting utilities.
- * Consistent formatting for dates, numbers, strings, and clinical values.
- */
-
-// ============================================================================
-// DATE & TIME
-// ============================================================================
-
 export const formatDate = (date: string | Date): string => {
   const d = typeof date === "string" ? new Date(date) : date;
   return new Intl.DateTimeFormat("en-US", {
@@ -27,23 +18,14 @@ export const formatDateTime = (date: string | Date): string => {
   }).format(d);
 };
 
-// ============================================================================
-// CLINICAL VALUES
-// ============================================================================
-
 export const formatBMI = (bmi: number): string => {
   return bmi.toFixed(1);
 };
 
 export const formatPercentage = (value: number): string => {
-  // Convert 0-1 decimal to 0-100 percentage if needed
   const percentage = value <= 1 ? value * 100 : value;
   return percentage.toFixed(1) + "%";
 };
-
-// ============================================================================
-// STRINGS
-// ============================================================================
 
 export const capitalize = (str: string): string => {
   if (!str) return "";
@@ -51,7 +33,6 @@ export const capitalize = (str: string): string => {
 };
 
 export const formatFingerName = (name: string): string => {
-  // thumb_right -> Right Thumb
   const parts = name.split("_");
   if (parts.length === 2) {
     const [finger, hand] = parts;
@@ -64,10 +45,6 @@ export const truncate = (str: string, length: number): string => {
   if (str.length <= length) return str;
   return str.substring(0, length) + "...";
 };
-
-// ============================================================================
-// FILE SIZES
-// ============================================================================
 
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return "0 Bytes";

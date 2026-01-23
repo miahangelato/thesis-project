@@ -11,7 +11,6 @@ export function Stepper({ currentStep, totalSteps, steps }: StepperProps) {
 
   return (
     <div className="w-full mb-8">
-      {/* Step Indicator */}
       <div className="flex justify-between items-center mb-4">
         {steps.map((step, idx) => {
           const stepNumber = idx + 1;
@@ -41,7 +40,6 @@ export function Stepper({ currentStep, totalSteps, steps }: StepperProps) {
         })}
       </div>
 
-      {/* Progress Bar */}
       <div className="relative w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
         <div
           className="absolute top-0 left-0 h-full bg-primary transition-all duration-500 ease-out"

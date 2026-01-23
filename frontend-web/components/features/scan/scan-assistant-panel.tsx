@@ -1,7 +1,8 @@
 "use client";
+import { useMemo } from "react";
 
-import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import {
   Fingerprint,
   CheckCircle,
@@ -54,7 +55,6 @@ export function ScanAssistantPanel({
     return `data:image/jpeg;base64,${trimmed}`;
   }, [previewFrame]);
 
-  // Map status to primary message
   const primaryMessage = {
     idle: "Ready to Scan",
     waiting: "Place your finger",
@@ -65,7 +65,6 @@ export function ScanAssistantPanel({
     cancelled: "Cancelled",
   }[status];
 
-  // Status color scheme
   const statusColors = {
     idle: "text-gray-500",
     waiting: "text-blue-600",
@@ -96,7 +95,6 @@ export function ScanAssistantPanel({
     cancelled: "border-gray-200",
   };
 
-  // Icon based on status
   const StatusIcon = {
     idle: Fingerprint,
     waiting: Activity,
@@ -120,12 +118,9 @@ export function ScanAssistantPanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-0">
-        {/* Animation or Preview */}
         <div className="flex justify-center mb-4">
           {previewSrc ? (
-            // Show live preview
             <div className="w-64 h-64 bg-white rounded-2xl border-2 border-teal-300 overflow-hidden flex items-center justify-center relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={previewSrc}
                 alt="Live preview"
@@ -136,7 +131,6 @@ export function ScanAssistantPanel({
               </div>
             </div>
           ) : (
-            // Show animation or static icon
             <div className="motion-safe:block motion-reduce:hidden">
               {animationData ? (
                 <Lottie
@@ -152,7 +146,6 @@ export function ScanAssistantPanel({
               )}
             </div>
           )}
-          {/* Static fallback for reduced motion */}
           {!previewSrc && (
             <div className="motion-reduce:block motion-safe:hidden w-64 h-64 bg-white/80 rounded-2xl border-2 border-teal-300 flex items-center justify-center">
               <Fingerprint className="w-32 h-32 text-teal-400" />
@@ -160,7 +153,6 @@ export function ScanAssistantPanel({
           )}
         </div>
 
-        {/* Primary Status */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
             {status === "capturing" ? (
@@ -178,10 +170,8 @@ export function ScanAssistantPanel({
             </p>
           </div>
 
-          {/* Hint (Secondary line) */}
           <p className="text-sm text-gray-600 min-h-5">{hint || "\u00A0"}</p>
 
-          {/* Finger Detected Badge (only when detecting or capturing) */}
           {(status === "detecting" || status === "capturing") && (
             <div className="inline-flex items-center gap-1 bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-sm font-semibold mt-2">
               <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
@@ -189,16 +179,14 @@ export function ScanAssistantPanel({
             </div>
           )}
 
-          {/* Optional: Placement indicator using centroid_dx/dy */}
           {metrics &&
             (Math.abs(metrics.centroid_dx || 0) > 0.1 ||
               Math.abs(metrics.centroid_dy || 0) > 0.1) &&
             status === "detecting" && (
               <div className="mt-3 flex items-center justify-center">
                 <div className="relative w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg">
-                  {/* Center target */}
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-gray-300 rounded-full" />
-                  {/* Finger position indicator */}
+
                   <div
                     className="absolute w-6 h-6 bg-yellow-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
                     style={{

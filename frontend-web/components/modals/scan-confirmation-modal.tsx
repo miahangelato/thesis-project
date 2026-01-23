@@ -1,9 +1,10 @@
 "use client";
+import * as React from "react";
 
 import { Button } from "@/components/ui/button";
-import { Fingerprint, AlertCircle, CheckCircle, Sparkles } from "lucide-react";
 import { ModalShell } from "@/components/ui/modal-shell";
-import * as React from "react";
+
+import { Fingerprint, AlertCircle, CheckCircle, Sparkles } from "lucide-react";
 
 interface ScanConfirmationModalProps {
   isOpen: boolean;
@@ -30,7 +31,6 @@ export function ScanConfirmationModal({
       showTopBar
     >
       <div className="p-10">
-        {/* Header */}
         <div className="flex flex-col items-center text-center gap-6 mb-10">
           <div className="relative">
             <div className="w-24 h-24 bg-linear-to-br from-teal-50 to-cyan-50 rounded-3xl flex items-center justify-center shadow-sm border border-teal-100">
@@ -51,9 +51,7 @@ export function ScanConfirmationModal({
           </div>
         </div>
 
-        {/* Content Blocks */}
         <div className="space-y-6 mb-10">
-          {/* Automatic Process - Hero Block */}
           <div className="bg-linear-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-2xl p-6 shadow-sm">
             <div className="flex items-start gap-5">
               <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-teal-100">
@@ -69,9 +67,7 @@ export function ScanConfirmationModal({
             </div>
           </div>
 
-          {/* Info Grid */}
           <div className="grid grid-cols-2 gap-4">
-            {/* Failure Handling */}
             <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5">
               <div className="flex items-center gap-3 mb-3">
                 <AlertCircle className="w-6 h-6 text-amber-600" />
@@ -83,7 +79,6 @@ export function ScanConfirmationModal({
               </p>
             </div>
 
-            {/* Quick Tips */}
             <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-5">
               <div className="flex items-center gap-3 mb-3">
                 <CheckCircle className="w-6 h-6 text-gray-600" />
@@ -107,7 +102,6 @@ export function ScanConfirmationModal({
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-4">
           <Button
             onClick={onCancel}

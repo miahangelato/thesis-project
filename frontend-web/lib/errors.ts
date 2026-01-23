@@ -1,12 +1,3 @@
-/**
- * Custom error classes for better error handling across the application.
- * Provides structured error information with proper typing.
- */
-
-// ============================================================================
-// BASE ERROR
-// ============================================================================
-
 export class BaseAppError extends Error {
   constructor(
     message: string,
@@ -29,10 +20,6 @@ export class BaseAppError extends Error {
     };
   }
 }
-
-// ============================================================================
-// API ERRORS
-// ============================================================================
 
 export class APIError extends BaseAppError {
   constructor(
@@ -87,10 +74,6 @@ export class RateLimitError extends APIError {
   }
 }
 
-// ============================================================================
-// SESSION ERRORS
-// ============================================================================
-
 export class SessionError extends BaseAppError {
   constructor(message: string, code?: string) {
     super(message, code || "SESSION_ERROR");
@@ -117,10 +100,6 @@ export class InvalidSessionError extends SessionError {
     super("Invalid session", "INVALID_SESSION");
   }
 }
-
-// ============================================================================
-// VALIDATION ERRORS
-// ============================================================================
 
 export class ValidationError extends BaseAppError {
   constructor(
@@ -154,10 +133,6 @@ export class RangeError extends ValidationError {
     this.details = { min, max, value };
   }
 }
-
-// ============================================================================
-// SCANNER ERRORS
-// ============================================================================
 
 export class ScannerError extends BaseAppError {
   constructor(message: string, code?: string) {
@@ -199,10 +174,6 @@ export class IncompleteFingerprintsError extends ScannerError {
   }
 }
 
-// ============================================================================
-// IMAGE ERRORS
-// ============================================================================
-
 export class ImageError extends BaseAppError {
   constructor(message: string, code?: string) {
     super(message, code || "IMAGE_ERROR");
@@ -225,13 +196,6 @@ export class ImageTooLargeError extends ImageError {
   }
 }
 
-// ============================================================================
-// ERROR HANDLERS
-// ============================================================================
-
-/**
- * Convert unknown error to BaseAppError
- */
 export function normalizeError(error: unknown): BaseAppError {
   if (error instanceof BaseAppError) {
     return error;
@@ -248,28 +212,17 @@ export function normalizeError(error: unknown): BaseAppError {
   return new BaseAppError("An unknown error occurred");
 }
 
-/**
- * Get user-friendly error message
- */
 export function getErrorMessage(error: unknown): string {
   const normalizedError = normalizeError(error);
   return normalizedError.message;
 }
 
-/**
- * Check if error is a specific type
- */
 export function isErrorType<T extends BaseAppError>(
   error: unknown,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errorClass: new (...args: any[]) => T
 ): error is T {
   return error instanceof errorClass;
 }
-
-// ============================================================================
-// ERROR LOGGER
-// ============================================================================
 
 export function logError(error: unknown, context?: string) {
   const normalizedError = normalizeError(error);
@@ -278,9 +231,7 @@ export function logError(error: unknown, context?: string) {
     console.error(`[${context || "Error"}]`, normalizedError.toJSON());
   }
 
-  // In production, send to error tracking service (e.g., Sentry)
   if (process.env.NODE_ENV === "production") {
-    // TODO: Integrate with error tracking service
     console.error("[Production Error]", normalizedError.message);
   }
 }
