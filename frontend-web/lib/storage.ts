@@ -1,3 +1,28 @@
+// In-memory storage for sensitive data (not persisted)
+class InMemoryStorage {
+  private storage = new Map<string, any>();
+
+  get<T>(key: string, defaultValue: T | null = null): T | null {
+    return this.storage.has(key) ? this.storage.get(key) : defaultValue;
+  }
+
+  set<T>(key: string, value: T): void {
+    this.storage.set(key, value);
+  }
+
+  has(key: string): boolean {
+    return this.storage.has(key);
+  }
+
+  remove(key: string): void {
+    this.storage.delete(key);
+  }
+
+  clear(): void {
+    this.storage.clear();
+  }
+}
+
 class StorageWrapper {
   private prefix: string;
   private memoryStorage = new InMemoryStorage();
@@ -66,6 +91,17 @@ class StorageWrapper {
         }
       });
     } catch (error) {}
+  }
+
+  private isSensitiveKey(key: string): boolean {
+    // Keys that should never be persisted to localStorage
+    const sensitiveKeys = [
+      'session_id',
+      'demographics',
+      'scanned_fingerprints',
+      'current_session_id'
+    ];
+    return sensitiveKeys.includes(key);
   }
 }
 

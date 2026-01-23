@@ -10,7 +10,7 @@ from ninja import Router
 
 from storage import get_storage
 
-from .gemini_service import get_gemini_service
+from .openai_service import get_openai_service
 from .ml_service import generate_patient_explanation
 from .pdf_schemas import PDFGenerateResponse
 from .pdf_service import get_pdf_generator
@@ -341,13 +341,13 @@ def analyze_patient(request, session_id: str):
             },
         }
         
-        # Generate AI-powered doctor explanation using Gemini (Privacy Optimized)
-        gemini_service = get_gemini_service()
-        doctor_explanation = gemini_service.generate_doctor_explanation(structured_response, session_id)
-        logger.info(f"🧑‍⚕️ Gemini doctor explanation generated (Session {session_id})")
+        # Generate AI-powered doctor explanation using OpenAI (Privacy Optimized)
+        openai_service = get_openai_service()
+        doctor_explanation = openai_service.generate_doctor_explanation(structured_response, session_id)
+        logger.info(f"🧑‍⚕️ OpenAI doctor explanation generated (Session {session_id})")
         
         # Use doctor explanation as the primary explanation (string)
-        # If Gemini fails, it automatically falls back to template in the gemini_service
+        # If OpenAI fails, it automatically falls back to template in the openai_service
         explanation = doctor_explanation
         logger.info("📝 Explanation ready")
 

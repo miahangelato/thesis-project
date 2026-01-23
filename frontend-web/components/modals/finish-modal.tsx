@@ -113,7 +113,7 @@ export const AnalysisLoadingOverlay = ({
               size="xl"
               label="Analyzing fingerprints"
               trackClassName="border-teal-200"
-              indicatorClassName="border-teal-600 border-t-transparent"
+              indicatorClassName="border-teal-800 border-t-transparent"
             />
           )}
         </div>
@@ -179,16 +179,7 @@ export const AnalysisLoadingOverlay = ({
           </p>
         )}
       </div>
-    );
-  }
-
-  return (
-    <FullScreenLoader
-      isOpen={isOpen}
-      title="Intelligence Scanning"
-      subtitle="The system is currently running a deep neural analysis of your fingerprint patterns."
-      steps={analysisSteps}
-    />
+    </div>
   );
 };
 

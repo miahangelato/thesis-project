@@ -15,7 +15,7 @@ import { ProgressHeader } from "@/components/layout/progress-header";
 import { Footer } from "@/components/layout/footer";
 
 import { SessionEndModal } from "@/components/modals/session-end-modal";
-import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+import { Spinner } from "@/components/ui/spinner";
 
 import {
   TestTube,
@@ -69,13 +69,21 @@ export default function ConsentPage() {
           onCancel={handleCancel}
         />
 
-        <FullScreenLoader
-          isOpen={loading}
-          title="Preparing Session"
-          subtitle="Please wait a moment…"
-          steps={[]}
-          footerText=""
-        />
+        {loading && (
+          <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+            <Spinner
+              size="xl"
+              trackClassName="border-teal-200"
+              indicatorClassName="border-teal-800 border-t-transparent"
+            />
+            <h2 className="mt-8 text-3xl font-bold text-slate-900 mb-3 tracking-tight">
+              Preparing Session
+            </h2>
+            <p className="text-slate-700 text-lg">
+              Initializing secure connection and calibrating sensors...
+            </p>
+          </div>
+        )}
 
         <div className="h-screen px-28 py-6 bg-white flex flex-col overflow-hidden select-none">
           <main className="w-full flex-1 flex flex-col overflow-hidden">

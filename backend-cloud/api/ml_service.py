@@ -122,10 +122,19 @@ class MLService:
             
             model_path = self._ensure_file("final_model_v3.pkl")
 
-            with open(model_path, "rb") as f:
-                self.diabetes_model = pickle.load(f)
-
-            logger.info("✓ Diabetes model loaded (final_model_v3.pkl)")
+            try:
+                with open(model_path, "rb") as f:
+                    self.diabetes_model = pickle.load(f)
+                logger.info("✓ Diabetes model loaded (final_model_v3.pkl)")
+            except ModuleNotFoundError as e:
+                if "'numpy._core'" in str(e):
+                    logger.warning(
+                        "⚠️ Model was pickled with numpy 2.0+, but numpy 1.24.3 is installed. "
+                        "Using fallback random predictions. Re-pickle model with numpy 1.24.3 to fix."
+                    )
+                    self.diabetes_model = None  # Will use fallback
+                else:
+                    raise
 
             # Load pattern recognition CNN
             logger.info("Loading Pattern CNN...")
@@ -580,7 +589,7 @@ def generate_patient_explanation(
             "description": "Loop patterns are the most common fingerprint type, found in about 60-65% of the population.",
             "clinical_context": (
                 "Research in dermatoglyphics has observed that loop-dominant patterns appear more frequently "
-                "in populations with Type 2 Diabetes. This is a statistical correlation observed at the population level."
+                "in populations with diabetes. This is a statistical correlation observed at the population level."
             ),
             "reassurance": (
                 "Having loop patterns does not cause diabetes — it is simply one of many biological markers "

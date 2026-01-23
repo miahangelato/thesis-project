@@ -136,7 +136,7 @@ SCIENTIFIC CONTEXT:
 Dermatoglyphic research suggests that fingerprint patterns may show statistical correlations with certain genetic and metabolic conditions at a population level.
 
 Studies have observed that:
-- Whorl patterns appear more frequently in populations with Type 2 Diabetes
+- Whorl patterns appear more frequently in populations with diabetes
 - Loop patterns are the most common in the general population and are considered baseline
 - Arch patterns are less common and show weaker associations with metabolic conditions
 

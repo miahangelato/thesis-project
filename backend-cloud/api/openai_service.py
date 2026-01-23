@@ -283,11 +283,12 @@ What you can do next
 • Stay physically active and eat well
 • Monitor any changes in your health"""
 
-    def generate_doctor_explanation(self, structured_response: dict) -> str:
+    def generate_doctor_explanation(self, structured_response: dict, session_id: str = None) -> str:
         """Generate a compassionate wellness screening explanation.
         
         Args:
             structured_response: Full response dict containing all prediction data
+            session_id: Optional session ID for caching (not used in OpenAI service currently)
         
         Returns:
             Safe wellness screening explanation

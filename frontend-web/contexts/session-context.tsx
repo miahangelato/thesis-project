@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import { storage } from "@/lib/storage";
 import { STEPS } from "@/lib/constants";
 import {
@@ -33,6 +33,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const sessionActive = !!sessionId;
   const [expirationReason, setExpirationReason] = useState<string | null>(null);
+  const router = useRouter();
+  const privacyManagerRef = useRef<ReturnType<typeof getPrivacyCleanupManager> | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && !privacyManagerRef.current) {
@@ -139,25 +141,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     console.log(`[PRIVACY] Session created: ${id}`);
     setSessionId(id);
     setConsent(consentGiven);
-  };
+  }, []);
 
   const setCurrentStep = useCallback((step: number) => {
     setCurrentStepState(step);
   }, []);
-
-  const clearSession = () => {
-    const currentSessionId = sessionId;
-    setSessionId(null);
-    setConsent(false);
-    setCurrentStepState(STEPS.LANDING);
-    storage.clear();
-    sessionStorage.removeItem("demographics");
-    sessionStorage.removeItem("current_session_id");
-    sessionStorage.removeItem("scanned_fingerprints");
-    if (currentSessionId) {
-      sessionStorage.removeItem(currentSessionId);
-    }
-  };
 
   return (
     <SessionContext.Provider

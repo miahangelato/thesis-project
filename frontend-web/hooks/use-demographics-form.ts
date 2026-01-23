@@ -80,18 +80,20 @@ export function useDemographicsForm() {
 
   const [formData, setFormData] = useState<DemographicsFormData>(() => {
     try {
-      const saved = sessionStorage.getItem("demographics");
-      if (saved) {
-        const data = JSON.parse(saved);
-        return {
-          age: data.age ? String(data.age) : "",
-          weight: data.weight_kg ? String(data.weight_kg) : "",
-          heightCm: data.height_cm ? String(data.height_cm) : "",
-          gender:
-            data.gender === "prefer_not_say" ? "prefer_not_to_say" : data.gender || "",
-          blood_type: data.blood_type || "unknown",
-          showDonationCentersLater: data.show_donation_centers_later || false,
-        };
+      if (typeof window !== "undefined") {
+        const saved = sessionStorage.getItem("demographics");
+        if (saved) {
+          const data = JSON.parse(saved);
+          return {
+            age: data.age ? String(data.age) : "",
+            weight: data.weight_kg ? String(data.weight_kg) : "",
+            heightCm: data.height_cm ? String(data.height_cm) : "",
+            gender:
+              data.gender === "prefer_not_say" ? "prefer_not_to_say" : data.gender || "",
+            blood_type: data.blood_type || "unknown",
+            showDonationCentersLater: data.show_donation_centers_later || false,
+          };
+        }
       }
     } catch (error) {
       console.error("Failed to load demographics from sessionStorage:", error);
