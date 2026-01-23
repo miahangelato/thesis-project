@@ -1,7 +1,6 @@
 import { api } from "./api-client";
 import { API_ENDPOINTS } from "./constants";
 
-// Session endpoints
 export const sessionAPI = {
   start: (consent: boolean) => api.post(API_ENDPOINTS.SESSION_START, { consent }),
 
@@ -39,7 +38,6 @@ export const sessionAPI = {
     api.get(API_ENDPOINTS.SESSION_GENERATE_PDF(sessionId), { responseType: "blob" }),
 };
 
-// ML Analysis endpoints
 export interface AnalyzePatientRequest {
   age: number;
   weight_kg: number;
@@ -48,7 +46,7 @@ export interface AnalyzePatientRequest {
   blood_type?: string;
   consent: boolean;
   willing_to_donate: boolean;
-  fingerprint_images: string[]; // base64-encoded images
+  fingerprint_images: string[];
 }
 
 export interface AnalyzePatientResponse {
@@ -75,5 +73,4 @@ export const analysisAPI = {
     api.post<AnalyzePatientResponse>(API_ENDPOINTS.ANALYZE, data),
 };
 
-// Health check
 export const healthCheck = () => api.get(API_ENDPOINTS.HEALTH);

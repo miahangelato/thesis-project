@@ -1,7 +1,5 @@
 "use client";
 
-import React from "react";
-
 type Hand = "right" | "left";
 type Finger = "thumb" | "index" | "middle" | "ring" | "pinky";
 

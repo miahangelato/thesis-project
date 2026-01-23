@@ -1,13 +1,17 @@
 "use client";
 import { useState } from "react";
-import { FileText, User, ScanLine, BarChart3 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Footer } from "@/components/layout/footer";
-import { sessionAPI } from "@/lib/api";
-import { useSession } from "@/contexts/session-context";
-import { MainCarousel } from "@/components/features/landing/main-carousel";
-import { WarningHeader } from "@/components/layout/warning-header";
+
 import { ROUTES, STEPS } from "@/lib/constants";
+import { useSession } from "@/contexts/session-context";
+
+import { sessionAPI } from "@/lib/api";
+
+import { Footer } from "@/components/layout/footer";
+import { WarningHeader } from "@/components/layout/warning-header";
+import { MainCarousel } from "@/components/features/landing/main-carousel";
+
+import { FileText, User, ScanLine, BarChart3 } from "lucide-react";
 
 const features = [
   {
@@ -40,10 +44,8 @@ export default function LandingPage() {
   const handleStartClick = async () => {
     setLoading(true);
     try {
-      // Start session immediately (consent status pending)
-      const response = await sessionAPI.start(false); // Start without consent
+      const response = await sessionAPI.start(false);
 
-      // Use logical OR to handle different response structures if backend API varies
       const session_id = response.data?.session_id || response.data?.sessionId;
 
       if (session_id) {
@@ -54,8 +56,6 @@ export default function LandingPage() {
         throw new Error("Invalid session response");
       }
     } catch (err) {
-      console.error("Failed to start session:", err);
-      // Fallback for demo/offline mode if needed, but preferably handle error UI
       const mockId = "dev-session-" + Date.now();
       setSession(mockId, false);
       setCurrentStep(STEPS.CONSENT);
@@ -67,12 +67,10 @@ export default function LandingPage() {
 
   return (
     <div className="relative flex flex-col h-screen w-full page-content-max overflow-hidden">
-      {/* Warning Banner */}
       <div className="w-full page-container pt-4 pb-0 z-20 select-none">
         <WarningHeader />
       </div>
 
-      {/* Hero Section - Carousel */}
       <div className="relative flex-1 w-full min-h-0 flex items-center">
         <MainCarousel
           autoPlayInterval={6000}
@@ -81,7 +79,6 @@ export default function LandingPage() {
         />
       </div>
 
-      {/* Features Section - Static Cards */}
       <div className="w-full page-container pb-2 -mt-8 grid grid-cols-4 gap-6 z-10 select-none">
         {features.map((feature, index) => (
           <div
@@ -101,7 +98,6 @@ export default function LandingPage() {
         ))}
       </div>
 
-      {/* Footer */}
       <div className="py-2 z-30">
         <Footer />
       </div>

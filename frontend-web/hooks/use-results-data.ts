@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 
 import type {
@@ -19,7 +18,6 @@ const normalizeBoolean = (value: unknown): boolean => {
   return false;
 };
 
-// Decode UTF-8 base64 JSON safely (handles emoji/unicode from AI text)
 const decodeBase64Json = (encoded: string) => {
   try {
     const binary = atob(encoded);
@@ -27,7 +25,6 @@ const decodeBase64Json = (encoded: string) => {
     const decoded = new TextDecoder().decode(bytes);
     return JSON.parse(decoded);
   } catch (err) {
-    console.error("Failed to decode stored session data", err);
     return null;
   }
 };
@@ -37,7 +34,6 @@ const readDemographicsFromSessionStorage = (): StoredDemographics | null => {
 
   const storedDemo = window.sessionStorage.getItem("demographics");
   if (!storedDemo) {
-    console.warn("⚠️ No demographics found in sessionStorage");
     return null;
   }
 
@@ -45,7 +41,6 @@ const readDemographicsFromSessionStorage = (): StoredDemographics | null => {
     const parsed = JSON.parse(storedDemo) as StoredDemographics;
     return parsed;
   } catch (e) {
-    console.error("Failed to parse demographics:", e);
     return null;
   }
 };
@@ -68,20 +63,17 @@ export function useResultsData(sessionId: string | null) {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Try to get sessionId from context or fallback to sessionStorage
       let activeSessionId = sessionId;
       if (!activeSessionId) {
         activeSessionId = sessionStorage.getItem("current_session_id");
       }
 
       if (!activeSessionId) {
-        console.warn("⚠️ No session ID available");
         setLoading(false);
         return;
       }
 
       try {
-        // Try to get data from sessionStorage
         const encodedData = sessionStorage.getItem(activeSessionId);
 
         if (encodedData) {
@@ -92,10 +84,8 @@ export function useResultsData(sessionId: string | null) {
             return;
           }
 
-          // Check expiry
           const expiry = (dataWithExpiry as { expiry?: unknown })?.expiry;
           if (typeof expiry === "number" && Date.now() > expiry) {
-            console.warn("⏰ Data expired");
             sessionStorage.removeItem(activeSessionId);
             setLoading(false);
             return;
@@ -119,15 +109,12 @@ export function useResultsData(sessionId: string | null) {
           const patternCounts =
             readRecord(dataObj.pattern_counts) ?? ({} as Record<string, unknown>);
 
-          // Pull stored demographics for willingness fallback
           let storedDemographics: StoredDemographics | null = null;
           const storedDemoRaw = sessionStorage.getItem("demographics");
           if (storedDemoRaw) {
             try {
               storedDemographics = JSON.parse(storedDemoRaw) as StoredDemographics;
-            } catch (err) {
-              console.error("Failed to parse stored demographics", err);
-            }
+            } catch (err) {}
           }
 
           const hasBloodCenters =
@@ -139,7 +126,6 @@ export function useResultsData(sessionId: string | null) {
             normalizeBoolean(storedDemographics?.willing_to_donate) ||
             hasBloodCenters;
 
-          // Map API response to component state
           setResult({
             diabetes_risk:
               (typeof dataObj.risk_level === "string" ? dataObj.risk_level : undefined) ||
@@ -200,7 +186,6 @@ export function useResultsData(sessionId: string | null) {
             nearby_facilities: nearbyFacilities,
             pattern_counts: patternCounts,
             bmi: typeof dataObj.bmi === "number" ? dataObj.bmi : 0,
-            // QR Code & PDF Download
             qr_code_url:
               typeof dataObj.qr_code_url === "string" ? dataObj.qr_code_url : undefined,
             download_url:
@@ -209,11 +194,9 @@ export function useResultsData(sessionId: string | null) {
 
           setLoading(false);
         } else {
-          console.error("❌ No data in sessionStorage for session:", sessionId);
           setLoading(false);
         }
       } catch (error) {
-        console.error("❌ Error parsing session data:", error);
         setLoading(false);
       }
     };

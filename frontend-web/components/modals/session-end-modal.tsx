@@ -23,7 +23,6 @@ export function SessionEndModal({ isOpen, onConfirm, onCancel }: SessionEndModal
       showTopBar
     >
       <div className="p-10">
-        {/* Icon */}
         <div className="flex justify-center mb-10">
           <div className="relative">
             <div className="w-24 h-24 bg-linear-to-br from-teal-50 to-cyan-50 rounded-3xl flex items-center justify-center shadow-sm border border-teal-100">
@@ -33,18 +32,15 @@ export function SessionEndModal({ isOpen, onConfirm, onCancel }: SessionEndModal
           </div>
         </div>
 
-        {/* Title */}
         <h2 className="text-4xl font-bold text-center mb-4 text-slate-900 tracking-tight">
           You&apos;re Almost Done!
         </h2>
 
-        {/* Description */}
         <p className="text-slate-600 font-medium text-center mb-10 leading-relaxed text-xl max-w-sm mx-auto">
           You&apos;ve made great progress. Leaving now will erase everything you&apos;ve
           entered, and you&apos;ll need to start over from the beginning.
         </p>
 
-        {/* Warning box */}
         <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-6 mb-10 shadow-sm">
           <p className="text-xl font-bold text-amber-900 mb-4 text-center flex items-center justify-center gap-3">
             <span className="text-2xl">⚠️</span> You Will Lose:
@@ -66,7 +62,6 @@ export function SessionEndModal({ isOpen, onConfirm, onCancel }: SessionEndModal
           </ul>
         </div>
 
-        {/* Buttons */}
         <div className="flex flex-col gap-4">
           <Button
             onClick={onCancel}

@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useId, useRef } from "react";
+import { useId, useRef } from "react";
 import { Button } from "@/components/ui/button";
 
 type FingerprintUploadProps = {

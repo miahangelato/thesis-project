@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type ScanPreviewProps = {
   file?: File | null;
@@ -13,7 +12,6 @@ export function ScanPreview({ file, alt, className }: ScanPreviewProps) {
 
   useEffect(() => {
     if (!file) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setObjectUrl(null);
       return;
     }
@@ -29,8 +27,6 @@ export function ScanPreview({ file, alt, className }: ScanPreviewProps) {
   if (!objectUrl) return null;
 
   return (
-    // next/image can break on blob: object URLs; use img for local previews.
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={objectUrl}
       alt={alt}

@@ -11,8 +11,7 @@ interface FooterProps {
 
 export function Footer({
   className = "",
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  showAllLinks: _showAllLinks = false, // Reserved for future use
+  showAllLinks: _showAllLinks = false,
   fixed = true,
   transparent = false,
   customContent,
@@ -26,10 +25,8 @@ export function Footer({
         fixed ? "absolute bottom-0 left-0 right-0 z-10" : ""
       } ${className}`}
     >
-      {/* Left: Copyright */}
       <div className="text-xs text-gray-500">© 2025 Team 3. All rights reserved.</div>
 
-      {/* Right: Custom content */}
       {customContent && (
         <div className="flex items-center text-xs text-gray-500">{customContent}</div>
       )}

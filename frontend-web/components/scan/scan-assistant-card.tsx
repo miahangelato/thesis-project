@@ -1,17 +1,16 @@
 "use client";
-
 import { useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HandGuide } from "@/components/features/scan/hand-guide";
-import FingerprintScanner from "@/components/features/scan/fingerprint-scanner";
-import { ScanAssistantSubtitle } from "@/components/features/scan/scan-assistant-subtitle";
-import { ScanPreview } from "@/components/scan/scan-preview";
-import { FingerprintUpload } from "@/components/scan/fingerprint-upload";
 
 import { FINGER_NAMES } from "@/lib/finger-names";
 import { FingerName } from "@/types/fingerprint";
 import type { ScanAssistantState } from "@/hooks/use-scan-session";
+
+import { ScanPreview } from "@/components/scan/scan-preview";
+import { HandGuide } from "@/components/features/scan/hand-guide";
+import { FingerprintUpload } from "@/components/scan/fingerprint-upload";
+import FingerprintScanner from "@/components/features/scan/fingerprint-scanner";
+import { ScanAssistantSubtitle } from "@/components/features/scan/scan-assistant-subtitle";
+
 import {
   CheckCircle,
   ChevronLeft,
@@ -24,11 +23,12 @@ import {
   RotateCcw,
   Undo2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Props = {
   loading: boolean;
 
-  // scan session state
   currentFingerIndex: number;
   fingerFiles: Partial<Record<FingerName, File>>;
   countdown: number | null;
@@ -36,7 +36,6 @@ type Props = {
   scanningStarted: boolean;
   paused: boolean;
 
-  // derived
   totalFingers: number;
   scannedCount: number;
   currentFinger: FingerName;
@@ -45,7 +44,6 @@ type Props = {
   scanAssistantState: ScanAssistantState;
   firstUnscannedIndex: number;
 
-  // actions
   setScannerReady: (next: boolean) => void;
   onRequestStartScanning: () => void;
   onOpenCancelModal: () => void;
@@ -93,7 +91,6 @@ export function ScanAssistantCard({
         : null;
     const fallbackFile = lastKey ? fingerFiles[lastKey] : null;
 
-    // Check if we're rescanning this finger
     const isRescanning =
       rescanningFinger && rescanningFinger.finger === currentFinger && !currentFile;
     const fileToShow =
@@ -136,7 +133,6 @@ export function ScanAssistantCard({
       </CardHeader>
 
       <CardContent className="p-5">
-        {/* Header Section - Moved outside grid for alignment */}
         <div className="text-center mb-2">
           <p className="text-2xl text-gray-600">
             Follow the instructions to scan your fingerprints
@@ -144,9 +140,7 @@ export function ScanAssistantCard({
         </div>
 
         <div className="grid grid-cols-2 gap-5 mb-1">
-          {/* Left Col: Hand Guide */}
           <div className="flex flex-col items-center">
-            {/* Header Container with fixed height - Top Aligned for perfect title alignment */}
             <div className="h-16 flex flex-col items-center justify-start mb-3 pt-1">
               <span
                 className={`text-2xl font-bold px-6 py-1.5 rounded-full shadow-sm ${
@@ -163,7 +157,6 @@ export function ScanAssistantCard({
               <HandGuide hand={hand} highlightFinger={highlight} className="w-42 h-42" />
             </div>
 
-            {/* Scan Assistant Status */}
             <div className="w-full">
               <ScanAssistantSubtitle
                 scannerState={scanAssistantState}
@@ -174,7 +167,6 @@ export function ScanAssistantCard({
               />
             </div>
 
-            {/* Hidden Scanner Component */}
             {scanningStarted && scannedCount < totalFingers && (
               <div className="w-full mt-2">
                 <FingerprintScanner
@@ -188,9 +180,7 @@ export function ScanAssistantCard({
             )}
           </div>
 
-          {/* Right Col: Scan Result */}
           <div className="flex flex-col items-center">
-            {/* Header Container - Same fixed height and top alignment */}
             <div className="h-16 flex flex-col items-center justify-start mb-3 pt-1">
               <span className="text-2xl font-bold px-6 py-1.5 rounded-full bg-gray-100 text-gray-700 shadow-sm">
                 Scanned Result
@@ -237,8 +227,8 @@ export function ScanAssistantCard({
                 </div>
               )}
             </div>
-{/* 
-            <div className="w-50 mt-2">
+
+            {/* <div className="w-50 mt-2">
               <FingerprintUpload
                 disabled={loading}
                 label={FINGER_NAMES[currentFinger]}
@@ -246,7 +236,6 @@ export function ScanAssistantCard({
               />
             </div> */}
 
-            {/* Retake Button - Only visible when session is complete */}
             {preview.isCurrent && scannedCount === totalFingers && (
               <Button
                 onClick={onRescan}
@@ -260,12 +249,9 @@ export function ScanAssistantCard({
           </div>
         </div>
 
-        {/* Control Bar Separator */}
         <hr className="border-t-2 border-dashed border-gray-100 my-2" />
 
-        {/* Dedicated Control Bar - Dynamic Buttons */}
         <div className="flex items-center justify-center gap-4 mb-2">
-          {/* State 1: Not Started - Show Start Button */}
           {!scanningStarted ? (
             <Button
               onClick={onRequestStartScanning}
@@ -276,9 +262,7 @@ export function ScanAssistantCard({
               Start Scanning
             </Button>
           ) : scannedCount < totalFingers ? (
-            /* State 2: Scanning - Show Pause/Resume, Restart, Cancel */
             <>
-              {/* Pause/Resume Button */}
               <Button
                 onClick={onTogglePaused}
                 variant={paused ? "default" : "outline"}
@@ -301,7 +285,6 @@ export function ScanAssistantCard({
                 )}
               </Button>
 
-              {/* Cancel Session Button - Red */}
               <Button
                 onClick={onOpenCancelModal}
                 variant="ghost"
@@ -311,7 +294,6 @@ export function ScanAssistantCard({
               </Button>
             </>
           ) : (
-            /* State 3: Completed (10/10) - Show Restart Button */
             <Button
               onClick={onOpenResetModal}
               variant="outline"
@@ -323,7 +305,6 @@ export function ScanAssistantCard({
           )}
         </div>
 
-        {/* Bottom Navigation Bar - Full Width */}
         <div className="flex gap-4 items-center pt-2 border-t border-gray-100 mt-1">
           <Button
             onClick={onPreviousFinger}
@@ -343,7 +324,6 @@ export function ScanAssistantCard({
             disabled={
               currentFingerIndex === totalFingers - 1 ||
               (scanningStarted && !paused && scannedCount < totalFingers) ||
-              // Prevent going forward if the current finger hasn't been scanned AND we aren't done yet
               (scannedCount < totalFingers && currentFingerIndex >= firstUnscannedIndex)
             }
             variant="ghost"

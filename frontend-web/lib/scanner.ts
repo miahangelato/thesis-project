@@ -1,7 +1,3 @@
-/**
- * Scanner Client - Interface to the Edge Node Digital Persona Scanner
- */
-
 const SCANNER_BASE_URL = process.env.NEXT_PUBLIC_SCANNER_URL
   ? `${process.env.NEXT_PUBLIC_SCANNER_URL}/api/scanner`
   : "http://localhost:5000/api/scanner";
@@ -18,7 +14,7 @@ export interface ScannerStatus {
 
 export interface ScanResult {
   success: boolean;
-  image?: string; // base64 encoded PNG
+  image?: string;
   finger?: string;
   width?: number;
   height?: number;
@@ -27,9 +23,6 @@ export interface ScanResult {
   debug_info?: string;
 }
 
-/**
- * Check if the scanner is available and ready
- */
 export async function checkScannerStatus(): Promise<ScannerStatus> {
   try {
     const response = await fetch(`${SCANNER_BASE_URL}/status`, {
@@ -37,7 +30,7 @@ export async function checkScannerStatus(): Promise<ScannerStatus> {
       headers: {
         "Content-Type": "application/json",
         "X-API-Key": API_KEY,
-        "ngrok-skip-browser-warning": "true", // Bypass ngrok warning page
+        "ngrok-skip-browser-warning": "true",
       },
     });
 
@@ -47,7 +40,6 @@ export async function checkScannerStatus(): Promise<ScannerStatus> {
 
     return await response.json();
   } catch (error) {
-    console.error("Scanner status check error:", error);
     return {
       scanner_available: false,
       status: "error",
@@ -57,9 +49,6 @@ export async function checkScannerStatus(): Promise<ScannerStatus> {
   }
 }
 
-/**
- * Capture a fingerprint image from the scanner
- */
 export async function captureFinger(fingerName: string): Promise<ScanResult> {
   try {
     const response = await fetch(`${SCANNER_BASE_URL}/capture`, {
@@ -67,7 +56,7 @@ export async function captureFinger(fingerName: string): Promise<ScanResult> {
       headers: {
         "Content-Type": "application/json",
         "X-API-Key": API_KEY,
-        "ngrok-skip-browser-warning": "true", // Bypass ngrok warning page
+        "ngrok-skip-browser-warning": "true",
       },
       body: JSON.stringify({
         finger_name: fingerName,
@@ -101,7 +90,6 @@ export async function captureFinger(fingerName: string): Promise<ScanResult> {
       quality: data.data.quality,
     };
   } catch (error) {
-    console.error("Fingerprint capture error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to capture fingerprint",
@@ -109,14 +97,9 @@ export async function captureFinger(fingerName: string): Promise<ScanResult> {
   }
 }
 
-/**
- * Convert base64 image to File object for upload
- */
 export function base64ToFile(base64: string, filename: string): File {
-  // Remove data URI prefix if present
   const base64Data = base64.includes(",") ? base64.split(",")[1] : base64;
 
-  // Convert base64 to binary
   const byteCharacters = atob(base64Data);
   const byteArrays = [];
 

@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/contexts/session-context";
@@ -8,7 +7,6 @@ export function useBackNavigation(enabled: boolean = true) {
   const router = useRouter();
   const { clearSession } = useSession();
   const [showModal, setShowModal] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [pendingNavigation, _setPendingNavigation] = useState(false);
 
   useEffect(() => {
@@ -17,15 +15,12 @@ export function useBackNavigation(enabled: boolean = true) {
     const handlePopState = (event: PopStateEvent) => {
       event.preventDefault();
 
-      // Show the modal instead of browser confirm
       setShowModal(true);
       _setPendingNavigation(true);
 
-      // Push state back to prevent navigation until user confirms
       window.history.pushState(null, "", window.location.pathname);
     };
 
-    // Push current state to prevent immediate back
     window.history.pushState(null, "", window.location.pathname);
 
     window.addEventListener("popstate", handlePopState);
@@ -48,7 +43,6 @@ export function useBackNavigation(enabled: boolean = true) {
   const handleCancel = () => {
     setShowModal(false);
     _setPendingNavigation(false);
-    // Push state again to maintain the current position
     window.history.pushState(null, "", window.location.pathname);
   };
 

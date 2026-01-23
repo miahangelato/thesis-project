@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useRef } from "react";
 import { Delete, Check } from "lucide-react";
 
@@ -22,7 +21,6 @@ export function InlineNumericKeypad({
 }: InlineNumericKeypadProps) {
   const keypadRef = useRef<HTMLDivElement>(null);
 
-  // Handle click outside to dismiss
   useEffect(() => {
     if (!isVisible) return;
 
@@ -36,7 +34,6 @@ export function InlineNumericKeypad({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isVisible, onDismiss]);
 
-  // Handle Enter key
   useEffect(() => {
     if (!isVisible) return;
 
@@ -59,7 +56,6 @@ export function InlineNumericKeypad({
 
   return (
     <>
-      {/* Backdrop - subtle, only appears when visible */}
       {isVisible && (
         <div
           className="fixed inset-0 bg-black/5 backdrop-blur-[1px] z-40 animate-in fade-in duration-200"
@@ -67,7 +63,6 @@ export function InlineNumericKeypad({
         />
       )}
 
-      {/* Docked Keypad - always at bottom, slides up/down */}
       <div
         ref={keypadRef}
         className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t-4 border-[#00c2cb] shadow-2xl transition-transform duration-300 ease-out ${
@@ -75,7 +70,6 @@ export function InlineNumericKeypad({
         }`}
       >
         <div className="max-w-2xl mx-auto p-4 pb-6">
-          {/* Number Grid */}
           <div className="grid grid-cols-3 gap-3 mb-3">
             {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
               <button
@@ -89,9 +83,7 @@ export function InlineNumericKeypad({
             ))}
           </div>
 
-          {/* Bottom Row */}
           <div className="grid grid-cols-3 gap-3">
-            {/* Decimal or Empty */}
             {allowDecimal ? (
               <button
                 type="button"
@@ -104,7 +96,6 @@ export function InlineNumericKeypad({
               <div />
             )}
 
-            {/* Zero */}
             <button
               type="button"
               onClick={() => onKeyPress("0")}
@@ -113,7 +104,6 @@ export function InlineNumericKeypad({
               0
             </button>
 
-            {/* Backspace */}
             <button
               type="button"
               onClick={onBackspace}
@@ -123,7 +113,6 @@ export function InlineNumericKeypad({
             </button>
           </div>
 
-          {/* Confirm Button (Optional) */}
           {onConfirm && (
             <button
               type="button"

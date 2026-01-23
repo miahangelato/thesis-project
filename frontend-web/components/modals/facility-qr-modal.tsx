@@ -1,10 +1,10 @@
 "use client";
-
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { X, MapPin, Globe, Facebook, Smartphone, Info } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { ModalShell } from "@/components/ui/modal-shell";
+import { X, MapPin, Globe, Facebook, Smartphone, Info } from "lucide-react";
 
 interface FacilityQRModalProps {
   isOpen: boolean;
@@ -60,7 +60,6 @@ export function FacilityQRModal({ isOpen, onClose, facility }: FacilityQRModalPr
       showTopBar
     >
       <div className="p-7">
-        {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center border border-teal-100">
@@ -83,7 +82,6 @@ export function FacilityQRModal({ isOpen, onClose, facility }: FacilityQRModalPr
           </button>
         </div>
 
-        {/* Facility Name Banner */}
         <div className="bg-teal-50/30 rounded-2xl p-5 mb-6 border border-teal-100/50 min-h-[110px] flex flex-col justify-center">
           <p className="text-sm font-bold text-[#00c2cb]/50 uppercase tracking-widest mb-1">
             Facility
@@ -91,7 +89,6 @@ export function FacilityQRModal({ isOpen, onClose, facility }: FacilityQRModalPr
           <p className="text-xl font-bold text-teal-900 leading-tight">{facility.name}</p>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-2 mb-6 bg-teal-50/50 p-1.5 rounded-2xl">
           {tabs.map((tab) => (
             <button
@@ -111,7 +108,6 @@ export function FacilityQRModal({ isOpen, onClose, facility }: FacilityQRModalPr
           ))}
         </div>
 
-        {/* QR Code Area */}
         <div className="flex flex-col items-center justify-center bg-white border-2 border-dashed border-teal-100 rounded-4xl p-6 mb-6">
           <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
             <QRCodeSVG
@@ -127,7 +123,6 @@ export function FacilityQRModal({ isOpen, onClose, facility }: FacilityQRModalPr
           </div>
         </div>
 
-        {/* Footer Action */}
         <Button
           onClick={onClose}
           className="w-full h-16 bg-[#00c2cb] hover:bg-[#00adb5] text-white text-xl font-bold rounded-2xl shadow-lg shadow-teal-200/50 transition-all transform hover:scale-[1.02] active:scale-[0.98]"

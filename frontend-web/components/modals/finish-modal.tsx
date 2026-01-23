@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle, Clock, Fingerprint, RefreshCcw } from "lucide-react";
-import { ModalShell } from "@/components/ui/modal-shell";
 import { Spinner } from "@/components/ui/spinner";
+import { ModalShell } from "@/components/ui/modal-shell";
+
+import { AlertTriangle, CheckCircle, Clock, Fingerprint, RefreshCcw } from "lucide-react";
 
 interface FinishConfirmationModalProps {
   isOpen: boolean;
@@ -95,15 +96,13 @@ export const AnalysisLoadingOverlay = ({
   const isError = state === "error";
 
   return (
-    <div className="fixed inset-0 z-60 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center transition-all duration-500">
+    <div className="fixed inset-0 z-60 bg-white/90 backdrop-blur-sm flex items-center justify-center transition-all duration-500">
       <div className="text-center px-8 w-full max-w-lg">
-        {/* Advanced Loader */}
-        {/* Standard Loader Style */}
         <div className="relative mb-12 flex items-center justify-center">
           {isError ? (
             <div className="flex flex-col items-center gap-4">
-              <div className="w-24 h-24 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
-                <AlertTriangle className="w-12 h-12 text-red-400" />
+              <div className="w-24 h-24 rounded-full bg-red-50 border border-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-12 h-12 text-red-600" />
               </div>
             </div>
           ) : (
@@ -116,68 +115,63 @@ export const AnalysisLoadingOverlay = ({
           )}
         </div>
 
-        {/* Loading Text */}
-        <h2 className="text-3xl font-bold text-white mb-3 tracking-tight">
+        <h2 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">
           {isError ? "Analyzing Fingerprints Failed" : "Analyzing Fingerprints"}
         </h2>
-        <p className="text-slate-400 mb-10 text-lg">
+        <p className="text-slate-700 mb-10 text-lg">
           {isError
             ? errorMessage || "Please try submitting again."
             : "Please wait while we process your data..."}
         </p>
 
-        {/* Progress Steps */}
         {!isError && (
           <div className="space-y-3 text-left">
-            {/* Step 1 */}
             <div
-              className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm animate-in slide-in-from-bottom-4 fade-in duration-700 fill-mode-forwards"
+              className="flex items-center gap-4 bg-teal-50 border border-teal-100 rounded-xl p-4 backdrop-blur-sm animate-in slide-in-from-bottom-4 fade-in duration-700 fill-mode-forwards"
               style={{ animationDelay: "100ms" }}
             >
-              <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-full bg-teal-100/60 flex items-center justify-center shrink-0">
                 <div className="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse" />
               </div>
               <div>
-                <p className="text-white font-medium">Uploading fingerprints</p>
-                <p className="text-xs text-slate-500">Securely transmitting data</p>
+                <p className="text-slate-900 font-medium">Uploading fingerprints</p>
+                <p className="text-xs text-slate-600">Securely transmitting data</p>
               </div>
             </div>
 
-            {/* Step 2 */}
             <div
-              className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm animate-in slide-in-from-bottom-4 fade-in duration-700 fill-mode-forwards"
+              className="flex items-center gap-4 bg-teal-50 border border-teal-100 rounded-xl p-4 backdrop-blur-sm animate-in slide-in-from-bottom-4 fade-in duration-700 fill-mode-forwards"
               style={{ animationDelay: "300ms" }}
             >
-              <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-full bg-teal-100/60 flex items-center justify-center shrink-0">
                 <RefreshCcw
-                  className="w-5 h-5 text-cyan-400 animate-spin"
+                  className="w-5 h-5 text-teal-500 animate-spin"
                   style={{ animationDuration: "3s" }}
                 />
               </div>
               <div>
-                <p className="text-white font-medium">Running AI analysis</p>
-                <p className="text-xs text-slate-500">Processing patterns & minutiae</p>
+                <p className="text-slate-900 font-medium">Running AI analysis</p>
+                <p className="text-xs text-slate-600">Processing patterns & minutiae</p>
               </div>
             </div>
 
-            {/* Step 3 */}
             <div
-              className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm animate-in slide-in-from-bottom-4 fade-in duration-700 fill-mode-forwards"
+              className="flex items-center gap-4 bg-teal-50 border border-teal-100 rounded-xl p-4 backdrop-blur-sm animate-in slide-in-from-bottom-4 fade-in duration-700 fill-mode-forwards"
               style={{ animationDelay: "500ms" }}
             >
-              <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center shrink-0">
-                <Clock className="w-5 h-5 text-teal-400" />
+              <div className="w-10 h-10 rounded-full bg-teal-100/60 flex items-center justify-center shrink-0">
+                <Clock className="w-5 h-5 text-teal-500" />
               </div>
               <div>
-                <p className="text-white font-medium">Generating results</p>
-                <p className="text-xs text-slate-500">Finalizing your report</p>
+                <p className="text-slate-900 font-medium">Generating results</p>
+                <p className="text-xs text-slate-600">Finalizing your report</p>
               </div>
             </div>
           </div>
         )}
 
         {!isError && (
-          <p className="text-slate-500 text-sm mt-8 animate-pulse">
+          <p className="text-slate-600 text-sm mt-8 animate-pulse">
             Estimated time: 10-15 seconds
           </p>
         )}

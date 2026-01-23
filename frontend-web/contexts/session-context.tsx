@@ -1,6 +1,5 @@
 "use client";
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { storage } from "@/lib/storage";
 import { STORAGE_KEYS, STEPS } from "@/lib/constants";
 
@@ -25,7 +24,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [currentStep, setCurrentStepState] = useState<number>(STEPS.LANDING);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load session from storage on mount
   useEffect(() => {
     try {
       const storedSessionId = storage.get<string>(STORAGE_KEYS.SESSION_ID);
@@ -44,7 +42,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Persist state changes
   useEffect(() => {
     if (!isLoading) {
       if (sessionId) {
@@ -62,7 +59,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const setSession = (id: string, consentGiven: boolean) => {
     setSessionId(id);
     setConsent(consentGiven);
-    // Step is usually updated separately or defaults to consent
   };
 
   const setCurrentStep = (step: number) => {
@@ -75,11 +71,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setConsent(false);
     setCurrentStepState(STEPS.LANDING);
     storage.clear();
-    // Clear demographics data from sessionStorage
     sessionStorage.removeItem("demographics");
     sessionStorage.removeItem("current_session_id");
     sessionStorage.removeItem("scanned_fingerprints");
-    // Clear analysis results from sessionStorage
     if (currentSessionId) {
       sessionStorage.removeItem(currentSessionId);
     }

@@ -1,9 +1,7 @@
 "use client";
-
 import React, { useMemo, useState } from "react";
 import { cmToFtIn, ftInToCm, kgToLb, lbToKg } from "@/lib/units";
 
-// Medical validation constants (evidence-based ranges)
 const VALIDATION = {
   AGE: {
     MIN: 18,
@@ -11,8 +9,8 @@ const VALIDATION = {
     SENIOR_THRESHOLD: 65,
   },
   WEIGHT_KG: {
-    MIN: 30,  // Severe underweight adult
-    MAX: 300, // Extreme obesity (bariatric range)
+    MIN: 30,
+    MAX: 300,
     WARN_LOW: 40,
     WARN_HIGH: 200,
   },
@@ -23,8 +21,8 @@ const VALIDATION = {
     WARN_HIGH: 440,
   },
   HEIGHT_CM: {
-    MIN: 120,  // Severe dwarfism adult
-    MAX: 250,  // Tallest recorded humans
+    MIN: 120,
+    MAX: 250,
     WARN_LOW: 140,
     WARN_HIGH: 220,
   },
@@ -37,8 +35,8 @@ const VALIDATION = {
     MAX: 11,
   },
   BMI: {
-    MIN: 12,   // Severe starvation
-    MAX: 80,   // Extreme obesity
+    MIN: 12,
+    MAX: 80,
     WARN_LOW: 15,
     WARN_HIGH: 50,
   },
@@ -70,22 +68,16 @@ export type BmiCategory = {
 };
 
 export function useDemographicsForm() {
-  // Unit preferences
   const [weightUnit, setWeightUnit] = useState<WeightUnit>("kg");
   const [heightUnit, setHeightUnit] = useState<HeightUnit>("cm");
 
-  // ft/in inputs for heightUnit === "ftin"
   const [heightFt, setHeightFt] = useState("");
   const [heightIn, setHeightIn] = useState("");
 
-  // Keypad routing
   const [activeField, setActiveField] = useState<ActiveField>(null);
 
-  // Validation warnings
   const [validationWarnings, setValidationWarnings] = useState<ValidationWarning[]>([]);
 
-  // Form state (clean: NO blood donation eligibility criteria)
-  // Load from sessionStorage if available
   const [formData, setFormData] = useState<DemographicsFormData>(() => {
     try {
       const saved = sessionStorage.getItem("demographics");
@@ -95,7 +87,8 @@ export function useDemographicsForm() {
           age: data.age ? String(data.age) : "",
           weight: data.weight_kg ? String(data.weight_kg) : "",
           heightCm: data.height_cm ? String(data.height_cm) : "",
-          gender: data.gender === "prefer_not_say" ? "prefer_not_to_say" : (data.gender || ""),
+          gender:
+            data.gender === "prefer_not_say" ? "prefer_not_to_say" : data.gender || "",
           blood_type: data.blood_type || "unknown",
           showDonationCentersLater: data.show_donation_centers_later || false,
         };
@@ -160,9 +153,6 @@ export function useDemographicsForm() {
     }
   };
 
-  // -------------------------
-  // Canonical values (kg/cm)
-  // -------------------------
   const weightKg = useMemo(() => {
     const w = parseFloat(formData.weight);
     if (!w || w <= 0) return null;
@@ -170,23 +160,18 @@ export function useDemographicsForm() {
   }, [formData.weight, weightUnit]);
 
   const heightCm = useMemo(() => {
-    // If heightUnit=cm: use formData.heightCm
     if (heightUnit === "cm") {
       const h = parseFloat(formData.heightCm);
       if (!h || h <= 0) return null;
       return h;
     }
 
-    // If heightUnit=ftin: convert ft/in to cm
     const ft = parseInt(heightFt || "0", 10);
     const inch = parseInt(heightIn || "0", 10);
     if (ft === 0 && inch === 0) return null;
     return ftInToCm(ft, inch);
   }, [formData.heightCm, heightUnit, heightFt, heightIn]);
 
-  // -------------------------
-  // BMI (compact preview)
-  // -------------------------
   const bmiValue = useMemo(() => {
     if (!weightKg || !heightCm) return null;
     const meters = heightCm / 100;
@@ -194,13 +179,9 @@ export function useDemographicsForm() {
     return Number.isFinite(bmi) ? bmi.toFixed(1) : null;
   }, [weightKg, heightCm]);
 
-  // -------------------------
-  // Validation Logic
-  // -------------------------
   const validateInputs = useMemo(() => {
     const warnings: ValidationWarning[] = [];
-    
-    // Age validation
+
     const age = parseInt(formData.age || "0", 10);
     if (age > 0) {
       if (age < VALIDATION.AGE.MIN) {
@@ -218,7 +199,6 @@ export function useDemographicsForm() {
       }
     }
 
-    // Weight validation
     if (weightKg) {
       if (weightKg < VALIDATION.WEIGHT_KG.MIN) {
         warnings.push({
@@ -247,7 +227,6 @@ export function useDemographicsForm() {
       }
     }
 
-    // Height validation
     if (heightCm) {
       if (heightCm < VALIDATION.HEIGHT_CM.MIN) {
         warnings.push({
@@ -276,7 +255,6 @@ export function useDemographicsForm() {
       }
     }
 
-    // BMI validation (cross-field)
     const bmi = bmiValue ? parseFloat(bmiValue) : null;
     if (bmi && weightKg && heightCm) {
       if (bmi < VALIDATION.BMI.MIN) {
@@ -309,7 +287,6 @@ export function useDemographicsForm() {
     return warnings;
   }, [formData.age, weightKg, heightCm, bmiValue]);
 
-  // Update validation warnings when inputs change
   React.useEffect(() => {
     setValidationWarnings(validateInputs);
   }, [validateInputs]);
@@ -319,7 +296,6 @@ export function useDemographicsForm() {
     const age = parseInt(formData.age || "0", 10);
     if (!bmi || !age || age < 18) return null;
 
-    // Standard Adult BMI Categories (WHO / CDC)
     if (bmi < 18.5) {
       return {
         label: "Underweight",
@@ -352,9 +328,6 @@ export function useDemographicsForm() {
     };
   }, [bmiValue, formData.age]);
 
-  // -------------------------
-  // Keypad handlers
-  // -------------------------
   const handleFieldFocus = (field: Exclude<ActiveField, null>) => setActiveField(field);
 
   const handleFieldBlur = (e: React.FocusEvent) => {
@@ -445,7 +418,6 @@ export function useDemographicsForm() {
   const handleKeypadConfirm = () => {
     if (activeField === "age") document.getElementById("weight")?.focus();
     else if (activeField === "weight") {
-      // Height: if ft/in mode, focus ft; else focus cm height field
       if (heightUnit === "ftin") document.getElementById("height-ft")?.focus();
       else document.getElementById("height")?.focus();
     } else if (activeField === "heightCm") document.getElementById("gender")?.focus();
@@ -455,9 +427,6 @@ export function useDemographicsForm() {
     dismissKeypad();
   };
 
-  // -------------------------
-  // Validations (simple)
-  // -------------------------
   const isBasicInfoComplete =
     !!formData.age && !!formData.weight && !!formData.gender && !!heightCm;
 
@@ -478,7 +447,6 @@ export function useDemographicsForm() {
   };
 
   return {
-    // state
     weightUnit,
     heightUnit,
     heightFt,
@@ -486,12 +454,10 @@ export function useDemographicsForm() {
     activeField,
     formData,
 
-    // setters
     setFormData,
     setHeightFt,
     setHeightIn,
 
-    // actions
     switchWeightUnit,
     switchHeightUnit,
     handleFieldFocus,
@@ -502,7 +468,6 @@ export function useDemographicsForm() {
     handleKeypadConfirm,
     clearFields,
 
-    // computed
     weightKg,
     heightCm,
     bmiValue,

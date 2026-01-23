@@ -1,34 +1,36 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 import { useSession } from "@/contexts/session-context";
+import { useResultsData } from "@/hooks/use-results-data";
+import { useBackNavigation } from "@/hooks/use-back-navigation";
+
+import { ROUTES, STEPS } from "@/lib/constants";
+
 import { ProgressHeader } from "@/components/layout/progress-header";
 import { Footer } from "@/components/layout/footer";
-import React from "react";
-import { useRouter } from "next/navigation";
-import { ROUTES, STEPS } from "@/lib/constants";
+
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { SessionEndModal } from "@/components/modals/session-end-modal";
-import { useBackNavigation } from "@/hooks/use-back-navigation";
-import { sessionAPI } from "@/lib/api";
-import { useResultsData } from "@/hooks/use-results-data";
+
+import { ResultsTabs } from "@/components/results/results-tabs";
 import { ResultsEmpty } from "@/components/results/results-empty";
 import { ResultsLoading } from "@/components/results/results-loading";
 import { ResultsSidebar } from "@/components/results/results-sidebar";
-import { ResultsTabs } from "@/components/results/results-tabs";
-import { ResultsTabContent } from "@/components/results/results-tab-content";
 import { FacilityQRModal } from "@/components/modals/facility-qr-modal";
-import type { MapPlace } from "@/types/results";
+import { ResultsTabContent } from "@/components/results/results-tab-content";
 
+import type { MapPlace } from "@/types/results";
 type TabType = "analysis" | "facilities" | "blood" | "download";
 
 export default function ResultPage() {
   const router = useRouter();
   const { sessionId, clearSession } = useSession();
   const [activeTab, setActiveTab] = useState<TabType>("analysis");
-  const { showModal, handleConfirm, handleCancel, promptBackNavigation} =
+  const { showModal, handleConfirm, handleCancel, promptBackNavigation } =
     useBackNavigation(false);
 
-  // QR Modal State
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<MapPlace | null>(null);
 
@@ -44,8 +46,6 @@ export default function ResultPage() {
     clearSession();
     router.push(ROUTES.HOME);
   };
-
-
 
   if (loading) {
     return <ResultsLoading />;
@@ -85,7 +85,6 @@ export default function ResultPage() {
               />
 
               <div className="grid grid-cols-12 gap-6 flex-1 min-h-0 pb-4 mb-6">
-                {/* Left Sidebar - Results & Profile */}
                 <ResultsSidebar
                   result={result}
                   bloodGroupResult={bloodGroupResult}
@@ -93,16 +92,13 @@ export default function ResultPage() {
                   demographics={demographics}
                 />
 
-                {/* Right Content Area - Tabs */}
                 <div className="col-span-8 flex flex-col min-h-0">
-                  {/* Tab Navigation */}
                   <ResultsTabs
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                     canShowBloodTab={canShowBloodTab}
                   />
 
-                  {/* Tab Content */}
                   <ResultsTabContent
                     activeTab={activeTab}
                     participantData={participantData}

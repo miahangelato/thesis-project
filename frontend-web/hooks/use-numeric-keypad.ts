@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useCallback } from "react";
 
 interface UseNumericKeypadProps {
@@ -8,7 +7,7 @@ interface UseNumericKeypadProps {
   maxLength?: number;
   min?: number;
   max?: number;
-  realTimeUpdate?: boolean; // Update parent in real-time as user types
+  realTimeUpdate?: boolean;
 }
 
 export function useNumericKeypad({
@@ -17,7 +16,7 @@ export function useNumericKeypad({
   maxLength = 10,
   min,
   max,
-  realTimeUpdate = true, // Real-time updates for immediate form feedback
+  realTimeUpdate = true,
 }: UseNumericKeypadProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [value, setValue] = useState("");
@@ -39,12 +38,11 @@ export function useNumericKeypad({
 
   const handleKeyPress = useCallback(
     (key: string) => {
-      setError(null); // Clear error on typing
+      setError(null);
       if (key === "." && !allowDecimal) return;
       if (key === "." && value.includes(".")) return;
       if (value.length >= maxLength) return;
 
-      // Prevent multiple leading zeros unless decimal
       if (value === "0" && key !== ".") {
         const newValue = key;
         setValue(newValue);
@@ -57,7 +55,6 @@ export function useNumericKeypad({
       const newValue = value + key;
       setValue(newValue);
 
-      // Real-time update to parent component
       if (realTimeUpdate) {
         onValueChange(newValue);
       }
@@ -70,14 +67,12 @@ export function useNumericKeypad({
     const newValue = value.slice(0, -1);
     setValue(newValue);
 
-    // Real-time update to parent component
     if (realTimeUpdate) {
       onValueChange(newValue);
     }
   }, [value, realTimeUpdate, onValueChange]);
 
   const handleDone = useCallback(() => {
-    // Validate before closing
     if (value) {
       const numVal = parseFloat(value);
 
@@ -94,7 +89,6 @@ export function useNumericKeypad({
       }
     }
 
-    // Always close after done is clicked
     if (!realTimeUpdate) {
       onValueChange(value);
     }

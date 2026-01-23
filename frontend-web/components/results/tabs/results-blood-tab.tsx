@@ -1,5 +1,5 @@
-import React from "react";
 import Link from "next/link";
+
 import { Heart, MapPin, Phone, Smartphone, Mail } from "lucide-react";
 import type { MapPlace, ResultsParticipantData } from "@/types/results";
 
@@ -18,7 +18,6 @@ export function ResultsBloodTab({
     <div className="h-full min-h-0 flex flex-col">
       {participantData?.blood_centers && participantData.blood_centers.length > 0 ? (
         <div className="flex flex-col flex-1 min-h-0 h-full">
-          {/* Header */}
           <div className="flex items-start justify-between gap-4 mb-6 p-6 pb-0">
             <h2 className="text-2xl font-bold text-teal-900 flex items-center">
               <Heart className="w-7 h-7 mr-3 text-teal-600" />
@@ -52,7 +51,6 @@ export function ResultsBloodTab({
                         </p>
                       </div>
 
-                      {/* Info Tags */}
                       <div className="flex flex-wrap gap-2 mb-6">
                         {center.type && (
                           <span className="inline-flex items-center px-4 py-2 bg-teal-50 text-teal-700 rounded-xl text-sm font-bold border border-teal-100">
@@ -61,7 +59,6 @@ export function ResultsBloodTab({
                         )}
                       </div>
 
-                      {/* Static Contact Info */}
                       <div className="space-y-3 mb-6">
                         {center.phone && (
                           <div className="flex items-center gap-3 text-gray-600 font-bold text-lg">
@@ -76,7 +73,6 @@ export function ResultsBloodTab({
                       </div>
                     </div>
 
-                    {/* Kiosk Action Button */}
                     <button
                       onClick={() => onOpenQR(center)}
                       className="w-full group relative overflow-hidden bg-white border-2 border-teal-500 hover:bg-teal-50 p-6 rounded-2xl transition-all active:scale-[0.98]"
@@ -84,22 +80,26 @@ export function ResultsBloodTab({
                       <div className="flex items-center justify-center gap-4">
                         <Smartphone className="w-8 h-8 text-teal-600" />
                         <div className="text-left">
-                          <p className="text-xl font-bold text-teal-900">Get Info on Mobile</p>
-                          <p className="text-sm font-bold text-teal-600/70 uppercase tracking-wider">Scan QR Code</p>
+                          <p className="text-xl font-bold text-teal-900">
+                            Get Info on Mobile
+                          </p>
+                          <p className="text-sm font-bold text-teal-600/70 uppercase tracking-wider">
+                            Scan QR Code
+                          </p>
                         </div>
                       </div>
                     </button>
                   </div>
                 ))}
-              
-                <div className="pt-6 pb-4 text-center">
-                  <Link
-                    href="/results/blood"
-                    className="inline-flex items-center justify-center rounded-2xl bg-[#00c2cb] hover:bg-[#0099a0] px-12 py-4 text-xl font-bold text-white shadow-lg shadow-cyan-100/50 transition-all transform hover:scale-[1.02]"
-                  >
-                    View more blood centers →
-                  </Link>
-                </div>
+
+              <div className="pt-6 pb-4 text-center">
+                <Link
+                  href="/results/blood"
+                  className="inline-flex items-center justify-center rounded-2xl bg-[#00c2cb] hover:bg-[#0099a0] px-12 py-4 text-xl font-bold text-white shadow-lg shadow-cyan-100/50 transition-all transform hover:scale-[1.02]"
+                >
+                  View more blood centers →
+                </Link>
+              </div>
             </div>
           </div>
         </div>

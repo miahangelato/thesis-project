@@ -1,10 +1,3 @@
-/**
- * Enhanced API client with interceptors, retry logic, and error handling.
- * Replaces the basic axios setup in lib/api.ts
- */
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { env } from "./env";
 import { API_CONFIG, HTTP_STATUS } from "./constants";
@@ -19,10 +12,6 @@ import {
   logError,
 } from "./errors";
 
-// ============================================================================
-// API CLIENT INSTANCE
-// ============================================================================
-
 const apiClient = axios.create({
   baseURL: env.NEXT_PUBLIC_API_URL,
   timeout: API_CONFIG.TIMEOUT,
@@ -32,13 +21,8 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-// ============================================================================
-// REQUEST INTERCEPTOR
-// ============================================================================
-
 apiClient.interceptors.request.use(
   (config) => {
-    // Add auth token if exists
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("auth_token");
       if (token && config.headers) {
@@ -46,7 +30,6 @@ apiClient.interceptors.request.use(
       }
     }
 
-    // Add API Key for Backend Auth
     const apiKey = env.NEXT_PUBLIC_KIOSK_API_KEY;
     if (apiKey && config.headers) {
       config.headers["X-API-Key"] = apiKey;
@@ -60,25 +43,18 @@ apiClient.interceptors.request.use(
   }
 );
 
-// ============================================================================
-// RESPONSE INTERCEPTOR
-// ============================================================================
-
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     return response;
   },
   async (error: AxiosError) => {
-    // Handle different error types
     if (error.response) {
-      // Server responded with error status
       const { status, data } = error.response;
 
       logError(error, `API Error ${status}`);
 
       switch (status) {
         case HTTP_STATUS.UNAUTHORIZED:
-          // Clear auth and redirect to login if needed
           if (typeof window !== "undefined") {
             localStorage.removeItem("auth_token");
           }
@@ -108,20 +84,14 @@ apiClient.interceptors.response.use(
           );
       }
     } else if (error.request) {
-      // Request made but no response received
       logError(error, "Network Error");
       throw new NetworkError("Network error. Please check your connection.");
     } else {
-      // Something else happened
       logError(error, "Unknown Error");
       throw new APIError(error.message);
     }
   }
 );
-
-// ============================================================================
-// RETRY LOGIC
-// ============================================================================
 
 async function retryRequest<T>(
   requestFn: () => Promise<T>,
@@ -135,7 +105,6 @@ async function retryRequest<T>(
     } catch (error) {
       lastError = error as Error;
 
-      // Don't retry on client errors (4xx) except 429
       if (error instanceof APIError) {
         if (
           error.statusCode &&
@@ -147,56 +116,33 @@ async function retryRequest<T>(
         }
       }
 
-      // Don't retry on last attempt
       if (attempt === maxRetries) {
         throw error;
       }
 
-      // Wait before retrying (exponential backoff)
       const delay = API_CONFIG.RETRY_DELAY * Math.pow(2, attempt);
       await new Promise((resolve) => setTimeout(resolve, delay));
-
     }
   }
 
   throw lastError;
 }
 
-// ============================================================================
-// API METHODS
-// ============================================================================
-
 export const api = {
-  /**
-   * GET request
-   */
   get: <T = any>(url: string, config?: AxiosRequestConfig) =>
     retryRequest(() => apiClient.get<T>(url, config)),
 
-  /**
-   * POST request
-   */
   post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
     retryRequest(() => apiClient.post<T>(url, data, config)),
 
-  /**
-   * PUT request
-   */
   put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
     retryRequest(() => apiClient.put<T>(url, data, config)),
 
-  /**
-   * PATCH request
-   */
   patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
     retryRequest(() => apiClient.patch<T>(url, data, config)),
 
-  /**
-   * DELETE request
-   */
   delete: <T = any>(url: string, config?: AxiosRequestConfig) =>
     retryRequest(() => apiClient.delete<T>(url, config)),
 };
 
-// Export the configured client
 export default apiClient;

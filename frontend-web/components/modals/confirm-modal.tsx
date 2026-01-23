@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { ModalShell } from "@/components/ui/modal-shell";
-import { cn } from "@/lib/utils";
 
 type ConfirmModalProps = {
   isOpen: boolean;
@@ -25,7 +25,6 @@ type ConfirmModalProps = {
   closeOnBackdrop?: boolean;
   closeOnEscape?: boolean;
 
-  /** Visual styling */
   backdropClassName?: string;
   panelClassName?: string;
   topBarClassName?: string;
@@ -69,13 +68,18 @@ export function ConfirmModal({
       closeOnBackdrop={!disableActions && closeOnBackdrop}
       closeOnEscape={!disableActions && closeOnEscape}
       zIndexClassName={zIndexClassName}
-      backdropClassName={cn("bg-linear-to-br from-slate-900/30 via-slate-800/30 to-slate-900/30 backdrop-blur-md", backdropClassName)}
-      panelClassName={cn("max-w-xl border-2 border-teal-100 rounded-3xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300", panelClassName)}
+      backdropClassName={cn(
+        "bg-linear-to-br from-slate-900/30 via-slate-800/30 to-slate-900/30 backdrop-blur-md",
+        backdropClassName
+      )}
+      panelClassName={cn(
+        "max-w-xl border-2 border-teal-100 rounded-3xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300",
+        panelClassName
+      )}
       showTopBar
       topBarClassName={topBarClassName}
     >
       <div className="p-10 flex flex-col items-center text-center">
-        {/* Icon wrapper - Squircle design to match other modals */}
         <div className="flex justify-center mb-10">
           <div className="relative">
             <div

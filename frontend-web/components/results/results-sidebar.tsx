@@ -1,4 +1,3 @@
-import React from "react";
 import { Droplets, TrendingUp, User } from "lucide-react";
 
 import type {
@@ -21,11 +20,8 @@ export function ResultsSidebar({
 }) {
   return (
     <div className="col-span-4 flex flex-col h-full min-h-0 self-start">
-      {/* Profile Card with All Info */}
       <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-5 h-full flex flex-col overflow-hidden">
-        {/* BLOOD AND DIABETES RESULTS */}
         <div className="flex flex-col mb-6 gap-3 justify-center items-stretch text-sm leading-tight">
-          {/* Diabetes Risk Card - Compact */}
           <div
             className={`flex-1 min-w-0 border rounded-xl p-4 shadow-lg ${
               result?.diabetes_risk?.toLowerCase() === "diabetic" ||
@@ -94,7 +90,6 @@ export function ResultsSidebar({
             )}
           </div>
 
-          {/* Blood Type Card - Compact */}
           <div className="flex-1 min-w-0 bg-linear-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4 shadow-lg">
             <div className="flex items-center mb-2.5">
               <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-3">
@@ -122,7 +117,6 @@ export function ResultsSidebar({
           </div>
         </div>
 
-        {/* Demographics Section */}
         <div className="flex-1 overflow-y-auto">
           <h4 className="text-xl font-bold text-slate-800 mb-4 uppercase tracking-wide flex items-center border-b pb-2">
             <User className="w-6 h-6 mr-2 text-slate-500" />
@@ -130,44 +124,57 @@ export function ResultsSidebar({
           </h4>
           {demographics ? (
             <div className="grid grid-cols-2 gap-x-8 gap-y-5 pt-2 px-6">
-              {/* Left Column */}
               <div className="space-y-5">
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Age</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    Age
+                  </span>
                   <span className="text-2xl font-bold text-slate-900">
-                    {demographics?.age || "N/A"} <span className="text-lg text-slate-500 font-normal">years</span>
+                    {demographics?.age || "N/A"}{" "}
+                    <span className="text-lg text-slate-500 font-normal">years</span>
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Weight</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    Weight
+                  </span>
                   <span className="text-2xl font-bold text-slate-900">
-                    {demographics?.weight_kg || "N/A"} <span className="text-lg text-slate-500 font-normal">kg</span>
+                    {demographics?.weight_kg || "N/A"}{" "}
+                    <span className="text-lg text-slate-500 font-normal">kg</span>
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Height</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    Height
+                  </span>
                   <span className="text-2xl font-bold text-slate-900">
-                    {demographics?.height_cm || "N/A"} <span className="text-lg text-slate-500 font-normal">cm</span>
+                    {demographics?.height_cm || "N/A"}{" "}
+                    <span className="text-lg text-slate-500 font-normal">cm</span>
                   </span>
                 </div>
               </div>
 
-              {/* Right Column */}
               <div className="space-y-5">
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Gender</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    Gender
+                  </span>
                   <span className="text-2xl font-bold text-slate-900 capitalize">
                     {demographics?.gender || "N/A"}
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Blood Type</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    Blood Type
+                  </span>
                   <span className="text-2xl font-bold text-slate-900 capitalize">
                     {demographics?.blood_type || "Unknown"}
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">BMI</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    BMI
+                  </span>
                   <span className="text-2xl font-bold text-slate-900">
                     {participantData?.bmi?.toFixed(1) || "N/A"}
                   </span>

@@ -17,7 +17,6 @@ type Demographics = {
   weight_kg?: number | string;
   height_cm?: number | string;
   blood_type?: string;
-  // Backward compat
   weight?: number | string;
   height?: number | string;
   bloodType?: string;
@@ -35,7 +34,6 @@ export function ScanInfoPanel({ demographics }: Props) {
 
   return (
     <div className="col-span-5 flex flex-col gap-4">
-      {/* User Info Card */}
       <div className="bg-linear-to-r from-teal-50 to-cyan-50 border-2 border-teal-300 rounded-2xl px-6 py-4 flex items-center gap-4 shadow-sm overflow-hidden">
         <User className="w-7 h-7 text-teal-600 shrink-0" />
         <div className="flex items-center gap-x-3 text-xl font-bold text-teal-900 whitespace-nowrap overflow-hidden text-ellipsis">
@@ -51,7 +49,6 @@ export function ScanInfoPanel({ demographics }: Props) {
         </div>
       </div>
 
-      {/* Scanning Tips Card */}
       <div className="bg-linear-to-br from-[#e4f7f8] to-white rounded-2xl p-5 border-2 border-[#00c2cb]/20 shadow-sm">
         <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-3">
           <Lightbulb className="w-7 h-7 text-[#00c2cb]" />
@@ -96,13 +93,13 @@ export function ScanInfoPanel({ demographics }: Props) {
         </div>
       </div>
 
-      {/* Important Warning */}
       <div className="bg-red-50 border-2 border-red-500 rounded-2xl px-5 py-4 flex gap-4 items-center shadow-sm">
         <AlertTriangle className="h-7 w-7 text-red-600 shrink-0" />
-        <span className="text-xl font-medium text-gray-900">This is a screening tool — not a medical diagnosis.</span>
+        <span className="text-xl font-medium text-gray-900">
+          This is a screening tool — not a medical diagnosis.
+        </span>
       </div>
 
-      {/* Legal Disclaimer */}
       <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
         <div className="flex items-start gap-4">
           <Shield className="h-7 w-7 text-slate-500 mt-0.5 shrink-0" />
@@ -111,9 +108,9 @@ export function ScanInfoPanel({ demographics }: Props) {
               Legal Disclaimer
             </strong>
             <p className="text-md text-slate-600 leading-relaxed">
-              This tool provides predictive insights based on fingerprint and
-              demographic data. It does not replace laboratory tests or medical
-              diagnosis. Always consult healthcare professionals.
+              This tool provides predictive insights based on fingerprint and demographic
+              data. It does not replace laboratory tests or medical diagnosis. Always
+              consult healthcare professionals.
             </p>
           </div>
         </div>

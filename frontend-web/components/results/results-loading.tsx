@@ -1,4 +1,3 @@
-import React from "react";
 import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 
 export function ResultsLoading() {
