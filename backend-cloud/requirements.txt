@@ -35,6 +35,7 @@ Pillow==11.3.0
 tensorflow-cpu==2.15.0
 numpy==1.24.3
 opencv-python-headless==4.8.1.78
+scipy==1.11.4
 
 # Pinned to avoid backtracking
 grpcio==1.76.0

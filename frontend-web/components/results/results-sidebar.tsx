@@ -133,21 +133,30 @@ export function ResultsSidebar({
               {/* Left Column */}
               <div className="space-y-5">
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Age</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    Age
+                  </span>
                   <span className="text-2xl font-bold text-slate-900">
-                    {demographics?.age || "N/A"} <span className="text-lg text-slate-500 font-normal">years</span>
+                    {demographics?.age || "N/A"}{" "}
+                    <span className="text-lg text-slate-500 font-normal">years</span>
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Weight</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    Weight
+                  </span>
                   <span className="text-2xl font-bold text-slate-900">
-                    {demographics?.weight_kg || "N/A"} <span className="text-lg text-slate-500 font-normal">kg</span>
+                    {demographics?.weight_kg || "N/A"}{" "}
+                    <span className="text-lg text-slate-500 font-normal">kg</span>
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Height</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    Height
+                  </span>
                   <span className="text-2xl font-bold text-slate-900">
-                    {demographics?.height_cm || "N/A"} <span className="text-lg text-slate-500 font-normal">cm</span>
+                    {demographics?.height_cm || "N/A"}{" "}
+                    <span className="text-lg text-slate-500 font-normal">cm</span>
                   </span>
                 </div>
               </div>
@@ -155,19 +164,25 @@ export function ResultsSidebar({
               {/* Right Column */}
               <div className="space-y-5">
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Gender</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    Gender
+                  </span>
                   <span className="text-2xl font-bold text-slate-900 capitalize">
                     {demographics?.gender || "N/A"}
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">Blood Type</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    Blood Type
+                  </span>
                   <span className="text-2xl font-bold text-slate-900 capitalize">
                     {demographics?.blood_type || "Unknown"}
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">BMI</span>
+                  <span className="text-base text-slate-500 font-bold mb-1 uppercase tracking-wider">
+                    BMI
+                  </span>
                   <span className="text-2xl font-bold text-slate-900">
                     {participantData?.bmi?.toFixed(1) || "N/A"}
                   </span>

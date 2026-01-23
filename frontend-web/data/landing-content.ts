@@ -1,11 +1,5 @@
 import {
   LucideIcon,
-  Fingerprint,
-  Droplet,
-  Heart,
-  Building2,
-  Settings,
-  ShieldCheck,
 } from "lucide-react";
 
 export interface CarouselSlide {

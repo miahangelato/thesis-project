@@ -142,7 +142,9 @@ export function ResultsAnalysisTab({
               className="h-full overflow-y-auto max-w-none text-slate-700 whitespace-pre-wrap leading-relaxed text-xl px-6 pb-6"
             >
               {displayText}
-              {!isComplete && <span className="inline-block animate-pulse text-teal-500">▍</span>}
+              {!isComplete && (
+                <span className="inline-block animate-pulse text-teal-500">▍</span>
+              )}
             </div>
           </div>
         </div>

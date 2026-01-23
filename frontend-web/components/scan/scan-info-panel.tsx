@@ -99,7 +99,9 @@ export function ScanInfoPanel({ demographics }: Props) {
       {/* Important Warning */}
       <div className="bg-red-50 border-2 border-red-500 rounded-2xl px-5 py-4 flex gap-4 items-center shadow-sm">
         <AlertTriangle className="h-7 w-7 text-red-600 shrink-0" />
-        <span className="text-xl font-medium text-gray-900">This is a screening tool — not a medical diagnosis.</span>
+        <span className="text-xl font-medium text-gray-900">
+          This is a screening tool — not a medical diagnosis.
+        </span>
       </div>
 
       {/* Legal Disclaimer */}
@@ -111,9 +113,9 @@ export function ScanInfoPanel({ demographics }: Props) {
               Legal Disclaimer
             </strong>
             <p className="text-md text-slate-600 leading-relaxed">
-              This tool provides predictive insights based on fingerprint and
-              demographic data. It does not replace laboratory tests or medical
-              diagnosis. Always consult healthcare professionals.
+              This tool provides predictive insights based on fingerprint and demographic
+              data. It does not replace laboratory tests or medical diagnosis. Always
+              consult healthcare professionals.
             </p>
           </div>
         </div>

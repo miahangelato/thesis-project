@@ -23,6 +23,15 @@ out/
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
+.env.staging
+
+# Certificates & Keys
+*.key
+*.pem
+*.crt
+*.p12
 
 # IDEs
 .vscode/

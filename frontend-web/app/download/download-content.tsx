@@ -68,7 +68,6 @@ export function DownloadPageContent() {
         }
       } catch (err: unknown) {
         console.error("Failed to generate PDF:", err);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const error = err as { response?: { data?: { error?: string } } };
         setError(error.response?.data?.error || "Failed to generate PDF report.");
       } finally {

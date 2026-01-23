@@ -113,11 +113,15 @@ active_scans = {}
 state_lock = threading.Lock()
 
 def create_session(socket_sid, participant_id, finger_list):
-    """Initialize new session"""
+    """Initialize new session with expiration timers - PRIVACY OPTIMIZED.
+    
+    PRIVACY: Sessions auto-expire after 30min absolute or 10min inactivity.
+    """
     global ACTIVE_SESSION
     with state_lock:
         session_id = str(uuid.uuid4())
         stop_event = threading.Event()
+        now = time.time()
         
         ACTIVE_SESSION.update({
             "session_id": session_id,
@@ -129,24 +133,66 @@ def create_session(socket_sid, participant_id, finger_list):
             "stop_event": stop_event,
             "state": "active",
             "grace_period_active": False,
-            "disconnected_at": None
+            "disconnected_at": None,
+            "created_at": now,  # For absolute timeout
+            "last_activity_time": now,  # For inactivity timeout
         })
         
-        logger.info(f"[SESSION] Created session {session_id} for participant {participant_id}")
-        logger.info(f"[SESSION] Finger queue: {finger_list}")
+        logger.info(f"[PRIVACY] ========== SESSION CREATED ==========")
+        logger.info(f"[PRIVACY] Session ID: {session_id}")
+        logger.info(f"[PRIVACY] Participant: {participant_id}")
+        logger.info(f"[PRIVACY] Finger queue: {finger_list}")
+        logger.info(f"[PRIVACY] Max lifetime: 30 minutes (absolute)")
+        logger.info(f"[PRIVACY] Inactivity timeout: 10 minutes")
+        logger.info(f"[PRIVACY] ===========================================")
+        
+        # Start expiration monitoring thread
+        expiration_thread = threading.Thread(
+            target=monitor_session_expiration,
+            args=(session_id,),
+            daemon=True
+        )
+        expiration_thread.start()
         
         return session_id, stop_event
 
 def cleanup_session():
-    """Clean up session state"""
-    global ACTIVE_SESSION
+    """Clean up session state - PRIVACY OPTIMIZED.
+    
+    PRIVACY: Clears ALL sensitive data including fingerprints and preview frames.
+    """
+    global ACTIVE_SESSION, SCANNER_STATE
     with state_lock:
-        session_id = ACTIVE_SESSION["session_id"]
-        logger.info(f"[SESSION] Cleaning up session {session_id}")
+        session_id = ACTIVE_SESSION.get("session_id")
+        if not session_id:
+            logger.debug("[PRIVACY] cleanup_session called but no active session")
+            return
+        
+        logger.info(f"[PRIVACY] ========== CLEANING UP SESSION ==========")
+        logger.info(f"[PRIVACY] Session ID: {session_id}")
+        
+        # Count sensitive data before clearing
+        fingerprint_count = len(ACTIVE_SESSION.get("captured_fingers", {}))
+        has_preview = ACTIVE_SESSION.get("last_preview_frame") is not None
         
         # Set stop event if exists
         if ACTIVE_SESSION["stop_event"]:
             ACTIVE_SESSION["stop_event"].set()
+        
+        # PRIVACY CHECKPOINT: Clear fingerprint images from memory
+        if fingerprint_count > 0:
+            ACTIVE_SESSION["captured_fingers"].clear()
+            logger.info(f"[PRIVACY] Cleared {fingerprint_count} fingerprint images from memory")
+        
+        # PRIVACY CHECKPOINT: Clear preview frames
+        if has_preview:
+            ACTIVE_SESSION["last_preview_frame"] = None
+            logger.info("[PRIVACY] Cleared preview frame from session")
+        
+        # Clear scanner state preview frames
+        if SCANNER_STATE.get("last_preview_frame_b64"):
+            SCANNER_STATE["last_preview_frame_b64"] = None
+            logger.info("[PRIVACY] Cleared preview frame from scanner state")
         
         # Reset to idle state
         ACTIVE_SESSION.update({
@@ -155,17 +201,91 @@ def cleanup_session():
             "socket_sid": None,
             "finger_queue": [],
             "current_index": 0,
-            "captured_fingers": {},
+            "captured_fingers": {},  # Already cleared above
             "device_handle": None,
             "sdk_initialized": False,
             "stop_event": None,
             "thread": None,
             "state": "idle",
             "last_status": None,
-            "last_preview_frame": None,
+            "last_preview_frame": None,  # Already cleared above
             "grace_period_active": False,
-            "disconnected_at": None
+            "disconnected_at": None,
+            "last_activity_time": None,
+            "created_at": None
         })
+        
+        # Reset scanner state
+        SCANNER_STATE.update({
+            "scan_id": None,
+            "finger_name": None,
+            "status": "idle",
+            "hint": "",
+            "metrics": {},
+            "last_preview_frame_b64": None,  # Already cleared above
+            "timestamp": 0
+        })
+        
+        logger.info(f"[PRIVACY] Session {session_id} fully cleared and destroyed")
+        logger.info("[PRIVACY] ========== CLEANUP COMPLETE ==========")
+
+
+
+def touch_session_activity():
+    """Update last activity timestamp for current session."""
+    with state_lock:
+        if ACTIVE_SESSION.get("session_id"):
+            ACTIVE_SESSION["last_activity_time"] = time.time()
+
+def monitor_session_expiration(session_id: str):
+    """Monitor session for expiration (background thread).
+    
+    Checks:
+    1. Absolute timeout (30 mins max lifetime)
+    2. Inactivity timeout (10 mins idle)
+    """
+    ABSOLUTE_TIMEOUT = 1800  # 30 minutes
+    INACTIVITY_TIMEOUT = 600 # 10 minutes
+    CHECK_INTERVAL = 60      # Check every minute
+    
+    logger.info(f"[PRIVACY] Started expiration monitor for session {session_id}")
+    
+    while True:
+        time.sleep(CHECK_INTERVAL)
+        
+        should_expire = False
+        reason = ""
+        
+        with state_lock:
+            # excessive locking protection
+            if ACTIVE_SESSION.get("session_id") != session_id:
+                logger.info(f"[PRIVACY] Monitoring stopped for {session_id} (session ended/changed)")
+                break
+                
+            now = time.time()
+            created_at = ACTIVE_SESSION.get("created_at", now)
+            last_activity = ACTIVE_SESSION.get("last_activity_time", now)
+            
+            # Check absolute timeout
+            if now - created_at > ABSOLUTE_TIMEOUT:
+                should_expire = True
+                reason = "MAX_LIFETIME_REACHED"
+            # Check inactivity timeout
+            elif now - last_activity > INACTIVITY_TIMEOUT:
+                should_expire = True
+                reason = "INACTIVITY_TIMEOUT"
+        
+        if should_expire:
+            logger.warning(f"[PRIVACY] Expiring session {session_id} due to {reason}")
+            
+            # Notify frontend before cleanup
+            try:
+                socketio.emit('session_expired', {'reason': reason, 'session_id': session_id}, namespace='/')
+            except:
+                pass
+            
+            cleanup_session()
+            break
 
 def get_session_state():
     """Return current session info"""
@@ -184,6 +304,10 @@ def get_session_state():
 def advance_to_next_finger():
     """Move to next finger in queue"""
     global ACTIVE_SESSION
+    
+    # Update activity timestamp
+    touch_session_activity()
+    
     with state_lock:
         ACTIVE_SESSION["current_index"] += 1
         current_idx = ACTIVE_SESSION["current_index"]
@@ -218,6 +342,10 @@ def grace_period_cleanup():
 def update_scanner_state(scan_id=None, finger_name=None, status=None, hint=None, metrics=None, preview_frame=None):
     """Thread-safe update of global scanner state"""
     global SCANNER_STATE
+    
+    # Update session activity on scanner updates
+    touch_session_activity()
+    
     with state_lock:
         if scan_id is not None:
             SCANNER_STATE["scan_id"] = scan_id

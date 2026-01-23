@@ -155,7 +155,6 @@ async function retryRequest<T>(
       // Wait before retrying (exponential backoff)
       const delay = API_CONFIG.RETRY_DELAY * Math.pow(2, attempt);
       await new Promise((resolve) => setTimeout(resolve, delay));
-
     }
   }
 

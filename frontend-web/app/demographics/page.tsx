@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { useSession } from "@/contexts/session-context";
 import { sessionAPI } from "@/lib/api";
 import { ProgressHeader } from "@/components/layout/progress-header";
@@ -100,9 +101,7 @@ export default function DemographicsPage() {
         .filter((w) => w.severity === "error")
         .map((w) => w.message)
         .join("\n");
-      alert(
-        "Please fix the following errors before continuing:\n\n" + errorMessages
-      );
+      alert("Please fix the following errors before continuing:\n\n" + errorMessages);
       return;
     }
 
@@ -130,12 +129,9 @@ export default function DemographicsPage() {
           weight_kg: weightKg ? Number(weightKg.toFixed(1)) : 0,
           height_cm: Math.round(heightCm),
           gender:
-            formData.gender === "prefer_not_to_say"
-              ? "prefer_not_say"
-              : formData.gender,
+            formData.gender === "prefer_not_to_say" ? "prefer_not_say" : formData.gender,
           willing_to_donate: formData.showDonationCentersLater,
-          blood_type:
-            formData.blood_type === "unknown" ? null : formData.blood_type,
+          blood_type: formData.blood_type === "unknown" ? undefined : formData.blood_type,
         };
 
         await sessionAPI.submitDemographics(sessionId, payload);
@@ -172,7 +168,12 @@ export default function DemographicsPage() {
 
         <PreparingScanOverlay isOpen={loading} />
 
-        <div className="h-screen px-28 py-6 bg-white flex flex-col overflow-x-hidden overflow-y-auto">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="h-screen px-28 py-6 bg-white flex flex-col overflow-x-hidden overflow-y-auto"
+        >
           <main className="flex-1 w-full max-w-full flex flex-col">
             <ProgressHeader
               currentStep={STEPS.DEMOGRAPHICS}
@@ -479,7 +480,10 @@ export default function DemographicsPage() {
                                   onBlur={handleFieldBlur}
                                   onChange={(e) => {
                                     const val = e.target.value;
-                                    if (/^\d*$/.test(val) && parseInt(val || "0", 10) < 12)
+                                    if (
+                                      /^\d*$/.test(val) &&
+                                      parseInt(val || "0", 10) < 12
+                                    )
                                       setHeightIn(val);
                                   }}
                                   className={`h-14 text-lg font-bold rounded-lg border-2 transition-all duration-200 cursor-pointer ${
@@ -643,11 +647,11 @@ export default function DemographicsPage() {
 
                     {/* BMI Compact Preview Row */}
                     <div className="mt-4">
-                      <div className={`flex items-center justify-between h-14 w-full px-4 bg-white rounded-lg border-2 ${
-                        getFieldError("bmi")
-                          ? "border-red-400"
-                          : "border-slate-300"
-                      }`}>
+                      <div
+                        className={`flex items-center justify-between h-14 w-full px-4 bg-white rounded-lg border-2 ${
+                          getFieldError("bmi") ? "border-red-400" : "border-slate-300"
+                        }`}
+                      >
                         <div className="flex items-center gap-3">
                           <span className="text-lg">📊</span>
                           <span className="text-lg font-bold text-slate-700">
@@ -779,7 +783,7 @@ export default function DemographicsPage() {
             transparent
             customContent={<>No needles • Non-invasive • Privacy-first</>}
           />
-        </div>
+        </motion.div>
 
         {/* Docked keypad (touchscreen) */}
         <InlineNumericKeypad

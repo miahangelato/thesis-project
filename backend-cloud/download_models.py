@@ -12,10 +12,9 @@ logger = logging.getLogger(__name__)
 
 # Model files to download
 REQUIRED_MODELS = [
-    "final_no_age_model.pkl",
-    "final_no_age_scaler.pkl",
-    "final_no_age_imputer.pkl",
-    "improved_pattern_cnn_model_retrained.h5",
+    "final_model_v3.pkl",
+
+    "pattern_cnn_corrected.h2",
     "blood_type_triplet_embedding.h5",
     "blood_support_embeddings.npz",
 ]

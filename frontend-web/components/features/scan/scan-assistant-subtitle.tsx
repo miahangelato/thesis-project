@@ -85,7 +85,9 @@ export function ScanAssistantSubtitle({
   return (
     <div className="text-center mt-1">
       {/* Instruction Text */}
-      <p className={`text-2xl font-bold ${config.textClass} leading-relaxed whitespace-nowrap`}>
+      <p
+        className={`text-2xl font-bold ${config.textClass} leading-relaxed whitespace-nowrap`}
+      >
         {displayText}
       </p>
     </div>

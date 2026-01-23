@@ -34,6 +34,7 @@ export function useScanSession() {
     () => {
       // Load saved fingerprint images from sessionStorage
       try {
+        if (typeof window === "undefined") return {};
         const saved = sessionStorage.getItem("scanned_fingerprints");
         if (saved) {
           const data = JSON.parse(saved);
@@ -66,6 +67,7 @@ export function useScanSession() {
   );
   const [demographics] = useState<StoredDemographics | null>(() => {
     try {
+      if (typeof window === "undefined") return null;
       const storedDemo = sessionStorage.getItem("demographics");
       if (!storedDemo) return null;
       return JSON.parse(storedDemo) as StoredDemographics;
@@ -140,23 +142,12 @@ export function useScanSession() {
     if (countdown !== null && countdown > 0) return "countdown";
     // When countdown finishes (null), show waiting - scanner activates
     return "waiting";
-  }, [
-    countdown,
-    paused,
-    scannedCount,
-    scanningStarted,
-    totalFingers,
-  ]);
+  }, [countdown, paused, scannedCount, scanningStarted, totalFingers]);
 
   // Countdown timer effect - manages countdown and respects paused state
   useEffect(() => {
+    // Check if we should ignore
     if (countdown === null || paused) return;
-    
-    // When countdown reaches 0, set to null (trigger scan)
-    if (countdown === 0) {
-      setCountdown(null);
-      return;
-    }
 
     // Countdown tick
     const timer = setInterval(() => {

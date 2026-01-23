@@ -25,9 +25,12 @@ const envSchema = z.object({
 
   NEXT_PUBLIC_SCANNER_PORT: z
     .string()
-    .regex(/^\d+$/, "NEXT_PUBLIC_SCANNER_PORT must be a number")
     .optional()
-    .default("5000"),
+    .default("5000")
+    .refine(
+      (val) => !val || /^\d+$/.test(val),
+      "NEXT_PUBLIC_SCANNER_PORT must be a number"
+    ),
 
   // Security
   NEXT_PUBLIC_KIOSK_API_KEY: z
@@ -72,7 +75,7 @@ function validateEnv(): Env {
 
       throw new Error(
         `❌ Invalid environment variables:\n${missingVars}\n\n` +
-        `Please check your .env.local file.`
+          `Please check your .env.local file.`
       );
     }
     throw error;

@@ -10,7 +10,6 @@ interface FingerprintScannerProps {
   currentFinger: FingerName;
   autoStart?: boolean;
   paused?: boolean;
-  onScannerReady?: () => void; // NEW: Callback when scanner is ready
 }
 
 const SCANNER_BASE_URL = process.env.NEXT_PUBLIC_SCANNER_URL || "http://localhost:5000";
@@ -20,7 +19,6 @@ export default function FingerprintScanner({
   currentFinger,
   autoStart = false,
   paused = false, // NEW: Default to not paused
-  onScannerReady,
 }: FingerprintScannerProps) {
   const [phase, setPhase] = useState<"waiting" | "scanning" | "idle">("idle");
   const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
@@ -34,7 +32,7 @@ export default function FingerprintScanner({
     setWaitCountdown(null);
     setError(null);
     setRetryAttempt(0); // Reset retry counter for new scan
-  }, [currentFinger]);
+  }, []);
 
   const performScan = React.useCallback(async () => {
     setPhase("scanning");

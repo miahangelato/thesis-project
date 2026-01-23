@@ -10,8 +10,8 @@ from ninja import Router
 
 from storage import get_storage
 
+from .gemini_service import get_gemini_service
 from .ml_service import generate_patient_explanation
-from .openai_service import get_openai_service
 from .pdf_schemas import PDFGenerateResponse
 from .pdf_service import get_pdf_generator
 from .session_manager import get_session_manager
@@ -47,7 +47,7 @@ def _get_public_base_url(request) -> str:
         return "http://localhost:8000"
 
 
-@router.post("/start", response=SessionStartResponse, tags=["Workflow"])
+@router.post("/start", response=SessionStartResponse, auth=None, tags=["Workflow"])
 def start_session(request, data: SessionStartRequest):
     """Step 0: Create session with user consent."""
     session_mgr = get_session_manager()
@@ -341,13 +341,13 @@ def analyze_patient(request, session_id: str):
             },
         }
         
-        # Generate AI-powered doctor explanation using OpenAI
-        openai_service = get_openai_service()
-        doctor_explanation = openai_service.generate_doctor_explanation(structured_response)
-        logger.info("🧑‍⚕️ OpenAI doctor explanation generated")
+        # Generate AI-powered doctor explanation using Gemini (Privacy Optimized)
+        gemini_service = get_gemini_service()
+        doctor_explanation = gemini_service.generate_doctor_explanation(structured_response, session_id)
+        logger.info(f"🧑‍⚕️ Gemini doctor explanation generated (Session {session_id})")
         
         # Use doctor explanation as the primary explanation (string)
-        # If OpenAI fails, it automatically falls back to template in the openai_service
+        # If Gemini fails, it automatically falls back to template in the gemini_service
         explanation = doctor_explanation
         logger.info("📝 Explanation ready")
 

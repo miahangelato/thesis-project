@@ -69,8 +69,14 @@ export function ConfirmModal({
       closeOnBackdrop={!disableActions && closeOnBackdrop}
       closeOnEscape={!disableActions && closeOnEscape}
       zIndexClassName={zIndexClassName}
-      backdropClassName={cn("bg-linear-to-br from-slate-900/30 via-slate-800/30 to-slate-900/30 backdrop-blur-md", backdropClassName)}
-      panelClassName={cn("max-w-xl border-2 border-teal-100 rounded-3xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300", panelClassName)}
+      backdropClassName={cn(
+        "bg-linear-to-br from-slate-900/30 via-slate-800/30 to-slate-900/30 backdrop-blur-md",
+        backdropClassName
+      )}
+      panelClassName={cn(
+        "max-w-xl border-2 border-teal-100 rounded-3xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300",
+        panelClassName
+      )}
       showTopBar
       topBarClassName={topBarClassName}
     >

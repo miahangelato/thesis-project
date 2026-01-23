@@ -97,12 +97,7 @@ export function ModalShell({
           onClick={(e) => e.stopPropagation()}
         >
           {showTopBar && (
-            <div
-              className={cn(
-                "h-3 w-full bg-[#00c2cb] shrink-0",
-                topBarClassName
-              )}
-            />
+            <div className={cn("h-3 w-full bg-[#00c2cb] shrink-0", topBarClassName)} />
           )}
           {children}
         </div>

@@ -9,7 +9,6 @@ import { ROUTES, STEPS } from "@/lib/constants";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { SessionEndModal } from "@/components/modals/session-end-modal";
 import { useBackNavigation } from "@/hooks/use-back-navigation";
-import { sessionAPI } from "@/lib/api";
 import { useResultsData } from "@/hooks/use-results-data";
 import { ResultsEmpty } from "@/components/results/results-empty";
 import { ResultsLoading } from "@/components/results/results-loading";
@@ -25,7 +24,7 @@ export default function ResultPage() {
   const router = useRouter();
   const { sessionId, clearSession } = useSession();
   const [activeTab, setActiveTab] = useState<TabType>("analysis");
-  const { showModal, handleConfirm, handleCancel, promptBackNavigation} =
+  const { showModal, handleConfirm, handleCancel, promptBackNavigation } =
     useBackNavigation(false);
 
   // QR Modal State
@@ -44,8 +43,6 @@ export default function ResultPage() {
     clearSession();
     router.push(ROUTES.HOME);
   };
-
-
 
   if (loading) {
     return <ResultsLoading />;

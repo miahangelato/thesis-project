@@ -12,7 +12,7 @@ export function useBackNavigation(enabled: boolean = true) {
   const [pendingNavigation, _setPendingNavigation] = useState(false);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || typeof window === "undefined") return;
 
     const handlePopState = (event: PopStateEvent) => {
       event.preventDefault();
@@ -40,9 +40,11 @@ export function useBackNavigation(enabled: boolean = true) {
     _setPendingNavigation(false);
     clearSession();
 
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 150);
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 150);
+    }
   };
 
   const handleCancel = () => {

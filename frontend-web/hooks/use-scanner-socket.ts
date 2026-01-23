@@ -1,152 +1,175 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { FingerName } from '@/types/fingerprint';
+import { useEffect, useState, useCallback, useRef } from "react";
+import { io, Socket } from "socket.io-client";
+import { FingerName } from "@/types/fingerprint";
 
 interface ScannerStatus {
-    scan_id: string | null;
-    finger_name: string | null;
-    status: 'idle' | 'waiting' | 'detecting' | 'capturing' | 'success' | 'error' | 'cancelled';
-    hint: string;
-    metrics: {
-        coverage?: number;
-        centroid_dx?: number;
-        centroid_dy?: number;
-        contrast?: number;
-        sharpness?: number;
-    };
+  scan_id: string | null;
+  finger_name: string | null;
+  status:
+    | "idle"
+    | "waiting"
+    | "detecting"
+    | "capturing"
+    | "success"
+    | "error"
+    | "cancelled";
+  hint: string;
+  metrics: {
+    coverage?: number;
+    centroid_dx?: number;
+    centroid_dy?: number;
+    contrast?: number;
+    sharpness?: number;
+  };
 }
 
 interface PreviewFrame {
-    scan_id: string;
-    finger_name: string;
-    frame_b64: string;
+  scan_id: string;
+  finger_name: string;
+  frame_b64: string;
 }
 
 interface ScanComplete {
-    scan_id: string;
-    finger_name: string;
-    image_b64_full: string;
-    metrics: any;
+  scan_id: string;
+  finger_name: string;
+  image_b64_full: string;
+  metrics: Record<string, unknown>;
 }
 
-const SCANNER_URL = process.env.NEXT_PUBLIC_SCANNER_BASE_URL || 'http://localhost:5000';
+const SCANNER_URL = process.env.NEXT_PUBLIC_SCANNER_BASE_URL || "http://localhost:5000";
 
 export function useScannerSocket() {
-    const [socket, setSocket] = useState<Socket | null>(null);
-    const [isConnected, setIsConnected] = useState(false);
-    const [scannerStatus, setScannerStatus] = useState<ScannerStatus>({
-        scan_id: null,
-        finger_name: null,
-        status: 'idle',
-        hint: '',
-        metrics: {},
+  // Use ref for socket instance to avoid re-renders and linting issues
+  const socketRef = useRef<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [scannerStatus, setScannerStatus] = useState<ScannerStatus>({
+    scan_id: null,
+    finger_name: null,
+    status: "idle",
+    hint: "",
+    metrics: {},
+  });
+  const [previewFrame, setPreviewFrame] = useState<string | null>(null);
+  const [scanComplete, setScanComplete] = useState<ScanComplete | null>(null);
+  const reconnectAttemptedRef = useRef(false);
+
+  // Initialize socket connection
+  useEffect(() => {
+    // Avoid double initialization
+    if (socketRef.current) return;
+
+    const newSocket = io(SCANNER_URL, {
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
     });
-    const [previewFrame, setPreviewFrame] = useState<string | null>(null);
-    const [scanComplete, setScanComplete] = useState<ScanComplete | null>(null);
-    const reconnectAttemptedRef = useRef(false);
 
-    // Initialize socket connection
-    useEffect(() => {
-        const newSocket = io(SCANNER_URL, {
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionDelay: 1000,
-            reconnectionAttempts: 5,
-        });
+    socketRef.current = newSocket;
 
-        // Connection handlers
-        newSocket.on('connect', () => {
-            setIsConnected(true);
-            reconnectAttemptedRef.current = false;
-        });
+    // Connection handlers
+    newSocket.on("connect", () => {
+      setIsConnected(true);
+      reconnectAttemptedRef.current = false;
+    });
 
-        newSocket.on('disconnect', () => {
-            setIsConnected(false);
-        });
+    newSocket.on("disconnect", () => {
+      setIsConnected(false);
+    });
 
-        // Scanner status updates
-        newSocket.on('scanner_status', (data: ScannerStatus) => {
-            setScannerStatus(data);
-        });
+    // Scanner status updates
+    newSocket.on("scanner_status", (data: ScannerStatus) => {
+      setScannerStatus(data);
+    });
 
-        // Preview frames
-        newSocket.on('preview_frame', (data: PreviewFrame) => {
-            setPreviewFrame(data.frame_b64);
-        });
+    // Preview frames
+    newSocket.on("preview_frame", (data: PreviewFrame) => {
+      setPreviewFrame(data.frame_b64);
+    });
 
-        // Scan complete
-        newSocket.on('scan_complete', (data: ScanComplete) => {
-            setScanComplete(data);
-        });
+    // Scan complete
+    newSocket.on("scan_complete", (data: ScanComplete) => {
+      setScanComplete(data);
+    });
 
-        // Scan started acknowledgment (no-op)
-        newSocket.on('scan_started', () => undefined);
+    // Scan started acknowledgment (no-op)
+    newSocket.on("scan_started", () => undefined);
 
-        setSocket(newSocket);
-
-        return () => {
-            newSocket.close();
-        };
-    }, []);
-
-    // Reconnect recovery: fetch fallback API to sync state
-    useEffect(() => {
-        if (isConnected && !reconnectAttemptedRef.current && scannerStatus.status !== 'idle') {
-            reconnectAttemptedRef.current = true;
-
-            // Fetch current state from fallback API
-            fetch(`${SCANNER_URL}/api/scanner/progress`)
-                .then((res) => res.json())
-                .then((data) => {
-                    if (data.success) {
-                        setScannerStatus({
-                            scan_id: data.scan_id,
-                            finger_name: data.finger_name,
-                            status: data.status || 'idle',
-                            hint: data.hint || '',
-                            metrics: data.metrics || {},
-                        });
-                        if (data.last_preview_frame_b64) {
-                            setPreviewFrame(data.last_preview_frame_b64);
-                        }
-                    }
-                })
-                .catch((err) => console.error('Failed to sync from fallback API:', err));
-        }
-    }, [isConnected, scannerStatus.status]);
-
-    // Start scan function
-    const startScan = useCallback((fingerName: FingerName) => {
-        if (!socket || !isConnected) {
-            console.error('❌ [useScannerSocket] Cannot start scan: WebSocket not connected');
-            console.error('   Socket:', !!socket, 'Connected:', isConnected);
-            return;
-        }
-
-        // Reset state
-        setScanComplete(null);
-        setPreviewFrame(null);
-
-        // Emit start_scan event
-        socket.emit('start_scan', { finger_name: fingerName });
-    }, [socket, isConnected]);
-
-    // Stop scan function
-    const stopScan = useCallback((scanId: string) => {
-        if (!socket || !isConnected) {
-            console.error('❌ [useScannerSocket] Cannot stop scan: WebSocket not connected');
-            return;
-        }
-
-        socket.emit('stop_scan', { scan_id: scanId });
-    }, [socket, isConnected]);
-
-    return {
-        isConnected,
-        scannerStatus,
-        previewFrame,
-        scanComplete,
-        startScan,
-        stopScan,
+    return () => {
+      newSocket.close();
+      socketRef.current = null;
     };
+  }, []);
+
+  // Reconnect recovery: fetch fallback API to sync state
+  useEffect(() => {
+    if (
+      isConnected &&
+      !reconnectAttemptedRef.current &&
+      scannerStatus.status !== "idle"
+    ) {
+      reconnectAttemptedRef.current = true;
+
+      // Fetch current state from fallback API
+      fetch(`${SCANNER_URL}/api/scanner/progress`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setScannerStatus({
+              scan_id: data.scan_id,
+              finger_name: data.finger_name,
+              status: data.status || "idle",
+              hint: data.hint || "",
+              metrics: data.metrics || {},
+            });
+            if (data.last_preview_frame_b64) {
+              setPreviewFrame(data.last_preview_frame_b64);
+            }
+          }
+        })
+        .catch((err) => console.error("Failed to sync from fallback API:", err));
+    }
+  }, [isConnected, scannerStatus.status]);
+
+  // Start scan function
+  const startScan = useCallback(
+    (fingerName: FingerName) => {
+      const socket = socketRef.current;
+      if (!socket || !isConnected) {
+        console.error("❌ [useScannerSocket] Cannot start scan: WebSocket not connected");
+        return;
+      }
+
+      // Reset state
+      setScanComplete(null);
+      setPreviewFrame(null);
+
+      // Emit start_scan event
+      socket.emit("start_scan", { finger_name: fingerName });
+    },
+    [isConnected]
+  );
+
+  // Stop scan function
+  const stopScan = useCallback(
+    (scanId: string) => {
+      const socket = socketRef.current;
+      if (!socket || !isConnected) {
+        console.error("❌ [useScannerSocket] Cannot stop scan: WebSocket not connected");
+        return;
+      }
+
+      socket.emit("stop_scan", { scan_id: scanId });
+    },
+    [isConnected]
+  );
+
+  return {
+    isConnected,
+    scannerStatus,
+    previewFrame,
+    scanComplete,
+    startScan,
+    stopScan,
+  };
 }

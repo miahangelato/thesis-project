@@ -82,14 +82,18 @@ export function ResultsFacilitiesTab({
                         <div className="flex items-center justify-center gap-4">
                           <Smartphone className="w-8 h-8 text-teal-600" />
                           <div className="text-left">
-                            <p className="text-xl font-bold text-teal-900">Get Info on Mobile</p>
-                            <p className="text-sm font-bold text-teal-600/70 uppercase tracking-wider">Scan QR Code</p>
+                            <p className="text-xl font-bold text-teal-900">
+                              Get Info on Mobile
+                            </p>
+                            <p className="text-sm font-bold text-teal-600/70 uppercase tracking-wider">
+                              Scan QR Code
+                            </p>
                           </div>
                         </div>
                       </button>
                     </div>
                   ))}
-                
+
                 <div className="pt-6 pb-4 text-center">
                   <Link
                     href="/results/hospitals"

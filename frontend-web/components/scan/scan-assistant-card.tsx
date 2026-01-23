@@ -7,7 +7,6 @@ import { HandGuide } from "@/components/features/scan/hand-guide";
 import FingerprintScanner from "@/components/features/scan/fingerprint-scanner";
 import { ScanAssistantSubtitle } from "@/components/features/scan/scan-assistant-subtitle";
 import { ScanPreview } from "@/components/scan/scan-preview";
-import { FingerprintUpload } from "@/components/scan/fingerprint-upload";
 
 import { FINGER_NAMES } from "@/lib/finger-names";
 import { FingerName } from "@/types/fingerprint";
@@ -21,18 +20,13 @@ import {
   Pause,
   Play,
   RefreshCcw,
-  RotateCcw,
-  Undo2,
 } from "lucide-react";
 
 type Props = {
-  loading: boolean;
-
   // scan session state
   currentFingerIndex: number;
   fingerFiles: Partial<Record<FingerName, File>>;
   countdown: number | null;
-  scannerReady: boolean;
   scanningStarted: boolean;
   paused: boolean;
 
@@ -46,7 +40,6 @@ type Props = {
   firstUnscannedIndex: number;
 
   // actions
-  setScannerReady: (next: boolean) => void;
   onRequestStartScanning: () => void;
   onOpenCancelModal: () => void;
   onOpenResetModal: () => void;
@@ -59,11 +52,9 @@ type Props = {
 };
 
 export function ScanAssistantCard({
-  loading,
   currentFingerIndex,
   fingerFiles,
   countdown,
-  scannerReady,
   scanningStarted,
   paused,
   totalFingers,
@@ -73,7 +64,6 @@ export function ScanAssistantCard({
   highlight,
   scanAssistantState,
   firstUnscannedIndex,
-  setScannerReady,
   onRequestStartScanning,
   onOpenCancelModal,
   onOpenResetModal,
@@ -182,7 +172,6 @@ export function ScanAssistantCard({
                   currentFinger={currentFinger}
                   autoStart={scanningStarted && countdown === null}
                   paused={paused}
-                  onScannerReady={() => setScannerReady(true)}
                 />
               </div>
             )}
@@ -237,7 +226,7 @@ export function ScanAssistantCard({
                 </div>
               )}
             </div>
-{/* 
+            {/* 
             <div className="w-50 mt-2">
               <FingerprintUpload
                 disabled={loading}

@@ -31,10 +31,7 @@ export function ResultsTabContent({
 
         {/* FACILITIES */}
         {activeTab === "facilities" && (
-          <ResultsFacilitiesTab 
-            participantData={participantData} 
-            onOpenQR={onOpenQR}
-          />
+          <ResultsFacilitiesTab participantData={participantData} onOpenQR={onOpenQR} />
         )}
 
         {/* BLOOD DONATION */}

@@ -79,6 +79,9 @@ export const FinishConfirmationModal = ({
   );
 };
 
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+import { Radio, Brain, ClipboardCheck } from "lucide-react";
+
 interface AnalysisLoadingOverlayProps {
   isOpen: boolean;
   state?: "loading" | "error";
@@ -94,94 +97,59 @@ export const AnalysisLoadingOverlay = ({
 
   const isError = state === "error";
 
-  return (
-    <div className="fixed inset-0 z-60 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center transition-all duration-500">
-      <div className="text-center px-8 w-full max-w-lg">
-        {/* Advanced Loader */}
-        {/* Standard Loader Style */}
-        <div className="relative mb-12 flex items-center justify-center">
-          {isError ? (
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-24 h-24 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
-                <AlertTriangle className="w-12 h-12 text-red-400" />
-              </div>
-            </div>
-          ) : (
-            <Spinner
-              size="xl"
-              label="Analyzing fingerprints"
-              trackClassName="border-teal-200"
-              indicatorClassName="border-teal-600 border-t-transparent"
-            />
-          )}
-        </div>
+  // Create steps for the unified loader
+  const analysisSteps = [
+    {
+      label: "Diagnostic Uplink",
+      description: "Securely transmitting biometric data",
+      status: "completed" as const,
+      icon: Radio,
+    },
+    {
+      label: "AI Neural Analysis",
+      description: "Processing patterns & minutiae",
+      status: "current" as const,
+      icon: Brain,
+    },
+    {
+      label: "Clinical Synthesis",
+      description: "Finalizing your medical report",
+      status: "pending" as const,
+      icon: ClipboardCheck,
+    },
+  ];
 
-        {/* Loading Text */}
-        <h2 className="text-3xl font-bold text-white mb-3 tracking-tight">
-          {isError ? "Analyzing Fingerprints Failed" : "Analyzing Fingerprints"}
-        </h2>
-        <p className="text-slate-400 mb-10 text-lg">
-          {isError
-            ? errorMessage || "Please try submitting again."
-            : "Please wait while we process your data..."}
-        </p>
-
-        {/* Progress Steps */}
-        {!isError && (
-          <div className="space-y-3 text-left">
-            {/* Step 1 */}
-            <div
-              className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm animate-in slide-in-from-bottom-4 fade-in duration-700 fill-mode-forwards"
-              style={{ animationDelay: "100ms" }}
-            >
-              <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center shrink-0">
-                <div className="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse" />
-              </div>
-              <div>
-                <p className="text-white font-medium">Uploading fingerprints</p>
-                <p className="text-xs text-slate-500">Securely transmitting data</p>
-              </div>
-            </div>
-
-            {/* Step 2 */}
-            <div
-              className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm animate-in slide-in-from-bottom-4 fade-in duration-700 fill-mode-forwards"
-              style={{ animationDelay: "300ms" }}
-            >
-              <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0">
-                <RefreshCcw
-                  className="w-5 h-5 text-cyan-400 animate-spin"
-                  style={{ animationDuration: "3s" }}
-                />
-              </div>
-              <div>
-                <p className="text-white font-medium">Running AI analysis</p>
-                <p className="text-xs text-slate-500">Processing patterns & minutiae</p>
-              </div>
-            </div>
-
-            {/* Step 3 */}
-            <div
-              className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-sm animate-in slide-in-from-bottom-4 fade-in duration-700 fill-mode-forwards"
-              style={{ animationDelay: "500ms" }}
-            >
-              <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center shrink-0">
-                <Clock className="w-5 h-5 text-teal-400" />
-              </div>
-              <div>
-                <p className="text-white font-medium">Generating results</p>
-                <p className="text-xs text-slate-500">Finalizing your report</p>
-              </div>
-            </div>
+  if (isError) {
+    return (
+      <div className="fixed inset-0 z-[10000] bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center p-8">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="w-24 h-24 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(239,68,68,0.1)]">
+            <AlertTriangle className="w-12 h-12 text-red-500" />
           </div>
-        )}
-
-        {!isError && (
-          <p className="text-slate-500 text-sm mt-8 animate-pulse">
-            Estimated time: 10-15 seconds
-          </p>
-        )}
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold text-white tracking-tight">Analysis Failed</h2>
+            <p className="text-slate-400 text-lg leading-relaxed">
+              {errorMessage || "We encountered a technical issue while processing your data. Please try again."}
+            </p>
+          </div>
+          <Button 
+            onClick={() => window.location.reload()}
+            className="w-full h-14 bg-white text-slate-950 hover:bg-slate-100 font-bold rounded-2xl transition-all"
+          >
+            Retry Submission
+          </Button>
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <FullScreenLoader
+      isOpen={isOpen}
+      title="Intelligence Scanning"
+      subtitle="The system is currently running a deep neural analysis of your fingerprint patterns."
+      steps={analysisSteps}
+    />
   );
 };
+

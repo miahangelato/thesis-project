@@ -10,8 +10,6 @@ import {
   MapPin,
   ArrowLeft,
   Phone,
-  Globe,
-  Facebook,
   Mail,
   Smartphone,
 } from "lucide-react";
@@ -143,7 +141,8 @@ export default function HospitalsPage() {
               const mergedServer = [
                 ...mergedWithFallback,
                 ...serverHospitals.filter(
-                  (s: any) => !mergedWithFallback.some((m) => (m.name || "") === s.name)
+                  (s: Facility) =>
+                    !mergedWithFallback.some((m) => (m.name || "") === s.name)
                 ),
               ];
               setFacilities(mergedServer);
@@ -214,9 +213,9 @@ export default function HospitalsPage() {
   const getPageNumbers = (current: number, total: number): (number | string)[] => {
     const maxVisible = 5;
     if (total <= maxVisible) return Array.from({ length: total }, (_, i) => i + 1);
-    
+
     const result: (number | string)[] = [];
-    
+
     if (current <= 3) {
       // Near start: [1, 2, 3, 4, ..., last]
       for (let i = 1; i <= 4; i++) result.push(i);
@@ -237,7 +236,7 @@ export default function HospitalsPage() {
       result.push("...");
       result.push(total);
     }
-    
+
     return result;
   };
 

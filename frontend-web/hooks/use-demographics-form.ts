@@ -11,7 +11,7 @@ const VALIDATION = {
     SENIOR_THRESHOLD: 65,
   },
   WEIGHT_KG: {
-    MIN: 30,  // Severe underweight adult
+    MIN: 30, // Severe underweight adult
     MAX: 300, // Extreme obesity (bariatric range)
     WARN_LOW: 40,
     WARN_HIGH: 200,
@@ -23,8 +23,8 @@ const VALIDATION = {
     WARN_HIGH: 440,
   },
   HEIGHT_CM: {
-    MIN: 120,  // Severe dwarfism adult
-    MAX: 250,  // Tallest recorded humans
+    MIN: 120, // Severe dwarfism adult
+    MAX: 250, // Tallest recorded humans
     WARN_LOW: 140,
     WARN_HIGH: 220,
   },
@@ -37,8 +37,8 @@ const VALIDATION = {
     MAX: 11,
   },
   BMI: {
-    MIN: 12,   // Severe starvation
-    MAX: 80,   // Extreme obesity
+    MIN: 12, // Severe starvation
+    MAX: 80, // Extreme obesity
     WARN_LOW: 15,
     WARN_HIGH: 50,
   },
@@ -95,7 +95,8 @@ export function useDemographicsForm() {
           age: data.age ? String(data.age) : "",
           weight: data.weight_kg ? String(data.weight_kg) : "",
           heightCm: data.height_cm ? String(data.height_cm) : "",
-          gender: data.gender === "prefer_not_say" ? "prefer_not_to_say" : (data.gender || ""),
+          gender:
+            data.gender === "prefer_not_say" ? "prefer_not_to_say" : data.gender || "",
           blood_type: data.blood_type || "unknown",
           showDonationCentersLater: data.show_donation_centers_later || false,
         };
@@ -199,7 +200,7 @@ export function useDemographicsForm() {
   // -------------------------
   const validateInputs = useMemo(() => {
     const warnings: ValidationWarning[] = [];
-    
+
     // Age validation
     const age = parseInt(formData.age || "0", 10);
     if (age > 0) {

@@ -114,7 +114,45 @@ import dj_database_url  # noqa: E402
 # Default to SQLite for local testing, PostgreSQL for production
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
 
-DATABASES = {"default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)}
+# Parse database URL with conn_max_age for connection pooling
+# Use regex parsing to avoid urlparse bug with Supabase pooler hostnames
+import re
+
+db_url_pattern = r'^(?P<scheme>[^:]+)://(?:(?P<user>[^:@]+)(?::(?P<password>[^@]+))?@)?(?P<host>[^:/]+)(?::(?P<port>\d+))?(?:/(?P<name>.+))?$'
+match = re.match(db_url_pattern, DATABASE_URL)
+
+if match:
+    parts = match.groupdict()
+    scheme = parts['scheme']
+    
+    if scheme.startswith('postgres'):
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": parts['name'] or "postgres",
+                "USER": parts['user'] or "",
+                "PASSWORD": parts['password'] or "",
+                "HOST": parts['host'] or "",
+                "PORT": parts['port'] or "5432",
+                "CONN_MAX_AGE": 600,
+            }
+        }
+    else:
+        # SQLite fallback
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": BASE_DIR / "db.sqlite3",
+            }
+        }
+else:
+    # Fallback to SQLite if parsing fails
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation

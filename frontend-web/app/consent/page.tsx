@@ -38,6 +38,7 @@ export default function ConsentPage() {
     const finalConsent = consent ?? false;
 
     setLoading(true);
+    const startTime = Date.now();
 
     try {
       if (sessionId) {
@@ -48,6 +49,13 @@ export default function ConsentPage() {
       }
 
       setCurrentStep(STEPS.DEMOGRAPHICS);
+
+      // Ensure loader shows for at least 10 seconds
+      const elapsed = Date.now() - startTime;
+      const minDisplayTime = 10000;
+      const remainingTime = Math.max(0, minDisplayTime - elapsed);
+
+      await new Promise(resolve => setTimeout(resolve, remainingTime));
 
       // Let React paint the loading UI
       requestAnimationFrame(() => {
@@ -71,8 +79,10 @@ export default function ConsentPage() {
 
         <FullScreenLoader
           isOpen={loading}
-          title="Preparing Your Session"
+          title="Preparing Session"
           subtitle="Please wait a moment…"
+          steps={[]}
+          footerText=""
         />
 
         <div className="h-screen px-28 py-6 bg-white flex flex-col overflow-hidden select-none">
