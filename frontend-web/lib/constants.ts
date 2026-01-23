@@ -76,6 +76,10 @@ export const UI = {
   TOAST_DURATION: 5000,
   DEBOUNCE_DELAY: 300,
   ANIMATION_DURATION: 200,
+  // Privacy/Session timeouts (aligned with backend)
+  SESSION_ABSOLUTE_TIMEOUT: 30 * 60 * 1000, // 30 minutes
+  SESSION_INACTIVITY_TIMEOUT: 10 * 60 * 1000, // 10 minutes
+  SESSION_WARNING_BEFORE: 2 * 60 * 1000, // 2 minutes warning
 } as const;
 
 export const STEPS = {
@@ -124,8 +128,9 @@ export type BloodGroup = (typeof BLOOD_GROUPS)[number];
 
 export const ERROR_MESSAGES = {
   NETWORK_ERROR: "Network error. Please check your connection.",
-  SESSION_EXPIRED: "Your session has expired. Please start over.",
-  INVALID_SESSION: "Invalid session. Please start over.",
+  SESSION_EXPIRED:
+    "Your session ended automatically to protect your privacy. Please start a new screening.",
+  INVALID_SESSION: "Invalid session. Please start a new screening.",
   SCANNER_NOT_FOUND: "Scanner not found. Please check the connection.",
   SCANNER_TIMEOUT: "Scanner timeout. Please try again.",
   INCOMPLETE_FINGERPRINTS: "Please scan all 10 fingerprints.",

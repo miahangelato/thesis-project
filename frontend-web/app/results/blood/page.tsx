@@ -118,7 +118,7 @@ export default function BloodCentersPage() {
               const mergedServer = [
                 ...finalCenters,
                 ...serverCenters.filter(
-                  (s: any) => !finalCenters.some((f) => (f.name || "") === s.name)
+                  (s: BloodCenter) => !finalCenters.some((f) => (f.name || "") === s.name)
                 ),
               ];
               setCenters(mergedServer);

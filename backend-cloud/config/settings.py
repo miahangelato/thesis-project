@@ -11,10 +11,18 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import warnings
 from pathlib import Path
 
 from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
+
+# Suppress migration consistency check warnings when DB is unreachable
+warnings.filterwarnings(
+    "ignore",
+    category=RuntimeWarning,
+    message=".*consistent migration history.*"
+)
 
 load_dotenv()
 
@@ -111,10 +119,38 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 import dj_database_url  # noqa: E402
 
-# Default to SQLite for local testing, PostgreSQL for production
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+# ==============================================================================
+# Database - Supabase PostgreSQL (Session Pooler) / SQLite fallback
+# ==============================================================================
 
-DATABASES = {"default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)}
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+# Set to 0 to prevent connection pooling issues with Supabase pooler
+# This closes connections immediately, reducing pressure on the pooler
+CONN_MAX_AGE = int(os.getenv("CONN_MAX_AGE", "0"))
+
+db_config = dj_database_url.parse(DATABASE_URL, conn_max_age=CONN_MAX_AGE)
+DATABASES = {"default": db_config}
+
+# Guard: Detect direct DB connection (IPv6-only) instead of pooler
+if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
+    host = DATABASES["default"].get("HOST", "")
+    if host.endswith(".supabase.co") and host.startswith("db."):
+        raise RuntimeError(
+            f"❌ Direct Supabase DB host detected: {host}\n"
+            "Railway cannot reach IPv6-only hosts.\n"
+            "Fix: In Railway, set DATABASE_URL to use the POOLER:\n"
+            "  postgresql://USER:PASSWORD@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require\n"
+            "Get it from: Supabase Dashboard → Connect → Pooler (Session mode)"
+        )
+    
+    # Pooler-safe configuration
+    DATABASES["default"]["CONN_MAX_AGE"] = CONN_MAX_AGE
+    DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
+    
+    opts = DATABASES["default"].setdefault("OPTIONS", {})
+    opts["sslmode"] = "require"
+    opts["client_encoding"] = "UTF8"
+    opts["connect_timeout"] = 10
 
 
 # Password validation
@@ -303,15 +339,6 @@ LOGGING = {
 # ==============================================================================
 # PERFORMANCE SETTINGS
 # ==============================================================================
-
-# Database Connection Pooling
-DATABASES["default"]["CONN_MAX_AGE"] = 600
-
-# Only add PostgreSQL-specific options if using PostgreSQL
-if "postgresql" in DATABASE_URL or "postgres" in DATABASE_URL:
-    DATABASES["default"]["OPTIONS"] = {
-        "connect_timeout": 10,
-    }
 
 # Cache (for future use with Redis)
 CACHES = {

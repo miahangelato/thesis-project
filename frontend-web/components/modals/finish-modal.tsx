@@ -80,6 +80,9 @@ export const FinishConfirmationModal = ({
   );
 };
 
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+import { Radio, Brain, ClipboardCheck } from "lucide-react";
+
 interface AnalysisLoadingOverlayProps {
   isOpen: boolean;
   state?: "loading" | "error";
@@ -176,6 +179,16 @@ export const AnalysisLoadingOverlay = ({
           </p>
         )}
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <FullScreenLoader
+      isOpen={isOpen}
+      title="Intelligence Scanning"
+      subtitle="The system is currently running a deep neural analysis of your fingerprint patterns."
+      steps={analysisSteps}
+    />
   );
 };
+

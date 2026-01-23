@@ -164,7 +164,12 @@ export default function DemographicsPage() {
 
         <PreparingScanOverlay isOpen={loading} />
 
-        <div className="h-screen px-28 py-6 bg-white flex flex-col overflow-x-hidden overflow-y-auto">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="h-screen px-28 py-6 bg-white flex flex-col overflow-x-hidden overflow-y-auto"
+        >
           <main className="flex-1 w-full max-w-full flex flex-col">
             <ProgressHeader
               currentStep={STEPS.DEMOGRAPHICS}
@@ -759,7 +764,7 @@ export default function DemographicsPage() {
             transparent
             customContent={<>No needles • Non-invasive • Privacy-first</>}
           />
-        </div>
+        </motion.div>
 
         <InlineNumericKeypad
           isVisible={!!activeField}

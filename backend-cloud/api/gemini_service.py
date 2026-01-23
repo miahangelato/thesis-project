@@ -17,19 +17,28 @@ class GeminiService:
 
         genai.configure(api_key=api_key)
         # Use gemini-flash-latest (Stable Flash with best free tier quotas)
-        self.model = genai.GenerativeModel("gemini-flash-latest")
-        logger.info("Gemini Flash service initialized")
+        # Use low temperature for consistency and safety
+        self.model = genai.GenerativeModel(
+            "gemini-flash-latest",
+            generation_config={"temperature": 0.3}  # Low temp for privacy/consistency
+        )
+        logger.info("[PRIVACY] Gemini Flash service initialized (temperature=0.3)")
 
-    def generate_risk_explanation(self, patient_data: Dict) -> str:
-        """Generate personalized risk explanation."""
+    def generate_risk_explanation(self, patient_data: Dict, session_id: str = None) -> str:
+        """Generate personalized risk explanation.
+        
+        PRIVACY: If session_id provided, uses session-scoped cache.
+        """
         from .cache_service import get_response_cache  # noqa: PLC0415
 
-        # Check cache first
-        cache = get_response_cache()
-        cached_response = cache.get(patient_data)
-        if cached_response:
-            logger.info("Gemini: Using cached explanation")
-            return cached_response
+        # Check session-scoped cache first if session_id exists
+        cache = None
+        if session_id:
+            cache = get_response_cache()
+            cached_response = cache.get(session_id, patient_data)
+            if cached_response:
+                logger.info(f"[PRIVACY] Gemini: Using cached explanation for session {session_id[:8]}...")
+                return cached_response
 
         prompt = f"""
 You are a medical AI assistant. Generate a brief, professional explanation of diabetes risk assessment.
@@ -63,15 +72,18 @@ Do not include medical advice or recommendations.
 
             response = self.model.generate_content(prompt)
             explanation = response.text.strip()
-            # Cache the successful response
-            cache.set(patient_data, explanation)
-            logger.info("Gemini: Generated and cached new explanation")
+            
+            # Cache for THIS SESSION ONLY
+            if session_id and cache:
+                cache.set(session_id, patient_data, explanation)
+                logger.info(f"[PRIVACY] Gemini: Generated and cached new explanation for session {session_id[:8]}...")
             return explanation
         except Exception as e:
             logger.error(f"Gemini generation failed: {e}")
             fallback = self._fallback_explanation(patient_data)
-            # Cache fallback to avoid repeated failures
-            cache.set(patient_data, fallback)
+            # Cache fallback to avoid repeated failures (session-scoped)
+            if session_id and cache:
+                cache.set(session_id, patient_data, fallback)
             return fallback
 
     def _fallback_explanation(self, data: Dict) -> str:
@@ -87,9 +99,23 @@ Do not include medical advice or recommendations.
         return templates.get(risk_level, "Risk assessment completed.")
 
     def generate_patient_explanation(
-        self, analysis_results: Dict, demographics: Dict
+        self, analysis_results: Dict, demographics: Dict, session_id: str = None
     ) -> str:
-        """Generate comprehensive explanation for patient results."""
+        """Generate comprehensive explanation for patient results.
+        
+        PRIVACY: If session_id provided, uses session-scoped cache.
+        """
+        from .cache_service import get_response_cache  # noqa: PLC0415
+
+        # Check cache if session_id provided
+        cache = None
+        if session_id:
+            cache = get_response_cache()
+            # Create a composite key or just use the data
+            cached_response = cache.get(session_id, {"results": analysis_results, "demo": demographics})
+            if cached_response:
+                logger.info(f"[PRIVACY] Gemini: Using cached comprehensive report for session {session_id[:8]}...")
+                return cached_response
 
         prompt = f"""
 You are a medical health screening assistant. Generate a scientifically accurate, calm health screening report.
@@ -174,7 +200,14 @@ TONE GUIDELINES:
 
                 try:
                     response = self.model.generate_content(prompt)
-                    return response.text.strip()
+                    text = response.text.strip()
+                    
+                    # Cache result if session active
+                    if session_id and cache:
+                        cache.set(session_id, {"results": analysis_results, "demo": demographics}, text)
+                        logger.info(f"[PRIVACY] Gemini: Cached comprehensive report for session {session_id[:8]}...")
+                        
+                    return text
                 except Exception as e:
                     error_str = str(e)
                     if "429" in error_str and attempt < max_retries - 1:
@@ -205,9 +238,147 @@ TONE GUIDELINES:
 
         except Exception as e:
             logger.error(f"Gemini generation failed: {e}")
+            logger.error(f"Gemini generation failed: {e}")
             return self._fallback_comprehensive_explanation(
                 analysis_results, demographics
             )
+
+    def generate_doctor_explanation(self, structured_response: Dict, session_id: str = None) -> str:
+        """Generate a compassionate wellness screening explanation.
+        
+        PRIVACY: If session_id provided, uses session-scoped cache.
+        """
+        from .cache_service import get_response_cache  # noqa: PLC0415
+        
+        # Check cache if session_id provided
+        cache = None
+        if session_id:
+            cache = get_response_cache()
+            cached_response = cache.get(session_id, structured_response)
+            if cached_response:
+                logger.info(f"[PRIVACY] Gemini: Using cached doctor explanation for session {session_id[:8]}...")
+                return cached_response
+
+        # Extract data from structured response
+        input_data = structured_response.get("input", {})
+        risk_assessment = structured_response.get("risk_assessment", {})
+        pattern_probs = input_data.get("fingerprint_patterns", {})
+        
+        # Check for unusual inputs
+        bmi = input_data.get('bmi', 0)
+        height = input_data.get('height_cm', 0)
+        weight = input_data.get('weight_kg', 0)
+        
+        unusual_input = False
+        if height < 100 or height > 250 or weight < 30 or weight > 300 or bmi > 80 or bmi < 10:
+            unusual_input = True
+        
+        prompt = f"""You are a compassionate clinician explaining a WELLNESS SCREENING result.
+
+Rules:
+- Do NOT cite research/studies/authors/statistics.
+- Do NOT claim fingerprints are medically proven predictors.
+- Do NOT describe personality traits from fingerprints.
+- Emphasize: screening estimate, not diagnosis; confirm with HbA1c/fasting glucose.
+- If inputs look unusual, advise re-checking.
+
+Use these headings:
+What this result means
+What this result does NOT mean
+What influenced this estimate
+What you can do next
+
+Data:
+- Risk level: {risk_assessment.get('risk_level', 'N/A')}
+- Risk score: {risk_assessment.get('risk_score', 'N/A')}/100
+- BMI: {bmi}
+- Height: {height} cm
+- Weight: {weight} kg
+- Dominant pattern: {pattern_probs.get('dominant_pattern', 'Unknown')} (experimental input)
+- Unusual input detected: {'Yes - suggest rechecking measurements' if unusual_input else 'No'}
+
+Keep under 200 words. Be warm and reassuring.
+"""
+
+        try:
+            # Apply rate limiting
+            import time  # noqa: PLC0415
+            from .rate_limiter import get_gemini_rate_limiter  # noqa: PLC0415
+            
+            rate_limiter = get_gemini_rate_limiter()
+            if rate_limiter.wait_if_needed():
+                time.sleep(rate_limiter.wait_if_needed())
+
+            response = self.model.generate_content(prompt)
+            text = response.text.strip()
+            
+            # Cache result if session active
+            if session_id and cache:
+                cache.set(session_id, structured_response, text)
+                logger.info(f"[PRIVACY] Gemini: Cached doctor explanation for session {session_id[:8]}...")
+                
+            return text
+        except Exception as e:
+            logger.error(f"Gemini doctor explanation failed: {e}")
+            from .openai_service import get_openai_service # fallback to openai logic if needed, or simple template
+            # Actually easier to just implement a simple fallback here to avoid circular dep
+            fallback = self._fallback_doctor_explanation(structured_response)
+            if session_id and cache:
+                cache.set(session_id, structured_response, fallback)
+            return fallback
+
+    def _fallback_doctor_explanation(self, structured_response: Dict) -> str:
+        """Template-based fallback if Gemini fails."""
+        risk_level = structured_response.get("risk_assessment", {}).get("risk_level", "Low Risk")
+        probability_percent = structured_response.get("predictions", {}).get("diabetes_probability_percent", "N/A")
+        bmi = structured_response.get("input", {}).get("bmi", "N/A")
+        
+        if "High" in risk_level:
+            return f"""What this result means
+Your wellness screening shows a higher estimated risk for diabetes (score: {probability_percent}). This suggests it may be beneficial to follow up with clinical testing.
+
+What this result does NOT mean
+This is not a diagnosis. It does not confirm you have or will develop diabetes. Only medical tests like HbA1c or fasting glucose can confirm that.
+
+What influenced this estimate
+Your BMI ({bmi}) and experimental, non-diagnostic fingerprint pattern analysis were used as model inputs. These are screening estimates, not proven medical predictors.
+
+What you can do next
+• Schedule a follow-up with your healthcare provider within the next month
+• Ask about a fasting blood glucose or HbA1c test
+• Focus on a balanced diet and regular physical activity
+• Remember: lifestyle choices have the greatest impact on your health"""
+        elif "Moderate" in risk_level:
+            return f"""What this result means
+Your wellness screening shows a moderate estimated risk (score: {probability_percent}). This suggests staying aware of your metabolic health may be beneficial.
+
+What this result does NOT mean
+This is not a diagnosis or confirmation of disease. Many people with similar results remain healthy. Only proper medical testing can assess your actual health.
+
+What influenced this estimate
+Your BMI ({bmi}) and experimental fingerprint pattern inputs contributed to this estimate. These are non-diagnostic screening tools, not medical certainty.
+
+What you can do next
+• Consider scheduling a health check-up within 6 months
+• Maintain a balanced diet with plenty of vegetables
+• Stay physically active - even daily walks help
+• Your choices matter more than any screening estimate"""
+        else:
+            return f"""What this result means
+Your wellness screening shows a lower estimated risk for diabetes (score: {probability_percent}). The information you provided suggests a favorable profile at this time.
+
+What this result does NOT mean
+This is not a guarantee of health. Screening results can change over time, and healthy habits remain important regardless of this estimate.
+
+What influenced this estimate
+Your BMI ({bmi}) and experimental, non-diagnostic pattern analysis were used. These are screening estimates based on provided measurements.
+
+What you can do next
+• Continue maintaining healthy lifestyle habits
+• Schedule routine check-ups every 1-2 years
+• Stay physically active and eat well
+• Monitor any changes in your health over time""" 
+
 
     def generate_health_facilities(self, risk_level: str) -> list:
         """Generate recommended health facilities based on risk level."""

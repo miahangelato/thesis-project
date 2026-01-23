@@ -20,8 +20,6 @@ import {
   Pause,
   Play,
   RefreshCcw,
-  RotateCcw,
-  Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +30,6 @@ type Props = {
   currentFingerIndex: number;
   fingerFiles: Partial<Record<FingerName, File>>;
   countdown: number | null;
-  scannerReady: boolean;
   scanningStarted: boolean;
   paused: boolean;
 
@@ -57,11 +54,9 @@ type Props = {
 };
 
 export function ScanAssistantCard({
-  loading,
   currentFingerIndex,
   fingerFiles,
   countdown,
-  scannerReady,
   scanningStarted,
   paused,
   totalFingers,
@@ -71,7 +66,6 @@ export function ScanAssistantCard({
   highlight,
   scanAssistantState,
   firstUnscannedIndex,
-  setScannerReady,
   onRequestStartScanning,
   onOpenCancelModal,
   onOpenResetModal,
@@ -174,7 +168,6 @@ export function ScanAssistantCard({
                   currentFinger={currentFinger}
                   autoStart={scanningStarted && countdown === null}
                   paused={paused}
-                  onScannerReady={() => setScannerReady(true)}
                 />
               </div>
             )}

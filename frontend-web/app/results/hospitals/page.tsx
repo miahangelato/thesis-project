@@ -134,7 +134,8 @@ export default function HospitalsPage() {
               const mergedServer = [
                 ...mergedWithFallback,
                 ...serverHospitals.filter(
-                  (s: any) => !mergedWithFallback.some((m) => (m.name || "") === s.name)
+                  (s: Facility) =>
+                    !mergedWithFallback.some((m) => (m.name || "") === s.name)
                 ),
               ];
               setFacilities(mergedServer);

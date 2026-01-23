@@ -261,11 +261,9 @@ export default function ScanPage() {
                   {/* Left Panel - Scanning Interface - FIXED WIDTH */}
                   <div className="col-span-7 flex flex-col h-full">
                     <ScanAssistantCard
-                      loading={loading}
                       currentFingerIndex={currentFingerIndex}
                       fingerFiles={fingerFiles}
                       countdown={countdown}
-                      scannerReady={scannerReady}
                       scanningStarted={scanningStarted}
                       paused={paused}
                       totalFingers={totalFingers}
@@ -275,7 +273,6 @@ export default function ScanPage() {
                       highlight={highlight}
                       scanAssistantState={scanAssistantState}
                       firstUnscannedIndex={firstUnscannedIndex}
-                      setScannerReady={setScannerReady}
                       onRequestStartScanning={() => setShowScanConfirmModal(true)}
                       onOpenCancelModal={() => {
                         if (!paused) togglePaused();

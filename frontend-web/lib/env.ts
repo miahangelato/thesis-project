@@ -14,9 +14,12 @@ const envSchema = z.object({
 
   NEXT_PUBLIC_SCANNER_PORT: z
     .string()
-    .regex(/^\d+$/, "NEXT_PUBLIC_SCANNER_PORT must be a number")
     .optional()
-    .default("5000"),
+    .default("5000")
+    .refine(
+      (val) => !val || /^\d+$/.test(val),
+      "NEXT_PUBLIC_SCANNER_PORT must be a number"
+    ),
 
   NEXT_PUBLIC_KIOSK_API_KEY: z
     .string()

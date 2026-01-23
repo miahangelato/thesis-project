@@ -92,7 +92,14 @@ class MLService:
             base_url = model_storage_url.rstrip("/")
             url = f"{base_url}/{filename}"
             
-            response = requests.get(url, stream=True, timeout=60)
+            # Add GitHub token if available (for private repos)
+            headers = {}
+            github_token = os.getenv("GITHUB_TOKEN")
+            if github_token:
+                headers['Authorization'] = f'token {github_token}'
+                logger.info(f"Using GitHub token for authenticated download")
+            
+            response = requests.get(url, stream=True, timeout=60, headers=headers)
             if response.status_code == 200:
                 with open(target_path, 'wb') as f:
                     for chunk in response.iter_content(chunk_size=8192):

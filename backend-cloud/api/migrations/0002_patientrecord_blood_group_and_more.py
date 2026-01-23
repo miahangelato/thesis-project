@@ -3,6 +3,35 @@
 from django.db import migrations, models
 
 
+def add_fields_if_not_exists(apps, schema_editor):
+    """Add fields only if they don't exist (idempotent migration)"""
+    from django.db import connection
+    with connection.cursor() as cursor:
+        # Check if blood_group column exists
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='patient_records' AND column_name='blood_group'
+        """)
+        if not cursor.fetchone():
+            cursor.execute("""
+                ALTER TABLE patient_records 
+                ADD COLUMN blood_group VARCHAR(5) NULL
+            """)
+        
+        # Check if donation_eligibility_status column exists
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='patient_records' AND column_name='donation_eligibility_status'
+        """)
+        if not cursor.fetchone():
+            cursor.execute("""
+                ALTER TABLE patient_records 
+                ADD COLUMN donation_eligibility_status VARCHAR(20) NULL
+            """)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,14 +39,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='patientrecord',
-            name='blood_group',
-            field=models.CharField(blank=True, max_length=5, null=True),
-        ),
-        migrations.AddField(
-            model_name='patientrecord',
-            name='donation_eligibility_status',
-            field=models.CharField(blank=True, max_length=20, null=True),
-        ),
+        migrations.RunPython(add_fields_if_not_exists, migrations.RunPython.noop),
     ]

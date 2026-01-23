@@ -5,15 +5,22 @@ Run this script to test the application against common security attack patterns.
 
 import requests
 import json
+import os
 
 # Configuration
-BASE_URL = "https://api.team3thesis.dev/api"
-BACKEND_API_KEY = "9c719864eb9ae54335201428596bb51bc13b5d817a"  # Change to your API key
+BASE_URL = os.getenv("BACKEND_URL", "https://api.team3thesis.dev/api")
+BACKEND_API_KEY = os.getenv("BACKEND_API_KEY")  # ✅ SECURITY: Use env variable
+
+if not BACKEND_API_KEY:
+    print("ERROR: BACKEND_API_KEY environment variable not set!")
+    print("Set it with: export BACKEND_API_KEY=your-key-here")
+    exit(1)
 
 HEADERS = {
     "Content-Type": "application/json",
     "X-API-Key": BACKEND_API_KEY
 }
+
 
 # XSS Test Payloads
 XSS_PAYLOADS = [
