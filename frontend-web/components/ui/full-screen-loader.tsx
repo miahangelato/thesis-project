@@ -87,7 +87,7 @@ export function FullScreenLoader({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-white/90 backdrop-blur-md overflow-hidden transition-all duration-500"
+          className="fixed inset-0 z-10000 flex items-center justify-center bg-white/90 backdrop-blur-md overflow-hidden transition-all duration-500"
         >
           <div className="text-center px-8 w-full max-w-lg">
             <div className="relative mb-12 flex items-center justify-center">

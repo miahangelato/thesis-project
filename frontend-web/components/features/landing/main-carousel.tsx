@@ -75,6 +75,15 @@ export function MainCarousel({
     }),
   };
 
+  // Separate variants: text slides, images crossfade (no horizontal motion)
+  const textVariants = slideVariants;
+
+  const imageVariants = {
+    enter: { opacity: 0, scale: 0.995 },
+    center: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.995 },
+  };
+
   return (
     <div className="flex flex-col w-full">
       <div
@@ -113,7 +122,7 @@ export function MainCarousel({
             <motion.div
               key={currentSlide}
               custom={direction}
-              variants={slideVariants}
+              variants={textVariants}
               initial="enter"
               animate="center"
               exit="exit"
@@ -175,88 +184,81 @@ export function MainCarousel({
         </div>
 
         <div className="w-[45%] flex justify-center items-center relative h-[600px]">
-          <AnimatePresence initial={false} custom={direction} mode="wait">
-            <motion.div
-              key={currentSlide}
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{
-                x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 },
-              }}
-              className="w-full h-full flex items-center justify-center"
-            >
-              <div className="relative w-full max-w-xl transform -translate-y-12">
-                <div className="relative h-[350px] lg:h-[400px] xl:h-[450px] w-full flex items-center justify-center">
-                  <div
-                    className="absolute rounded-3xl border-2 border-[#00c2cb]/70 bg-white/50 bottom-43 right-43"
-                    style={{
-                      width: "clamp(260px, 20vw, 200px)",
-                      height: "clamp(260px, 20vw, 200px)",
-                      transform: "translate(-70px, 10px)",
-                      zIndex: 0,
-                    }}
-                  />
+          <div className="relative w-full max-w-xl transform -translate-y-12">
+            <div className="relative h-[350px] lg:h-[400px] xl:h-[450px] w-full flex items-center justify-center">
+              {/* decorative elements remain static */}
+              <div
+                className="absolute rounded-3xl border-2 border-[#00c2cb]/70 bg-white/50 bottom-43 right-43"
+                style={{
+                  width: "clamp(260px, 20vw, 200px)",
+                  height: "clamp(260px, 20vw, 200px)",
+                  transform: "translate(-70px, 10px)",
+                  zIndex: 0,
+                }}
+              />
 
-                  <div
-                    className="absolute rounded-3xl border-2 border-[#00c2cb]/60 bg-white/40 top-43 left-43"
-                    style={{
-                      width: "clamp(260px, 20vw, 200px)",
-                      height: "clamp(260px, 20vw, 200px)",
-                      transform: "translate(70px, 10px)",
-                      zIndex: 0,
-                    }}
-                  />
+              <div
+                className="absolute rounded-3xl border-2 border-[#00c2cb]/60 bg-white/40 top-43 left-43"
+                style={{
+                  width: "clamp(260px, 20vw, 200px)",
+                  height: "clamp(260px, 20vw, 200px)",
+                  transform: "translate(70px, 10px)",
+                  zIndex: 0,
+                }}
+              />
 
-                  <div
-                    className="absolute rounded-full"
-                    style={{
-                      width: "clamp(280px, 36vw, 360px)",
-                      height: "clamp(280px, 36vw, 360px)",
-                      background: "rgba(0,194,203,0.16)",
-                      filter: "blur(35px)",
-                      zIndex: 0,
-                    }}
-                  />
+              <div
+                className="absolute rounded-full"
+                style={{
+                  width: "clamp(280px, 36vw, 360px)",
+                  height: "clamp(280px, 36vw, 360px)",
+                  background: "rgba(0,194,203,0.16)",
+                  filter: "blur(35px)",
+                  zIndex: 0,
+                }}
+              />
 
-                  <div
-                    className="relative rounded-3xl p-[3px] bg-linear-to-b from-cyan-300 via-[#00c2cb] to-teal-600 shadow-[0_0_35px_rgba(0,194,203,0.45)]"
-                    style={{
-                      width: "clamp(280px, 34vw, 340px)",
-                      height: "clamp(280px, 34vw, 340px)",
-                      zIndex: 2,
-                    }}
-                  >
-                    <div className="relative h-full w-full bg-white rounded-3xl overflow-hidden flex items-center justify-center">
-                      <div className="relative w-full h-full rounded-2xl flex items-center justify-center overflow-hidden">
-                        {slide.imagePath ? (
-                          <Image
-                            src={slide.imagePath}
-                            alt="Slide visual"
-                            fill
-                            draggable={false}
-                            className="object-contain"
-                            sizes="(min-width: 1280px) 340px, (min-width: 1024px) 320px, 280px"
-                            priority
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center p-6">
-                            {Icon && <Icon className="w-20 h-20 text-gray-300 mb-4" />}
-                            <p className="text-gray-400 text-center">
-                              No Image Available
-                            </p>
-                          </div>
-                        )}
-                      </div>
+              {/* only this inner box will crossfade */}
+              <AnimatePresence initial={false} custom={direction} mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  custom={direction}
+                  variants={imageVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ opacity: { duration: 0.45 }, scale: { duration: 0.45 } }}
+                  className="relative rounded-3xl p-[3px] bg-linear-to-b from-cyan-300 via-[#00c2cb] to-teal-600 shadow-[0_0_35px_rgba(0,194,203,0.45)]"
+                  style={{
+                    width: "clamp(280px, 34vw, 340px)",
+                    height: "clamp(280px, 34vw, 340px)",
+                    zIndex: 2,
+                  }}
+                >
+                  <div className="relative h-full w-full bg-white rounded-3xl overflow-hidden flex items-center justify-center">
+                    <div className="relative w-full h-full rounded-2xl flex items-center justify-center overflow-hidden">
+                      {slide.imagePath ? (
+                        <Image
+                          src={slide.imagePath}
+                          alt="Slide visual"
+                          fill
+                          draggable={false}
+                          className="object-contain"
+                          sizes="(min-width: 1280px) 340px, (min-width: 1024px) 320px, 280px"
+                          priority
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center p-6">
+                          {Icon && <Icon className="w-20 h-20 text-gray-300 mb-4" />}
+                          <p className="text-gray-400 text-center">No Image Available</p>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
 
           <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 w-full flex justify-center">
             <Button

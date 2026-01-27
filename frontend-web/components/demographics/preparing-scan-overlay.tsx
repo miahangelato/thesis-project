@@ -8,31 +8,27 @@ type PreparingScanOverlayProps = {
 export function PreparingScanOverlay({ isOpen }: PreparingScanOverlayProps) {
   const preparationSteps = [
     {
-      label: "Secure Connection",
-      description: "INITIALIZING ENCRYPTED UPLINK",
-      status: "completed" as const,
-      icon: ShieldCheck,
-    },
-    {
-      label: "Diagnostic Sensors",
-      description: "VALIDATING BIOMETRIC HARDWARE",
+      label: "Preparing Scanner",
+      description: "INITIALIZING SCANNER HARDWARE",
       status: "current" as const,
-      icon: Settings2,
+      icon: ScanLine,
     },
     {
-      label: "Scanner Alignment",
-      description: "CALIBRATING HIGH-RES SCANNER",
+      label: "Configuring Session",
+      description: "SECURING SESSION & CALIBRATION",
       status: "pending" as const,
-      icon: ScanLine,
+      icon: ShieldCheck,
     },
   ];
 
   return (
     <FullScreenLoader
       isOpen={isOpen}
-      title="Preparing Scan"
-      subtitle="Setting up secure biometric environment..."
+      title="Preparing Scanner"
+      subtitle="Configuring scanner and secure session..."
       steps={preparationSteps}
+      useDefaultSteps={false}
+      footerText="This should only take a few seconds"
     />
   );
 }

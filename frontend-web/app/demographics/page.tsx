@@ -108,19 +108,35 @@ export default function DemographicsPage() {
     }
 
     if (hasWarnings) {
-      const warningMessages = validationWarnings
-        .filter((w) => w.severity === "warning")
-        .map((w) => w.message)
-        .join("\n");
-      const confirmed = confirm(
-        "Note: The following concerns were detected:\n\n" +
-          warningMessages +
-          "\n\nDo you want to continue anyway?"
-      );
-      if (!confirmed) return;
+      const warnings = validationWarnings.filter((w) => w.severity === "warning");
+
+      const onlyBmiWarnings =
+        warnings.length > 0 &&
+        warnings.every((w) => {
+          const f = (w.field || "").toString().toLowerCase();
+          return f === "bmi" || f.includes("bmi");
+        });
+
+      if (!onlyBmiWarnings) {
+        const warningMessages = warnings.map((w) => w.message).join("\n");
+        const confirmed = confirm(
+          "Note: The following concerns were detected:\n\n" +
+            warningMessages +
+            "\n\nDo you want to continue anyway?"
+        );
+        if (!confirmed) return;
+      }
     }
 
     setLoading(true);
+    const start = Date.now();
+    const ensureMinDelay = async (minMs: number) => {
+      const elapsed = Date.now() - start;
+      if (elapsed < minMs) {
+        await new Promise((res) => setTimeout(res, minMs - elapsed));
+      }
+    };
+
     try {
       setCurrentStep(STEPS.SCAN);
 
@@ -145,9 +161,12 @@ export default function DemographicsPage() {
         );
       }
 
+      await ensureMinDelay(5000);
+
       router.push(ROUTES.SCAN);
     } catch (err) {
       setCurrentStep(STEPS.SCAN);
+      await ensureMinDelay(5000);
       router.push(ROUTES.SCAN);
     } finally {
       setLoading(false);
@@ -165,7 +184,7 @@ export default function DemographicsPage() {
 
         <PreparingScanOverlay isOpen={loading} />
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}

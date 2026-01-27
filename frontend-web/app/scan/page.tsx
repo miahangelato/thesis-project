@@ -53,6 +53,24 @@ export default function ScanPage() {
     };
   }, []);
 
+  // If navigating here from the demographics submission, show the analysis
+  // overlay briefly so users see both the "Preparing Scanner" and the
+  // analysis loading states in sequence.
+  useEffect(() => {
+    try {
+      const flag = sessionStorage.getItem("show_initial_analysis_overlay");
+      if (flag) {
+        sessionStorage.removeItem("show_initial_analysis_overlay");
+        setAnalysisOverlayOpen(true);
+        setAnalysisOverlayState("loading");
+        overlayTimeoutRef.current = window.setTimeout(() => {
+          setAnalysisOverlayOpen(false);
+        }, 1500);
+      }
+    } catch (e) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const showErrorToast = (message: string) => {
     setToastMessage(message);
     setToastOpen(true);

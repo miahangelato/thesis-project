@@ -223,7 +223,6 @@ export function ScanAssistantCard({
 
             {/* <div className="w-50 mt-2">
               <FingerprintUpload
-                disabled={loading}
                 label={FINGER_NAMES[currentFinger]}
                 onFileSelected={(file) => onCapture(currentFinger, file)}
               />
